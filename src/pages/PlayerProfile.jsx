@@ -105,6 +105,54 @@ function SocialIcon({ platform }) {
   return icons[platform] || null;
 }
 
+function CareerTimeline({ career }) {
+  if (!career?.length) return null;
+  return (
+    <div style={{ overflowX: "auto", paddingBottom: 8 }}>
+      <div style={{ display: "flex", gap: 0, minWidth: "max-content", position: "relative" }}>
+        {/* connecting line */}
+        <div style={{
+          position: "absolute", top: 18, left: 20, right: 20, height: 2,
+          background: "var(--border)", zIndex: 0,
+        }} />
+        {career.map((c, i) => {
+          const isLast = i === career.length - 1;
+          return (
+            <div key={i} style={{
+              display: "flex", flexDirection: "column", alignItems: "center",
+              minWidth: 140, padding: "0 8px", position: "relative", zIndex: 1,
+            }}>
+              {/* dot */}
+              <div style={{
+                width: isLast ? 16 : 12, height: isLast ? 16 : 12,
+                borderRadius: "50%",
+                background: isLast ? "var(--text-1)" : "var(--bg)",
+                border: `2px solid var(--text-1)`,
+                marginBottom: 12, flexShrink: 0,
+              }} />
+              {/* year */}
+              <span style={{
+                fontSize: 13, fontWeight: 800, color: "var(--text-1)",
+                fontFamily: "var(--font-display)", marginBottom: 4,
+              }}>{c.year}</span>
+              {/* team */}
+              <span style={{
+                fontSize: 12, fontWeight: 700, color: "var(--text-2)",
+                textAlign: "center", marginBottom: 4, lineHeight: 1.2,
+              }}>{c.team}</span>
+              {/* note */}
+              <span style={{
+                fontSize: 10, color: "var(--text-4)", textAlign: "center",
+                lineHeight: 1.4, maxWidth: 120,
+              }}>{c.note}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function calcAge(birthdate) {
   if (!birthdate || birthdate.startsWith("0000")) return null;
   return Math.floor((Date.now() - new Date(birthdate).getTime()) / (1000 * 60 * 60 * 24 * 365.25));
@@ -209,6 +257,14 @@ export default function PlayerProfile() {
               ))}
             </div>
           </section>
+
+          {/* Career Timeline */}
+          {player.career?.length > 0 && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <h2 className={styles.cardTitle}>Career Timeline</h2>
+              <CareerTimeline career={player.career} />
+            </section>
+          )}
 
           {/* Social Links */}
           <section className={styles.card}>
