@@ -1,0 +1,367 @@
+.page {
+  width: 100%;
+  background: #f7f8fa;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Hero */
+.hero {
+  width: 100%;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  padding: 36px 40px 28px;
+  box-sizing: border-box;
+}
+
+.heroInner {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  max-width: 1400px;
+}
+
+.avatarWrapper { position: relative; flex-shrink: 0; }
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+
+.avatarRing {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2.5px solid;
+  opacity: 0.5;
+}
+
+.heroInfo { flex: 1; }
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.flag { font-size: 13px; color: #999; }
+
+.pos {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.nickname {
+  font-size: 36px;
+  font-weight: 900;
+  color: #111315;
+  margin: 0 0 2px;
+  font-family: 'Arial Black', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.fullName {
+  font-size: 14px;
+  color: #aaa;
+  margin: 0 0 14px;
+}
+
+.heroTags { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.tag {
+  font-size: 13px;
+  color: #666;
+  background: #f4f5f7;
+  border: 1px solid #eee;
+  padding: 5px 14px;
+  border-radius: 6px;
+}
+.tag b { color: #111; }
+
+.ratingBadge {
+  flex-shrink: 0;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  border: 2px solid;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  margin-left: auto;
+}
+
+.ratingNum {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  font-family: 'Arial Black', sans-serif;
+}
+
+.ratingLabel {
+  font-size: 9px;
+  color: #aaa;
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+
+/* Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 20px 40px 40px;
+  box-sizing: border-box;
+}
+
+/* Card */
+.card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  padding: 22px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+
+.cardTitle {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Stats */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 14px 8px;
+  gap: 4px;
+  border: 1px solid #f0f0f0;
+}
+
+.statVal {
+  font-size: 20px;
+  font-weight: 900;
+  font-family: 'Arial Black', sans-serif;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 10px;
+  color: #aaa;
+  letter-spacing: 0.06em;
+}
+
+/* Bonservis grafiği */
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.chartHeader .cardTitle { margin: 0; border: none; padding: 0; }
+
+.currentVal {
+  font-size: 22px;
+  font-weight: 900;
+  font-family: 'Arial Black', sans-serif;
+}
+
+.transferList {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.transferRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 8px 4px;
+}
+
+.transferYear { font-size: 11px; font-weight: 700; }
+.transferTeam { font-size: 10px; color: #aaa; text-align: center; }
+.transferVal { font-size: 12px; font-weight: 800; }
+
+/* Timeline */
+.timeline {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  overflow-x: auto;
+  padding: 12px 0 0;
+}
+
+.timelineItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 90px;
+  position: relative;
+}
+
+.timelineItem::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  right: -50%;
+  height: 2px;
+  background: #f0f0f0;
+  z-index: 0;
+}
+.timelineItem:last-child::before { display: none; }
+
+.timelineDot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  z-index: 1;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(0,0,0,0.15);
+}
+
+.timelineContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-top: 10px;
+  text-align: center;
+  padding: 0 6px;
+}
+
+.timelineYear { font-size: 12px; font-weight: 800; }
+.timelineTeam { font-size: 12px; font-weight: 600; color: #333; }
+.timelineNote { font-size: 10px; color: #aaa; line-height: 1.4; }
+
+/* Ödüller */
+.awardList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.awardItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #f8f9fa;
+  border: 1px solid #f0f0f0;
+  border-radius: 9px;
+  transition: background 0.15s;
+}
+.awardItem:hover { background: #f0f1f3; }
+
+.awardIcon { font-size: 18px; flex-shrink: 0; }
+.awardTitle { font-size: 13px; font-weight: 600; color: #222; }
+.awardYear { font-size: 11px; color: #aaa; margin-top: 1px; }
+
+/* Sosyal medya */
+.socials { display: flex; flex-direction: column; gap: 8px; }
+
+.socialBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 9px;
+  background: #f8f9fa;
+  border: 1px solid #eee;
+  text-decoration: none;
+  transition: all 0.18s;
+}
+.socialBtn:hover {
+  border-color: var(--gc);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.socialIcon { display: flex; align-items: center; flex-shrink: 0; }
+
+.socialTexts { display: flex; flex-direction: column; gap: 1px; }
+.socialPlatform { font-size: 13px; font-weight: 600; color: #222; }
+.socialHandle { font-size: 11px; color: #aaa; }
+
+/* İlgili oyuncular */
+.relatedList { display: flex; flex-direction: column; gap: 8px; }
+
+.relatedItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #f8f9fa;
+  border: 1px solid #eee;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.relatedItem:hover { border-color: var(--gc); background: #fff; }
+
+.relatedAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.relatedNick { font-size: 13px; font-weight: 700; color: #111; }
+.relatedMeta { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .grid { grid-template-columns: repeat(2, 1fr); padding: 16px 24px 32px; }
+  .card[style*="span 2"] { grid-column: span 2; }
+  .hero { padding: 24px; }
+  .transferList { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .grid { grid-template-columns: 1fr; padding: 12px 16px 32px; }
+  .card[style*="span 2"] { grid-column: span 1; }
+  .hero { padding: 16px; }
+  .heroInner { flex-wrap: wrap; gap: 16px; }
+  .ratingBadge { margin-left: 0; }
+  .nickname { font-size: 26px; }
+  .transferList { grid-template-columns: repeat(3, 1fr); }
+  .timeline { flex-direction: column; gap: 14px; }
+  .timelineItem::before { display: none; }
+  .timelineItem { flex-direction: row; align-items: flex-start; gap: 10px; min-width: unset; }
+  .timelineDot { margin-top: 2px; }
+  .timelineContent { align-items: flex-start; text-align: left; margin-top: 0; }
+}
