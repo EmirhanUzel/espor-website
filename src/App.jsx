@@ -4,25 +4,58 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import PlayerProfile from "./pages/PlayerProfile";
 import TeamPage from "./pages/TeamPage";
+import TournamentPage from "./pages/TournamentPage";
+import MatchPage from "./pages/MatchPage";
+import NewsPage from "./pages/NewsPage";
+import TransfersPage from "./pages/TransfersPage";
 
-const GAME_THEMES = {
-  cs2:      { bg: "#ffffff", accent: "#f0a500" },
-  lol:      { bg: "#ffffff", accent: "#C89B3C" },
-  valorant: { bg: "#ffffff", accent: "#FF4655" },
-};
+function Footer() {
+  return (
+    <footer style={{ borderTop: "1px solid var(--border)", padding: "32px 40px", marginTop: "80px" }}>
+      <div className="wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+        <span style={{ fontWeight: 700, fontSize: 14, letterSpacing: "0.12em", color: "var(--text-1)", fontFamily: "var(--font-display)" }}>
+          eSPORMAX
+        </span>
+        <span style={{ fontSize: 12, color: "var(--text-4)" }}>
+          © 2025 eSPORMAX · Powered by Liquipedia API
+        </span>
+        <div style={{ display: "flex", gap: 20 }}>
+          {["About", "Privacy", "Contact"].map(l => (
+            <a key={l} href="#" style={{ fontSize: 12, color: "var(--text-3)", transition: "color 0.15s" }}
+              onMouseEnter={e => e.target.style.color = "var(--text-1)"}
+              onMouseLeave={e => e.target.style.color = "var(--text-3)"}
+            >{l}</a>
+          ))}
+        </div>
+      </div>
+    </footer>
+  );
+}
 
 export default function App() {
-  const [activeGame, setActiveGame] = useState("cs2");
-  const theme = GAME_THEMES[activeGame];
+  const [wiki, setWiki] = useState("valorant");
+  const [region, setRegion] = useState("All");
 
   return (
-    <div style={{ minHeight: "100vh", width: "100%", background: theme.bg }}>
-      <Navbar onGameChange={setActiveGame} gameColor={theme.accent} />
-      <Routes>
-        <Route path="/"              element={<Home gameColor={theme.accent} activeGame={activeGame} />} />
-        <Route path="/oyuncu/:nick"  element={<PlayerProfile gameColor={theme.accent} />} />
-        <Route path="/takim/:name"   element={<TeamPage gameColor={theme.accent} />} />
-      </Routes>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
+      <Navbar
+        activeWiki={wiki}
+        onWikiChange={setWiki}
+        activeRegion={region}
+        onRegionChange={setRegion}
+      />
+      <div style={{ flex: 1 }}>
+        <Routes>
+          <Route path="/"              element={<Home wiki={wiki} region={region} />} />
+          <Route path="/turnuva/:id"   element={<TournamentPage wiki={wiki} />} />
+          <Route path="/mac/:id"       element={<MatchPage />} />
+          <Route path="/oyuncu/:id"    element={<PlayerProfile />} />
+          <Route path="/takim/:name"   element={<TeamPage wiki={wiki} />} />
+          <Route path="/haberler"      element={<NewsPage wiki={wiki} />} />
+          <Route path="/transferler"   element={<TransfersPage />} />
+        </Routes>
+      </div>
+      <Footer />
     </div>
   );
 }

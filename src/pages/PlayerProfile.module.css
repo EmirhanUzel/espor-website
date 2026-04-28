@@ -1,367 +1,253 @@
-.page {
-  width: 100%;
-  background: #f7f8fa;
-  min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
 /* Hero */
 .hero {
-  width: 100%;
-  background: #fff;
-  border-bottom: 1px solid #eee;
-  padding: 36px 40px 28px;
-  box-sizing: border-box;
+  background: var(--text-1);
+  padding: 48px 0 40px;
+  color: #fff;
 }
 
 .heroInner {
   display: flex;
   align-items: center;
   gap: 28px;
-  max-width: 1400px;
+  flex-wrap: wrap;
 }
-
-.avatarWrapper { position: relative; flex-shrink: 0; }
 
 .avatar {
-  width: 100px;
-  height: 100px;
+  width: 96px; height: 96px;
   border-radius: 50%;
-  object-fit: cover;
-  object-position: top;
-  display: block;
-  border: 3px solid #fff;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
 }
 
-.avatarRing {
-  position: absolute;
-  inset: -5px;
-  border-radius: 50%;
-  border: 2.5px solid;
-  opacity: 0.5;
+.avatarLetter {
+  font-size: 36px; font-weight: 700; color: #fff;
+  font-family: var(--font-display);
 }
 
 .heroInfo { flex: 1; }
 
 .heroMeta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap; margin-bottom: 8px;
 }
 
-.flag { font-size: 13px; color: #999; }
+.flag { font-size: 13px; color: rgba(255,255,255,0.7); }
 
-.pos {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 3px 10px;
-  border-radius: 20px;
+.region, .statusBadge {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.6);
 }
+
+.statusActive  { border-color: rgba(22,163,74,0.5); color: #4ade80; }
+.statusInactive{ border-color: rgba(220,38,38,0.5); color: #f87171; }
 
 .nickname {
-  font-size: 36px;
-  font-weight: 900;
-  color: #111315;
-  margin: 0 0 2px;
-  font-family: 'Arial Black', sans-serif;
-  letter-spacing: -0.01em;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700; color: #fff;
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  letter-spacing: 0.02em; line-height: 1;
 }
 
-.fullName {
-  font-size: 14px;
-  color: #aaa;
-  margin: 0 0 14px;
-}
+.fullName { font-size: 14px; color: rgba(255,255,255,0.55); margin: 0 0 16px; }
 
 .heroTags { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .tag {
-  font-size: 13px;
-  color: #666;
-  background: #f4f5f7;
-  border: 1px solid #eee;
-  padding: 5px 14px;
-  border-radius: 6px;
+  font-size: 12px; color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 4px 12px; border-radius: var(--radius-sm);
 }
-.tag b { color: #111; }
+.tag strong { color: rgba(255,255,255,0.95); font-weight: 700; }
 
-.ratingBadge {
+/* Value block */
+.valueBlock {
   flex-shrink: 0;
-  width: 82px;
-  height: 82px;
-  border-radius: 50%;
-  border: 2px solid;
-  background: #fff;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  gap: 10px;
   margin-left: auto;
 }
 
-.ratingNum {
-  font-size: 24px;
-  font-weight: 900;
-  line-height: 1;
-  font-family: 'Arial Black', sans-serif;
+.marketValueBadge {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+  padding: 14px 18px;
+  background: rgba(255,255,255,0.12);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: var(--radius-lg);
 }
 
-.ratingLabel {
-  font-size: 9px;
-  color: #aaa;
-  letter-spacing: 0.08em;
-  margin-top: 2px;
+.mvVal {
+  font-size: 22px; font-weight: 700; color: #fff;
+  font-family: var(--font-display); font-variant-numeric: tabular-nums;
 }
+
+.mvLabel {
+  font-size: 10px; color: rgba(255,255,255,0.6);
+  letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
+}
+
+.mvNote { font-size: 9px; color: rgba(255,255,255,0.35); }
+
+.earningsBadge {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+  padding: 14px 18px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-lg);
+}
+
+.earningsNum {
+  font-size: 18px; font-weight: 700; color: rgba(255,255,255,0.8);
+  font-family: var(--font-display); font-variant-numeric: tabular-nums;
+}
+
+.earningsLabel {
+  font-size: 10px; color: rgba(255,255,255,0.4);
+  letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
+}
+
+.earningsLatest { font-size: 11px; color: rgba(255,255,255,0.55); }
 
 /* Grid */
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  padding: 20px 40px 40px;
-  box-sizing: border-box;
+  gap: 16px;
+  padding: 32px 0 60px;
 }
 
-/* Card */
 .card {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 14px;
-  padding: 22px;
-  box-sizing: border-box;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
 }
 
-.cardTitle {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  margin: 0 0 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #f0f0f0;
-}
+.cardWide { grid-column: span 3; }
 
-/* Stats */
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.statItem {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #f8f9fa;
-  border-radius: 10px;
-  padding: 14px 8px;
-  gap: 4px;
-  border: 1px solid #f0f0f0;
-}
-
-.statVal {
-  font-size: 20px;
-  font-weight: 900;
-  font-family: 'Arial Black', sans-serif;
-  line-height: 1;
-}
-
-.statLabel {
-  font-size: 10px;
-  color: #aaa;
-  letter-spacing: 0.06em;
-}
-
-/* Bonservis grafiği */
-.chartHeader {
+.cardTitleRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
-}
-.chartHeader .cardTitle { margin: 0; border: none; padding: 0; }
-
-.currentVal {
-  font-size: 22px;
-  font-weight: 900;
-  font-family: 'Arial Black', sans-serif;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
 }
 
-.transferList {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
+.cardTitle {
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-4); margin: 0;
+}
+
+.currentMV {
+  font-size: 18px; font-weight: 700; color: var(--text-1);
+  font-family: var(--font-display); font-variant-numeric: tabular-nums;
+}
+
+/* Market Value Chart */
+.mvChartWrap { width: 100%; }
+
+.mvAlgoNote {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   margin-top: 12px;
+  font-size: 11px; color: var(--text-4);
 }
 
-.transferRow {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 8px 4px;
+.mvAlgoTitle {
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-3);
 }
 
-.transferYear { font-size: 11px; font-weight: 700; }
-.transferTeam { font-size: 10px; color: #aaa; text-align: center; }
-.transferVal { font-size: 12px; font-weight: 800; }
+/* Earnings chart */
+.chartWrap { width: 100%; overflow-x: auto; }
 
-/* Timeline */
-.timeline {
-  display: flex;
-  flex-direction: row;
-  gap: 0;
-  overflow-x: auto;
-  padding: 12px 0 0;
+.earningsTable { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+.earningsRow { display: flex; align-items: center; gap: 12px; }
+
+.earningsYear {
+  font-size: 12px; font-weight: 700; color: var(--text-3);
+  min-width: 36px; font-variant-numeric: tabular-nums;
 }
 
-.timelineItem {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  min-width: 90px;
-  position: relative;
+.earningsBar {
+  flex: 1; height: 6px;
+  background: var(--surface-2); border-radius: 3px; overflow: hidden;
 }
 
-.timelineItem::before {
-  content: '';
-  position: absolute;
-  top: 7px;
-  left: 50%;
-  right: -50%;
-  height: 2px;
-  background: #f0f0f0;
-  z-index: 0;
-}
-.timelineItem:last-child::before { display: none; }
-
-.timelineDot {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  z-index: 1;
-  flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(0,0,0,0.15);
+.earningsBarFill {
+  height: 100%; background: var(--text-1); border-radius: 3px;
 }
 
-.timelineContent {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  margin-top: 10px;
-  text-align: center;
-  padding: 0 6px;
+.earningsAmount {
+  font-size: 13px; font-weight: 700; color: var(--text-2);
+  min-width: 90px; text-align: right; font-variant-numeric: tabular-nums;
 }
 
-.timelineYear { font-size: 12px; font-weight: 800; }
-.timelineTeam { font-size: 12px; font-weight: 600; color: #333; }
-.timelineNote { font-size: 10px; color: #aaa; line-height: 1.4; }
+/* Social */
+.socialList { display: flex; flex-direction: column; gap: 8px; }
 
-/* Ödüller */
-.awardList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-
-.awardItem {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: #f8f9fa;
-  border: 1px solid #f0f0f0;
-  border-radius: 9px;
-  transition: background 0.15s;
-}
-.awardItem:hover { background: #f0f1f3; }
-
-.awardIcon { font-size: 18px; flex-shrink: 0; }
-.awardTitle { font-size: 13px; font-weight: 600; color: #222; }
-.awardYear { font-size: 11px; color: #aaa; margin-top: 1px; }
-
-/* Sosyal medya */
-.socials { display: flex; flex-direction: column; gap: 8px; }
-
-.socialBtn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: 9px;
-  background: #f8f9fa;
-  border: 1px solid #eee;
-  text-decoration: none;
-  transition: all 0.18s;
-}
-.socialBtn:hover {
-  border-color: var(--gc);
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+.socialItem {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); text-decoration: none; color: inherit;
+  transition: border-color 0.15s, background 0.15s;
 }
 
-.socialIcon { display: flex; align-items: center; flex-shrink: 0; }
+.socialItem:hover { border-color: var(--text-1); background: var(--bg); }
 
-.socialTexts { display: flex; flex-direction: column; gap: 1px; }
-.socialPlatform { font-size: 13px; font-weight: 600; color: #222; }
-.socialHandle { font-size: 11px; color: #aaa; }
+.socialIcon { color: var(--text-2); display: flex; align-items: center; flex-shrink: 0; }
 
-/* İlgili oyuncular */
-.relatedList { display: flex; flex-direction: column; gap: 8px; }
+.socialTexts { display: flex; flex-direction: column; gap: 1px; flex: 1; }
 
-.relatedItem {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: #f8f9fa;
-  border: 1px solid #eee;
-  border-radius: 9px;
-  cursor: pointer;
-  transition: all 0.18s;
+.socialPlatform { font-size: 13px; font-weight: 700; color: var(--text-1); }
+.socialUrl { font-size: 11px; color: var(--text-4); }
+
+.socialArrow { font-size: 14px; color: var(--text-4); transition: color 0.15s; }
+.socialItem:hover .socialArrow { color: var(--text-1); }
+
+/* Detail */
+.detailList { display: flex; flex-direction: column; }
+
+.detailRow {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border); gap: 12px;
 }
-.relatedItem:hover { border-color: var(--gc); background: #fff; }
+.detailRow:last-child { border-bottom: none; }
 
-.relatedAvatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 14px;
-  flex-shrink: 0;
-}
+.detailLabel { font-size: 12px; color: var(--text-4); font-weight: 600; flex-shrink: 0; }
 
-.relatedNick { font-size: 13px; font-weight: 700; color: #111; }
-.relatedMeta { font-size: 11px; color: #aaa; margin-top: 2px; }
+.detailVal { font-size: 13px; font-weight: 600; color: var(--text-1); text-align: right; }
+.detailLink { text-decoration: underline; color: var(--text-1); }
+.detailActive { color: var(--success); }
+.detailEarnings { font-size: 15px; font-weight: 700; font-family: var(--font-display); }
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .grid { grid-template-columns: repeat(2, 1fr); padding: 16px 24px 32px; }
-  .card[style*="span 2"] { grid-column: span 2; }
-  .hero { padding: 24px; }
-  .transferList { grid-template-columns: repeat(3, 1fr); }
+  .grid { grid-template-columns: 1fr 1fr; }
+  .cardWide { grid-column: span 2; }
 }
 
-@media (max-width: 700px) {
-  .grid { grid-template-columns: 1fr; padding: 12px 16px 32px; }
-  .card[style*="span 2"] { grid-column: span 1; }
-  .hero { padding: 16px; }
-  .heroInner { flex-wrap: wrap; gap: 16px; }
-  .ratingBadge { margin-left: 0; }
-  .nickname { font-size: 26px; }
-  .transferList { grid-template-columns: repeat(3, 1fr); }
-  .timeline { flex-direction: column; gap: 14px; }
-  .timelineItem::before { display: none; }
-  .timelineItem { flex-direction: row; align-items: flex-start; gap: 10px; min-width: unset; }
-  .timelineDot { margin-top: 2px; }
-  .timelineContent { align-items: flex-start; text-align: left; margin-top: 0; }
+@media (max-width: 640px) {
+  .grid { grid-template-columns: 1fr; }
+  .cardWide { grid-column: span 1; }
+  .heroInner { gap: 20px; }
+  .valueBlock { margin-left: 0; width: 100%; flex-direction: row; flex-wrap: wrap; }
+  .marketValueBadge, .earningsBadge { flex: 1; min-width: 140px; }
 }

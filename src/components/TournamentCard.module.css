@@ -1,0 +1,118 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  cursor: pointer;
+}
+
+.card:hover {
+  border-color: var(--text-1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+  transform: translateY(-2px);
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tier {
+  align-self: flex-start;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.tierS { background: var(--text-1); color: #fff; }
+.tierA { border: 1.5px solid var(--text-1); color: var(--text-1); }
+.tierB { border: 1.5px solid var(--border-strong); color: var(--text-3); }
+
+.name {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-1);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.series {
+  font-size: 11px;
+  color: var(--text-4);
+  letter-spacing: 0.02em;
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metaLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-4);
+}
+
+.metaVal {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.prize {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--text-1);
+  font-family: var(--font-display);
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.footItem {
+  font-size: 11px;
+  color: var(--text-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 3px 9px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.arrow {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--text-3);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.18s, transform 0.18s;
+}
+
+.card:hover .arrow {
+  opacity: 1;
+  transform: translateX(0);
+}

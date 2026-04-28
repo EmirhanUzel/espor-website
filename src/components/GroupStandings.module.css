@@ -1,0 +1,139 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.group {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.groupTitle {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-1);
+}
+
+.groupType {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-4);
+  letter-spacing: 0.06em;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table thead th {
+  padding: 8px 10px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.thPos { width: 36px; }
+.thTeam { text-align: left !important; min-width: 140px; }
+.thStat { width: 36px; }
+
+.table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+
+.table tbody tr:last-child { border-bottom: none; }
+.table tbody tr:hover { background: var(--surface); }
+
+.rowAdvance { border-left: 2px solid var(--text-1); }
+
+.tdPos {
+  text-align: center;
+  padding: 10px 6px;
+}
+
+.pos {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.tdTeam {
+  padding: 10px 10px 10px 6px;
+}
+
+.teamLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.teamName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-1);
+  transition: text-decoration 0.12s;
+}
+
+.teamLink:hover .teamName { text-decoration: underline; }
+
+.up { font-size: 10px; font-weight: 700; color: var(--success); }
+.down { font-size: 10px; font-weight: 700; color: var(--danger); }
+.same { font-size: 10px; color: var(--text-4); }
+
+.tdStat {
+  text-align: center;
+  padding: 10px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.tdStat.pos { color: var(--success); }
+.tdStat.neg { color: var(--danger); }
+
+.tdPoints {
+  text-align: center;
+  padding: 10px 8px;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text-1);
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.matchCount {
+  padding: 8px 16px;
+  font-size: 11px;
+  color: var(--text-4);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}

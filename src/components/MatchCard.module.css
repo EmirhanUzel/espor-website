@@ -1,0 +1,228 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  cursor: pointer;
+}
+
+.card:hover {
+  border-color: var(--text-1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+}
+
+/* Head */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.headLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tier {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.tierS { background: var(--text-1); color: #fff; }
+.tierA { border: 1.5px solid var(--text-1); color: var(--text-1); }
+.tierB { border: 1.5px solid var(--border-strong); color: var(--text-3); }
+
+.header {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  letter-spacing: 0.02em;
+}
+
+.bestof {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+}
+
+.badgeFinished {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.badgeLive {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--danger);
+  letter-spacing: 0.06em;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.badgeUpcoming {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-3);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.streamLink {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-1);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.streamLink:hover { background: var(--text-1); color: #fff; }
+
+/* Matchup */
+.matchup {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.teamRight {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.teamName {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-3);
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  transition: color 0.15s;
+}
+
+.winner .teamName {
+  color: var(--text-1);
+}
+
+.score {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--text-3);
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  min-width: 24px;
+  text-align: center;
+}
+
+.winner .score {
+  color: var(--text-1);
+}
+
+.vs {
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--text-4);
+  letter-spacing: 0.12em;
+  flex-shrink: 0;
+}
+
+/* Games */
+.games {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.game {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.gameWin1 { border-left: 2px solid var(--text-1); }
+.gameWin2 { border-right: 2px solid var(--text-1); }
+
+.mapName {
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+.mapScore {
+  font-weight: 800;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.mapLen {
+  color: var(--text-4);
+  font-size: 10px;
+}
+
+/* Foot */
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.tournament {
+  font-size: 11px;
+  color: var(--text-4);
+  font-weight: 500;
+}
+
+.date {
+  font-size: 11px;
+  color: var(--text-4);
+}

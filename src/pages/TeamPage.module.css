@@ -1,36 +1,28 @@
-.page {
-  width: 100%;
-  background: #f7f8fa;
-  min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
 /* Hero */
 .hero {
-  width: 100%;
-  background: #fff;
-  border-bottom: 1px solid #eee;
-  padding: 36px 40px 28px;
-  box-sizing: border-box;
+  background: var(--text-1);
+  padding: 48px 0 40px;
+  color: #fff;
 }
 
 .heroInner {
   display: flex;
   align-items: center;
   gap: 28px;
+  flex-wrap: wrap;
 }
 
-.logoWrapper {
+.logoBox {
   width: 96px;
   height: 96px;
-  background: #f4f5f7;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid #eee;
-  padding: 10px;
+  padding: 12px;
   box-sizing: border-box;
 }
 
@@ -38,6 +30,14 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.logoFallback {
+  font-size: 36px;
+  font-weight: 900;
+  color: #fff;
+  font-family: var(--font-display);
 }
 
 .heroInfo { flex: 1; }
@@ -45,358 +45,428 @@
 .heroMeta {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 6px;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 
-.flag { font-size: 13px; color: #999; }
-
-.region, .founded {
-  font-size: 11px;
-  color: #bbb;
-  background: #f4f5f7;
-  padding: 3px 10px;
-  border-radius: 20px;
+.heroBadge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-sm);
+  color: rgba(255,255,255,0.6);
 }
+
+.badgeActive { border-color: rgba(22,163,74,0.4); color: #4ade80; }
+.badgeInactive { border-color: rgba(220,38,38,0.4); color: #f87171; }
 
 .teamName {
-  font-size: 40px;
+  font-size: clamp(28px, 4vw, 48px);
   font-weight: 900;
-  color: #111315;
-  margin: 0 0 2px;
-  font-family: 'Arial Black', sans-serif;
+  color: #fff;
+  font-family: var(--font-display);
   letter-spacing: -0.02em;
+  line-height: 1;
+  margin: 0 0 16px;
 }
 
-.fullName {
-  font-size: 14px;
-  color: #aaa;
-  margin: 0 0 14px;
+.heroTags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
-
-.heroTags { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .tag {
-  font-size: 13px;
-  color: #666;
-  background: #f4f5f7;
-  border: 1px solid #eee;
-  padding: 5px 14px;
-  border-radius: 6px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
 }
-.tag b { color: #111; }
+.tag strong { color: rgba(255,255,255,0.95); }
 
-/* Rank Badge */
-.rankBadge {
+.earningsBadge {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 96px;
-  height: 96px;
-  border-radius: 16px;
-  border: 2px solid;
-  background: #fff;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 16px 20px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius-lg);
   margin-left: auto;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  gap: 0;
 }
 
-.rankHash {
-  font-size: 14px;
+.earningsTotal {
+  font-size: 22px;
   font-weight: 900;
-  line-height: 1;
-  margin-bottom: -4px;
+  color: #fff;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
 }
 
-.rankNum {
-  font-size: 34px;
-  font-weight: 900;
-  line-height: 1;
-  font-family: 'Arial Black', sans-serif;
-}
-
-.rankChange {
-  font-size: 11px;
+.earningsLabel {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   font-weight: 700;
-  line-height: 1;
 }
 
-.rankLabel {
-  font-size: 9px;
-  color: #bbb;
-  letter-spacing: 0.06em;
-  margin-top: 2px;
-  text-align: center;
+.earningsLast {
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
 }
 
 /* Grid */
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  padding: 20px 40px 40px;
-  box-sizing: border-box;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 32px 0 60px;
 }
 
-/* Card */
 .card {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 14px;
-  padding: 22px;
-  box-sizing: border-box;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
 }
+
+.cardWide { grid-column: span 2; }
 
 .cardTitle {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  margin: 0 0 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #f0f0f0;
+  color: var(--text-4);
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
 }
 
-/* Oyuncular */
-.playerList { display: flex; flex-direction: column; gap: 8px; }
+/* Squad */
+.squadList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
-.playerRow {
+.squadRow {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 16px;
-  background: #f8f9fa;
-  border: 1px solid #eee;
-  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.18s;
+  transition: border-color 0.15s, background 0.15s;
+}
+.squadRow:hover { border-color: var(--text-1); background: var(--bg); }
+
+.squadIdx {
+  font-size: 11px;
+  color: var(--text-4);
+  min-width: 16px;
+  font-variant-numeric: tabular-nums;
 }
 
-.playerRow:hover {
-  border-color: var(--gc);
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-.playerAvatar {
-  width: 38px;
-  height: 38px;
+.squadAvatar {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-1);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 900;
   font-size: 14px;
+  font-weight: 900;
+  font-family: var(--font-display);
   flex-shrink: 0;
 }
 
-.playerInfo { flex: 1; }
+.squadInfo { flex: 1; }
 
-.playerNick {
-  display: block;
-  font-size: 14px;
-  font-weight: 800;
-  color: #111;
-  font-family: 'Arial Black', sans-serif;
-}
-
-.playerMeta {
-  font-size: 11px;
-  color: #aaa;
-  margin-top: 2px;
-}
-
-.playerRating {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-}
-
-.ratingVal {
+.squadNick {
   font-size: 15px;
-  font-weight: 900;
-  font-family: 'Arial Black', sans-serif;
-  line-height: 1;
+  font-weight: 800;
+  color: var(--text-1);
+  font-family: var(--font-display);
 }
 
-.ratingLbl {
-  font-size: 9px;
-  color: #bbb;
-  letter-spacing: 0.06em;
-}
-
-.playerValue {
-  font-size: 13px;
+.squadRole {
+  font-size: 11px;
   font-weight: 700;
-  color: #555;
-  min-width: 52px;
-  text-align: right;
+  color: var(--text-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  text-transform: capitalize;
+  flex-shrink: 0;
 }
 
-.arrow {
-  font-size: 16px;
+.squadArrow {
+  color: var(--text-4);
   opacity: 0;
   transform: translateX(-4px);
-  transition: all 0.18s;
+  transition: opacity 0.15s, transform 0.15s;
 }
-.playerRow:hover .arrow {
-  opacity: 1;
-  transform: translateX(0);
+.squadRow:hover .squadArrow { opacity: 1; transform: translateX(0); }
+
+/* Earnings Bar Chart */
+.earningsBar {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 120px;
+  margin-bottom: 20px;
+  padding: 0 4px;
 }
 
-/* Stats */
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-.statItem {
+.earningsCol {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #f8f9fa;
-  border: 1px solid #f0f0f0;
-  border-radius: 10px;
-  padding: 14px 8px;
   gap: 4px;
+  flex: 1;
 }
 
-.statVal {
-  font-size: 20px;
-  font-weight: 900;
-  font-family: 'Arial Black', sans-serif;
-  line-height: 1;
+.earningsBarOuter {
+  width: 100%;
+  height: 80px;
+  background: var(--surface-2);
+  border-radius: 3px 3px 0 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
 }
 
-.statLabel {
+.earningsBarInner {
+  width: 100%;
+  background: var(--text-1);
+  border-radius: 2px 2px 0 0;
+  transition: height 0.4s ease;
+  min-height: 2px;
+}
+
+.earningsYear {
   font-size: 10px;
-  color: #aaa;
-  letter-spacing: 0.04em;
-  text-align: center;
+  color: var(--text-4);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Maçlar */
-.matchList { display: flex; flex-direction: column; gap: 8px; }
+.earningsVal {
+  font-size: 9px;
+  color: var(--text-4);
+  white-space: nowrap;
+}
+
+.earningsTable {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.earningsRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.earningsRowYear {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+  min-width: 36px;
+  font-variant-numeric: tabular-nums;
+}
+
+.earningsRowBar {
+  flex: 1;
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.earningsRowFill {
+  height: 100%;
+  background: var(--text-1);
+  border-radius: 3px;
+}
+
+.earningsRowAmt {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+  min-width: 90px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Matches */
+.matchList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
 .matchRow {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
-  background: #f8f9fa;
-  border: 1px solid #eee;
-  border-radius: 10px;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s;
+  flex-wrap: wrap;
 }
+.matchRow:hover { border-color: var(--text-1); }
 
-.win {
-  font-size: 11px;
+.matchW {
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: #22c55e18;
-  color: #22c55e;
+  letter-spacing: 0.06em;
+  background: var(--text-1);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
 
-.loss {
-  font-size: 11px;
+.matchL {
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: #ef444418;
-  color: #ef4444;
+  letter-spacing: 0.06em;
+  background: var(--surface-2);
+  color: var(--text-3);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
 
 .matchOpp {
   font-size: 14px;
   font-weight: 700;
-  color: #111;
+  color: var(--text-1);
   flex: 1;
 }
 
 .matchScore {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 900;
-  font-family: 'Arial Black', sans-serif;
+  color: var(--text-1);
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
 }
 
-.matchEvent {
-  font-size: 12px;
-  color: #aaa;
+.matchHeader {
+  font-size: 11px;
+  color: var(--text-4);
   flex: 1;
   text-align: right;
 }
 
 .matchDate {
   font-size: 11px;
-  color: #ccc;
-  min-width: 48px;
+  color: var(--text-4);
+  white-space: nowrap;
+}
+
+/* Social */
+.socialList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.socialItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s;
+}
+.socialItem:hover { border-color: var(--text-1); }
+
+.socialPlatform {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-1);
+  flex: 1;
+}
+
+.socialUrl {
+  font-size: 11px;
+  color: var(--text-4);
+}
+
+.socialArrow {
+  font-size: 13px;
+  color: var(--text-4);
+}
+
+/* Info */
+.infoList {
+  display: flex;
+  flex-direction: column;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.infoRow:last-child { border-bottom: none; }
+
+.infoLabel {
+  font-size: 12px;
+  color: var(--text-4);
+  font-weight: 600;
+}
+
+.infoVal {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-1);
   text-align: right;
 }
 
-/* Kadro Değişimi */
-.transferList { display: flex; flex-direction: column; gap: 8px; }
-
-.transferRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 14px;
-  background: #f8f9fa;
-  border: 1px solid #eee;
-  border-radius: 10px;
-}
-
-.transferBadge {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  padding: 4px 8px;
-  border-radius: 6px;
-  flex-shrink: 0;
-}
-
-.transferInfo { flex: 1; }
-
-.transferNick {
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  color: #111;
-}
-
-.transferDetail {
-  font-size: 11px;
-  color: #aaa;
-  margin-top: 1px;
-}
-
-.transferDate {
-  font-size: 11px;
-  color: #ccc;
+.infoActive { color: var(--success); }
+.infoInactive { color: var(--danger); }
+.infoEarnings {
+  font-size: 16px;
+  font-weight: 900;
+  font-family: var(--font-display);
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-  .grid { grid-template-columns: repeat(2, 1fr); padding: 16px 24px 32px; }
-  .hero { padding: 24px; }
-  .card[style*="span 2"] { grid-column: span 2; }
-}
-
-@media (max-width: 700px) {
-  .grid { grid-template-columns: 1fr; padding: 12px 16px 32px; }
-  .card[style*="span 2"] { grid-column: span 1; }
-  .hero { padding: 16px; }
-  .heroInner { flex-wrap: wrap; gap: 16px; }
-  .rankBadge { margin-left: 0; }
-  .teamName { font-size: 28px; }
-  .matchEvent { display: none; }
+@media (max-width: 768px) {
+  .grid { grid-template-columns: 1fr; }
+  .cardWide { grid-column: span 1; }
+  .earningsBadge { margin-left: 0; width: 100%; }
+  .matchHeader { display: none; }
 }

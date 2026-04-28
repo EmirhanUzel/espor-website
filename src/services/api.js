@@ -1,0 +1,787 @@
+// Mock API layer — mirrors real Liquipedia API response shapes
+
+export const FLAG_EMOJI = {
+  "afghanistan":"🇦🇫","albania":"🇦🇱","algeria":"🇩🇿","argentina":"🇦🇷",
+  "australia":"🇦🇺","austria":"🇦🇹","belgium":"🇧🇪","brazil":"🇧🇷",
+  "bulgaria":"🇧🇬","canada":"🇨🇦","chile":"🇨🇱","china":"🇨🇳",
+  "colombia":"🇨🇴","croatia":"🇭🇷","czech republic":"🇨🇿","denmark":"🇩🇰",
+  "egypt":"🇪🇬","england":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","estonia":"🇪🇪","finland":"🇫🇮",
+  "france":"🇫🇷","germany":"🇩🇪","greece":"🇬🇷","hungary":"🇭🇺",
+  "india":"🇮🇳","indonesia":"🇮🇩","israel":"🇮🇱","italy":"🇮🇹",
+  "japan":"🇯🇵","kazakhstan":"🇰🇿","latvia":"🇱🇻","lithuania":"🇱🇹",
+  "malaysia":"🇲🇾","mexico":"🇲🇽","netherlands":"🇳🇱","new zealand":"🇳🇿",
+  "norway":"🇳🇴","philippines":"🇵🇭","poland":"🇵🇱","portugal":"🇵🇹",
+  "romania":"🇷🇴","russia":"🇷🇺","saudi arabia":"🇸🇦","scotland":"🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+  "serbia":"🇷🇸","singapore":"🇸🇬","slovakia":"🇸🇰","south korea":"🇰🇷",
+  "spain":"🇪🇸","sweden":"🇸🇪","switzerland":"🇨🇭","taiwan":"🇹🇼",
+  "thailand":"🇹🇭","turkey":"🇹🇷","ukraine":"🇺🇦","united kingdom":"🇬🇧",
+  "united states":"🇺🇸","vietnam":"🇻🇳","wales":"🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+  "bosnia and herzegovina":"🇧🇦",
+};
+
+export function getFlag(nat) {
+  return FLAG_EMOJI[nat?.toLowerCase()] || "🌐";
+}
+
+export function formatDate(dateStr, locale = "en-US") {
+  if (!dateStr || dateStr.startsWith("0000")) return "—";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
+}
+
+export function formatPrize(amount) {
+  if (!amount) return "—";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
+}
+
+export function tierLabel(tier) {
+  return { "1": "S", "2": "A", "3": "B", "4": "C" }[tier] || tier;
+}
+
+// ── TICKER ────────────────────────────────────────────────────────────────────
+export const TICKER_ITEMS = [
+  "NRG def. Fnatic 3–1 · VALORANT Champions 2025 Grand Final",
+  "T1 def. G2 Esports 3–1 · Worlds 2025 Grand Final · Shanghai",
+  "NAVI def. G2 Esports 2–0 · ESL Pro League Season 21 Final",
+  "Champions 2025 Prize Pool · $2,250,000 · 16 Teams · Paris",
+  "tOfu joins Team Liquid from Gaimin Gladiators · Dota 2",
+  "Worlds 2025 · Prize Pool $2,500,000 · 22 Teams · Shanghai",
+  "Faker wins 5th World Championship with T1 · Historic run",
+  "ardiis signs with NRG from Fnatic · VALORANT Americas",
+];
+
+// ── GUESTS ───────────────────────────────────────────────────────────────────
+export const GUESTS = [
+  { id: "PAL", name: "Gregor Morton", position: "Guest", language: "English", flag: "scotland", date: "2025-10-05", wiki: "valorant" },
+  { id: "Yinsu", name: "Yinsu Collins", position: "Host", language: "English", flag: "england", date: "2025-10-05", wiki: "valorant" },
+  { id: "Pansy", name: "Lauren Scott", position: "Caster", language: "English", flag: "england", date: "2025-09-12", wiki: "valorant" },
+  { id: "Pimp", name: "Jacob Winneche", position: "Analyst", language: "English", flag: "denmark", date: "2025-09-20", wiki: "valorant" },
+  { id: "Caedrel", name: "Marc Robert Lamont", position: "Caster", language: "English", flag: "england", date: "2025-10-05", wiki: "leagueoflegends" },
+  { id: "Vedius", name: "Daniel Drakos", position: "Analyst", language: "English", flag: "england", date: "2025-10-04", wiki: "leagueoflegends" },
+];
+
+// ── INTERVIEWS ────────────────────────────────────────────────────────────────
+export const INTERVIEWS = [
+  { pagename: "Alfajer", title: "Everyone's having fun and is in form right now", link: "https://www.vlr.gg/474462", date: "2025-04-17", language: "en", publisher: "VLR.gg", type: "Interview", wiki: "valorant" },
+  { pagename: "Boaster", title: "We came here to win — nothing less", link: "https://www.vlr.gg/474000", date: "2025-10-04", language: "en", publisher: "VLR.gg", type: "Interview", wiki: "valorant" },
+  { pagename: "NRG", title: "NRG reflect on Champions run: 'We were the best team in the world'", link: "https://www.thespike.gg/123456", date: "2025-10-06", language: "en", publisher: "The Spike", type: "Article", wiki: "valorant" },
+  { pagename: "s0m", title: "s0m on NRG's explosive year: 'We never stopped believing'", link: "https://www.vlr.gg/475000", date: "2025-09-30", language: "en", publisher: "VLR.gg", type: "Interview", wiki: "valorant" },
+  { pagename: "Paper Rex", title: "Paper Rex's high-speed Valorant is here to stay, says f0rsakeN", link: "https://www.vlr.gg/473000", date: "2025-09-20", language: "en", publisher: "VLR.gg", type: "Interview", wiki: "valorant" },
+  { pagename: "VALORANT Champions 2025", title: "Champions 2025: The complete preview — who wins Paris?", link: "https://www.thespike.gg/112233", date: "2025-09-10", language: "en", publisher: "The Spike", type: "Article", wiki: "valorant" },
+  { pagename: "Derke", title: "Derke: 'Fnatic is the hungriest team I've ever been on'", link: "https://www.vlr.gg/476000", date: "2025-09-28", language: "en", publisher: "VLR.gg", type: "Interview", wiki: "valorant" },
+  { pagename: "s1mple", title: "s1mple after Major: 'I proved I still belong at the top'", link: "https://www.hltv.org/news/1001", date: "2025-10-02", language: "en", publisher: "HLTV.org", type: "Interview", wiki: "counterstrike" },
+  { pagename: "NiKo", title: "NiKo on G2's title run: 'Finally everything clicked'", link: "https://www.hltv.org/news/1002", date: "2025-09-25", language: "en", publisher: "HLTV.org", type: "Interview", wiki: "counterstrike" },
+  { pagename: "Faker", title: "Faker on 5th World Championship: 'I just wanted to prove it one more time'", link: "https://www.lolesports.com/interview/faker2025", date: "2025-10-06", language: "en", publisher: "LoL Esports", type: "Interview", wiki: "leagueoflegends" },
+  { pagename: "Caps", title: "Caps: 'We pushed T1 harder than anyone expected in that final'", link: "https://www.lolesports.com/interview/caps2025", date: "2025-10-05", language: "en", publisher: "LoL Esports", type: "Interview", wiki: "leagueoflegends" },
+  { pagename: "Worlds 2025", title: "Worlds 2025 Preview: Can anyone stop T1's five-peat?", link: "https://www.oneesports.gg/lol/worlds-2025-preview", date: "2025-09-08", language: "en", publisher: "ONE Esports", type: "Article", wiki: "leagueoflegends" },
+];
+
+// ── MATCHES ───────────────────────────────────────────────────────────────────
+export const MATCHES = [
+  // VALORANT
+  {
+    id: "CHAMP25GF",
+    tournament: "VALORANT Champions 2025",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 5, winner: "1", finished: 1,
+    date: "2025-10-05 11:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/VALORANT" },
+    match2bracketdata: { type: "bracket", header: "Grand Final" },
+    match2opponents: [
+      { type: "team", name: "NRG", score: 3, match2players: [] },
+      { type: "team", name: "Fnatic", score: 1, match2players: [] },
+    ],
+    match2games: [
+      { map: "Corrode", scores: [13, 3], winner: "1", date: "2025-10-05 11:00:00", length: "40:34", vod: "https://youtu.be/WPm6FMkZ3Qo?t=151" },
+      { map: "Abyss", scores: [13, 8], winner: "1", date: "2025-10-05 12:30:00", length: "45:12", vod: "https://youtu.be/WPm6FMkZ3Qo?t=3600" },
+      { map: "Bind", scores: [10, 13], winner: "2", date: "2025-10-05 14:00:00", length: "52:08", vod: "https://youtu.be/WPm6FMkZ3Qo?t=7200" },
+      { map: "Haven", scores: [13, 7], winner: "1", date: "2025-10-05 15:45:00", length: "41:30", vod: "https://youtu.be/WPm6FMkZ3Qo?t=10800" },
+    ],
+    wiki: "valorant",
+  },
+  {
+    id: "CHAMP25SF1",
+    tournament: "VALORANT Champions 2025",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 5, winner: "1", finished: 1,
+    date: "2025-10-03 11:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/VALORANT" },
+    match2bracketdata: { type: "bracket", header: "Upper Final" },
+    match2opponents: [
+      { type: "team", name: "NRG", score: 3, match2players: [] },
+      { type: "team", name: "Paper Rex", score: 0, match2players: [] },
+    ],
+    match2games: [
+      { map: "Ascent", scores: [13, 5], winner: "1", date: "2025-10-03 11:00:00", length: "35:22", vod: null },
+      { map: "Icebox", scores: [13, 9], winner: "1", date: "2025-10-03 12:20:00", length: "48:05", vod: null },
+      { map: "Split", scores: [13, 11], winner: "1", date: "2025-10-03 14:00:00", length: "55:30", vod: null },
+    ],
+    wiki: "valorant",
+  },
+  {
+    id: "CHAMP25SF2",
+    tournament: "VALORANT Champions 2025",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 5, winner: "1", finished: 1,
+    date: "2025-10-04 11:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/VALORANT" },
+    match2bracketdata: { type: "bracket", header: "Lower Final" },
+    match2opponents: [
+      { type: "team", name: "Fnatic", score: 3, match2players: [] },
+      { type: "team", name: "Team Liquid", score: 1, match2players: [] },
+    ],
+    match2games: [
+      { map: "Pearl", scores: [13, 11], winner: "1", date: "2025-10-04 11:00:00", length: "58:44", vod: null },
+      { map: "Lotus", scores: [9, 13], winner: "2", date: "2025-10-04 13:00:00", length: "50:22", vod: null },
+      { map: "Sunset", scores: [13, 6], winner: "1", date: "2025-10-04 14:45:00", length: "42:10", vod: null },
+      { map: "Bind", scores: [13, 8], winner: "1", date: "2025-10-04 16:00:00", length: "44:00", vod: null },
+    ],
+    wiki: "valorant",
+  },
+  {
+    id: "CHAMP25GrA_0001",
+    tournament: "VALORANT Champions 2025",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 3, winner: "1", finished: 1,
+    date: "2025-09-14 09:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/VALORANT" },
+    match2bracketdata: { type: "league", header: "Group A" },
+    match2opponents: [
+      { type: "team", name: "Paper Rex", score: 2, match2players: [] },
+      { type: "team", name: "Team Liquid", score: 0, match2players: [] },
+    ],
+    match2games: [
+      { map: "Pearl", scores: [13, 7], winner: "1", date: "2025-09-14 09:00:00", length: "38:44", vod: null },
+      { map: "Lotus", scores: [13, 6], winner: "1", date: "2025-09-14 10:30:00", length: "36:15", vod: null },
+    ],
+    wiki: "valorant",
+  },
+  {
+    id: "CHAMP25GrB_0001",
+    tournament: "VALORANT Champions 2025",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 3, winner: "1", finished: 1,
+    date: "2025-09-14 13:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/VALORANT" },
+    match2bracketdata: { type: "league", header: "Group B" },
+    match2opponents: [
+      { type: "team", name: "NRG", score: 2, match2players: [] },
+      { type: "team", name: "ZETA DIVISION", score: 0, match2players: [] },
+    ],
+    match2games: [
+      { map: "Ascent", scores: [13, 4], winner: "1", date: "2025-09-14 13:00:00", length: "34:10", vod: null },
+      { map: "Haven", scores: [13, 7], winner: "1", date: "2025-09-14 14:20:00", length: "40:05", vod: null },
+    ],
+    wiki: "valorant",
+  },
+  // CS2
+  {
+    id: "EPL21F",
+    tournament: "ESL Pro League Season 21",
+    liquipediatier: "2", liquipediatiertype: "",
+    bestof: 3, winner: "1", finished: 1,
+    date: "2025-10-01 15:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/ESL_CSGO" },
+    match2bracketdata: { type: "bracket", header: "Grand Final" },
+    match2opponents: [
+      { type: "team", name: "NAVI", score: 2, match2players: [] },
+      { type: "team", name: "G2 Esports", score: 0, match2players: [] },
+    ],
+    match2games: [
+      { map: "Mirage", scores: [16, 11], winner: "1", date: "2025-10-01 15:00:00", length: "42:30", vod: null },
+      { map: "Inferno", scores: [16, 12], winner: "1", date: "2025-10-01 17:00:00", length: "48:55", vod: null },
+    ],
+    wiki: "counterstrike",
+  },
+  {
+    id: "EPL21SF1",
+    tournament: "ESL Pro League Season 21",
+    liquipediatier: "2", liquipediatiertype: "",
+    bestof: 3, winner: "2", finished: 1,
+    date: "2025-09-29 15:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/ESL_CSGO" },
+    match2bracketdata: { type: "bracket", header: "Upper Semi-Final" },
+    match2opponents: [
+      { type: "team", name: "FaZe Clan", score: 0, match2players: [] },
+      { type: "team", name: "G2 Esports", score: 2, match2players: [] },
+    ],
+    match2games: [
+      { map: "Ancient", scores: [12, 16], winner: "2", date: "2025-09-29 15:00:00", length: "44:20", vod: null },
+      { map: "Nuke", scores: [10, 16], winner: "2", date: "2025-09-29 17:00:00", length: "40:05", vod: null },
+    ],
+    wiki: "counterstrike",
+  },
+  // League of Legends
+  {
+    id: "WORLDS25GF",
+    tournament: "Worlds 2025",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 5, winner: "1", finished: 1,
+    date: "2025-11-02 10:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/riotgames" },
+    match2bracketdata: { type: "bracket", header: "Grand Final" },
+    match2opponents: [
+      { type: "team", name: "T1", score: 3, match2players: [] },
+      { type: "team", name: "G2 Esports", score: 1, match2players: [] },
+    ],
+    match2games: [
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-11-02 10:00:00", length: "31:45", vod: null },
+      { map: "Summoner's Rift", scores: [0, 1], winner: "2", date: "2025-11-02 11:20:00", length: "38:22", vod: null },
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-11-02 12:50:00", length: "28:10", vod: null },
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-11-02 14:05:00", length: "35:40", vod: null },
+    ],
+    wiki: "leagueoflegends",
+  },
+  {
+    id: "WORLDS25SF1",
+    tournament: "Worlds 2025",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 5, winner: "1", finished: 1,
+    date: "2025-10-30 10:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/riotgames" },
+    match2bracketdata: { type: "bracket", header: "Semi-Final" },
+    match2opponents: [
+      { type: "team", name: "G2 Esports", score: 3, match2players: [] },
+      { type: "team", name: "Cloud9", score: 0, match2players: [] },
+    ],
+    match2games: [
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-10-30 10:00:00", length: "25:44", vod: null },
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-10-30 11:10:00", length: "29:18", vod: null },
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-10-30 12:20:00", length: "32:05", vod: null },
+    ],
+    wiki: "leagueoflegends",
+  },
+  {
+    id: "WORLDS25GrA_0001",
+    tournament: "Worlds 2025",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 1, winner: "1", finished: 1,
+    date: "2025-10-15 09:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/riotgames" },
+    match2bracketdata: { type: "league", header: "Group A" },
+    match2opponents: [
+      { type: "team", name: "T1", score: 1, match2players: [] },
+      { type: "team", name: "Cloud9", score: 0, match2players: [] },
+    ],
+    match2games: [
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-10-15 09:00:00", length: "28:33", vod: null },
+    ],
+    wiki: "leagueoflegends",
+  },
+];
+
+// ── PRIZE RESULTS ─────────────────────────────────────────────────────────────
+export const PRIZE_RESULTS = [
+  // VALORANT
+  { date: "2025-10-05 11:00:00", placement: "1", prizemoney: 1000000, opponentname: "NRG", opponenttype: "team", opponentplayers: {}, lastvsdata: { opponenttype: "team", opponentname: "Fnatic", score: 3 }, qualifier: "Americas Stage 2 (#2)", wiki: "valorant" },
+  { date: "2025-10-05 11:00:00", placement: "2", prizemoney: 400000, opponentname: "Fnatic", opponenttype: "team", opponentplayers: {}, lastvsdata: { opponenttype: "team", opponentname: "NRG", score: 1 }, qualifier: "EMEA Stage 2 (#1)", wiki: "valorant" },
+  { date: "2025-10-05", placement: "3-4", prizemoney: 200000, opponentname: "Paper Rex", opponenttype: "team", opponentplayers: {}, lastvsdata: { opponenttype: "team", opponentname: "NRG", score: 0 }, qualifier: "Pacific Stage 2 (#1)", wiki: "valorant" },
+  { date: "2025-10-05", placement: "3-4", prizemoney: 200000, opponentname: "Team Liquid", opponenttype: "team", opponentplayers: {}, lastvsdata: { opponenttype: "team", opponentname: "Fnatic", score: 1 }, qualifier: "EMEA Stage 2 (#2)", wiki: "valorant" },
+  { date: "2025-10-05", placement: "5-8", prizemoney: 85000, opponentname: "DRX", opponenttype: "team", opponentplayers: {}, lastvsdata: { opponenttype: "team", opponentname: "Paper Rex", score: 1 }, qualifier: "Pacific Stage 2 (#2)", wiki: "valorant" },
+  { date: "2025-10-05", placement: "5-8", prizemoney: 85000, opponentname: "LOUD", opponenttype: "team", opponentplayers: {}, lastvsdata: { opponenttype: "team", opponentname: "Team Liquid", score: 0 }, qualifier: "Americas Stage 2 (#1)", wiki: "valorant" },
+  { date: "2025-10-05", placement: "5-8", prizemoney: 85000, opponentname: "EDward Gaming", opponenttype: "team", opponentplayers: {}, lastvsdata: { opponenttype: "team", opponentname: "NRG", score: 1 }, qualifier: "Pacific Stage 1 (#1)", wiki: "valorant" },
+  { date: "2025-10-05", placement: "5-8", prizemoney: 85000, opponentname: "ZETA DIVISION", opponenttype: "team", opponentplayers: {}, lastvsdata: { opponenttype: "team", opponentname: "Fnatic", score: 0 }, qualifier: "Pacific Stage 1 (#3)", wiki: "valorant" },
+  // LoL
+  { date: "2025-11-02", placement: "1", prizemoney: 500000, opponentname: "T1", opponenttype: "team", opponentplayers: {}, lastvsdata: { opponenttype: "team", opponentname: "G2 Esports", score: 3 }, qualifier: "LCK 2025 Summer (#1)", wiki: "leagueoflegends" },
+  { date: "2025-11-02", placement: "2", prizemoney: 200000, opponentname: "G2 Esports", opponenttype: "team", opponentplayers: {}, lastvsdata: { opponenttype: "team", opponentname: "T1", score: 1 }, qualifier: "LEC 2025 Summer (#1)", wiki: "leagueoflegends" },
+  { date: "2025-11-02", placement: "3-4", prizemoney: 100000, opponentname: "Cloud9", opponenttype: "team", opponentplayers: {}, lastvsdata: { opponenttype: "team", opponentname: "G2 Esports", score: 0 }, qualifier: "LCS 2025 Summer (#1)", wiki: "leagueoflegends" },
+  { date: "2025-11-02", placement: "3-4", prizemoney: 100000, opponentname: "Gen.G", opponenttype: "team", opponentplayers: {}, lastvsdata: { opponenttype: "team", opponentname: "T1", score: 2 }, qualifier: "LCK 2025 Summer (#2)", wiki: "leagueoflegends" },
+];
+
+// ── PLAYERS ───────────────────────────────────────────────────────────────────
+export const PLAYERS = [
+  // VALORANT
+  {
+    id: "Boaster", name: "Jake Howlett", type: "player",
+    nationality: "United Kingdom", region: "Europe",
+    birthdate: "1995-05-25", teampagename: "Fnatic",
+    links: { tiktok: "https://tiktok.com/@officialboaster", instagram: "https://www.instagram.com/OfficialBoaster", youtube: "https://www.youtube.com/OfficialBoaster", twitch: "https://www.twitch.tv/OfficialBoaster" },
+    status: "Active",
+    earnings: 421988,
+    earningsbyyear: { "2020": 5198, "2021": 38005, "2022": 42685, "2023": 136833, "2024": 44600, "2025": 154667 },
+    marketvalue: 1500000,
+    marketvaluehistory: [
+      { date: "2021-01", value: 120000 }, { date: "2022-01", value: 380000 },
+      { date: "2023-01", value: 750000 }, { date: "2024-01", value: 1100000 },
+      { date: "2025-01", value: 1350000 }, { date: "2025-10", value: 1500000 },
+    ],
+    wiki: "valorant",
+  },
+  {
+    id: "Alfajer", name: "Emir Ali Beder", type: "player",
+    nationality: "Turkey", region: "Europe",
+    birthdate: "2004-07-27", teampagename: "Fnatic",
+    links: { instagram: "https://www.instagram.com/alfajerval", twitter: "https://twitter.com/alfajerval", twitch: "https://www.twitch.tv/alfajer" },
+    status: "Active",
+    earnings: 312500,
+    earningsbyyear: { "2022": 22000, "2023": 108000, "2024": 44600, "2025": 137900 },
+    marketvalue: 1200000,
+    marketvaluehistory: [
+      { date: "2022-06", value: 80000 }, { date: "2023-01", value: 400000 },
+      { date: "2023-06", value: 700000 }, { date: "2024-01", value: 950000 },
+      { date: "2025-01", value: 1050000 }, { date: "2025-10", value: 1200000 },
+    ],
+    wiki: "valorant",
+  },
+  {
+    id: "s0m", name: "Samuel Oh", type: "player",
+    nationality: "United States", region: "Americas",
+    birthdate: "2001-08-16", teampagename: "NRG",
+    links: { twitter: "https://twitter.com/s0mcs", twitch: "https://www.twitch.tv/s0m", instagram: "https://www.instagram.com/s0mval" },
+    status: "Active",
+    earnings: 587000,
+    earningsbyyear: { "2021": 45000, "2022": 89000, "2023": 178000, "2024": 120000, "2025": 155000 },
+    marketvalue: 1800000,
+    marketvaluehistory: [
+      { date: "2021-01", value: 150000 }, { date: "2022-01", value: 420000 },
+      { date: "2023-01", value: 900000 }, { date: "2024-01", value: 1400000 },
+      { date: "2025-01", value: 1600000 }, { date: "2025-10", value: 1800000 },
+    ],
+    wiki: "valorant",
+  },
+  {
+    id: "f0rsakeN", name: "Jason Susanto", type: "player",
+    nationality: "Singapore", region: "Pacific",
+    birthdate: "2002-03-07", teampagename: "Paper Rex",
+    links: { twitter: "https://twitter.com/f0rsakeNCS", twitch: "https://www.twitch.tv/f0rsaken", instagram: "https://www.instagram.com/f0rsaken" },
+    status: "Active",
+    earnings: 342000,
+    earningsbyyear: { "2022": 28000, "2023": 96000, "2024": 80000, "2025": 138000 },
+    marketvalue: 1100000,
+    marketvaluehistory: [
+      { date: "2022-01", value: 90000 }, { date: "2023-01", value: 380000 },
+      { date: "2024-01", value: 700000 }, { date: "2025-01", value: 950000 },
+      { date: "2025-10", value: 1100000 },
+    ],
+    wiki: "valorant",
+  },
+  {
+    id: "Derke", name: "Nikita Sirmitev", type: "player",
+    nationality: "Finland", region: "Europe",
+    birthdate: "2002-07-21", teampagename: "Fnatic",
+    links: { twitter: "https://twitter.com/derkeCS", twitch: "https://www.twitch.tv/derke", instagram: "https://www.instagram.com/derke_val" },
+    status: "Active",
+    earnings: 268900,
+    earningsbyyear: { "2021": 18000, "2022": 42000, "2023": 90000, "2024": 44600, "2025": 74300 },
+    marketvalue: 1000000,
+    marketvaluehistory: [
+      { date: "2021-06", value: 60000 }, { date: "2022-06", value: 210000 },
+      { date: "2023-01", value: 580000 }, { date: "2024-01", value: 800000 },
+      { date: "2025-01", value: 900000 }, { date: "2025-10", value: 1000000 },
+    ],
+    wiki: "valorant",
+  },
+  // CS2
+  {
+    id: "s1mple", name: "Oleksandr Kostyliev", type: "player",
+    nationality: "Ukraine", region: "Europe",
+    birthdate: "1997-10-02", teampagename: "NAVI",
+    links: { twitter: "https://twitter.com/s1mpleO", twitch: "https://www.twitch.tv/s1mple", instagram: "https://www.instagram.com/s1mple" },
+    status: "Active",
+    earnings: 1842000,
+    earningsbyyear: { "2019": 280000, "2020": 180000, "2021": 560000, "2022": 320000, "2023": 210000, "2024": 180000, "2025": 112000 },
+    marketvalue: 3500000,
+    marketvaluehistory: [
+      { date: "2019-01", value: 1200000 }, { date: "2020-01", value: 1800000 },
+      { date: "2021-01", value: 3000000 }, { date: "2022-01", value: 3800000 },
+      { date: "2023-01", value: 3500000 }, { date: "2024-01", value: 3200000 },
+      { date: "2025-01", value: 3500000 },
+    ],
+    wiki: "counterstrike",
+  },
+  {
+    id: "NiKo", name: "Nikola Kovač", type: "player",
+    nationality: "Bosnia and Herzegovina", region: "Europe",
+    birthdate: "1997-02-16", teampagename: "G2 Esports",
+    links: { twitter: "https://twitter.com/NiKoCSGO", twitch: "https://www.twitch.tv/niko", instagram: "https://www.instagram.com/niko" },
+    status: "Active",
+    earnings: 1690000,
+    earningsbyyear: { "2019": 240000, "2020": 120000, "2021": 310000, "2022": 280000, "2023": 340000, "2024": 210000, "2025": 190000 },
+    marketvalue: 3000000,
+    marketvaluehistory: [
+      { date: "2019-01", value: 900000 }, { date: "2020-01", value: 1200000 },
+      { date: "2021-01", value: 2200000 }, { date: "2022-01", value: 2800000 },
+      { date: "2023-01", value: 3200000 }, { date: "2024-01", value: 3000000 },
+      { date: "2025-01", value: 3000000 },
+    ],
+    wiki: "counterstrike",
+  },
+  // League of Legends
+  {
+    id: "Faker", name: "Lee Sang-hyeok", type: "player",
+    nationality: "South Korea", region: "Korea",
+    birthdate: "1996-05-07", teampagename: "T1",
+    links: { twitter: "https://twitter.com/faker", twitch: "https://www.twitch.tv/faker", instagram: "https://www.instagram.com/faker", youtube: "https://www.youtube.com/c/Faker" },
+    status: "Active",
+    earnings: 4800000,
+    earningsbyyear: { "2019": 380000, "2020": 290000, "2021": 520000, "2022": 680000, "2023": 820000, "2024": 420000, "2025": 200000 },
+    marketvalue: 5000000,
+    marketvaluehistory: [
+      { date: "2019-01", value: 2500000 }, { date: "2020-01", value: 3000000 },
+      { date: "2021-01", value: 3800000 }, { date: "2022-01", value: 4500000 },
+      { date: "2023-01", value: 5200000 }, { date: "2024-01", value: 4800000 },
+      { date: "2025-01", value: 5000000 },
+    ],
+    wiki: "leagueoflegends",
+  },
+  {
+    id: "Caps", name: "Rasmus Borregaard Winther", type: "player",
+    nationality: "Denmark", region: "Europe",
+    birthdate: "1999-11-06", teampagename: "G2 Esports",
+    links: { twitter: "https://twitter.com/G2Caps", twitch: "https://www.twitch.tv/caps", instagram: "https://www.instagram.com/g2caps" },
+    status: "Active",
+    earnings: 2100000,
+    earningsbyyear: { "2020": 180000, "2021": 320000, "2022": 410000, "2023": 580000, "2024": 390000, "2025": 220000 },
+    marketvalue: 2500000,
+    marketvaluehistory: [
+      { date: "2020-01", value: 600000 }, { date: "2021-01", value: 1200000 },
+      { date: "2022-01", value: 1800000 }, { date: "2023-01", value: 2400000 },
+      { date: "2024-01", value: 2200000 }, { date: "2025-01", value: 2500000 },
+    ],
+    wiki: "leagueoflegends",
+  },
+  {
+    id: "Ruler", name: "Park Jae-hyuk", type: "player",
+    nationality: "South Korea", region: "Korea",
+    birthdate: "2000-07-18", teampagename: "T1",
+    links: { twitter: "https://twitter.com/RulerLoL", instagram: "https://www.instagram.com/ruler_lol" },
+    status: "Active",
+    earnings: 1650000,
+    earningsbyyear: { "2021": 190000, "2022": 380000, "2023": 490000, "2024": 380000, "2025": 210000 },
+    marketvalue: 2000000,
+    marketvaluehistory: [
+      { date: "2021-01", value: 400000 }, { date: "2022-01", value: 900000 },
+      { date: "2023-01", value: 1400000 }, { date: "2024-01", value: 1800000 },
+      { date: "2025-01", value: 2000000 },
+    ],
+    wiki: "leagueoflegends",
+  },
+  {
+    id: "Jankos", name: "Marcin Jankowski", type: "player",
+    nationality: "Poland", region: "Europe",
+    birthdate: "1996-03-17", teampagename: "G2 Esports",
+    links: { twitter: "https://twitter.com/Jankos", twitch: "https://www.twitch.tv/jankos", instagram: "https://www.instagram.com/jankosprimus" },
+    status: "Active",
+    earnings: 1920000,
+    earningsbyyear: { "2019": 280000, "2020": 310000, "2021": 390000, "2022": 340000, "2023": 420000, "2024": 180000 },
+    marketvalue: 1200000,
+    marketvaluehistory: [
+      { date: "2019-01", value: 800000 }, { date: "2020-01", value: 1200000 },
+      { date: "2021-01", value: 1600000 }, { date: "2022-01", value: 1500000 },
+      { date: "2023-01", value: 1400000 }, { date: "2024-01", value: 1200000 },
+    ],
+    wiki: "leagueoflegends",
+  },
+];
+
+// ── TOURNAMENT SERIES ─────────────────────────────────────────────────────────
+export const TOURNAMENT_SERIES = [
+  {
+    name: "First Strike",
+    abbreviation: "FS",
+    imageurl: "https://liquipedia.net/commons/images/thumb/c/c7/Valorant_First_Strike_lightmode.png/400px-Valorant_First_Strike_lightmode.png",
+    imagedarkurl: "https://liquipedia.net/commons/images/thumb/1/1b/Valorant_First_Strike_darkmode.png/400px-Valorant_First_Strike_darkmode.png",
+    launcheddate: "0000-01-01",
+    locations: '{"region1":"World"}',
+    organizers: ["Riot Games"],
+    prizepool: 613957,
+    links: { home: "https://playvalorant.com/en-us/news/esports/announcing-valorant-first-strike/", twitter: "https://twitter.com/ValorantEsports" },
+    wiki: "valorant",
+  },
+];
+
+// ── STANDINGS ─────────────────────────────────────────────────────────────────
+export const STANDINGS = [
+  // VALORANT
+  {
+    title: "Group A", type: "league",
+    matches: ["CHAMP25GrA_0001", "CHAMP25GrA_0002", "CHAMP25GrA_0003", "CHAMP25GrA_0004", "CHAMP25GrA_0005"],
+    entries: [
+      { opponenttype: "team", opponentname: "Paper Rex", placement: 1, placementchange: 0, roundindex: 1, scoreboard: { points: 6, diff: 20, game: { d: 0, w: 4, l: 1 }, match: { d: 0, w: 2, l: 0 } }, wiki: "valorant" },
+      { opponenttype: "team", opponentname: "Team Liquid", placement: 2, placementchange: -1, roundindex: 1, scoreboard: { points: 3, diff: 2, game: { d: 0, w: 2, l: 2 }, match: { d: 0, w: 1, l: 1 } }, wiki: "valorant" },
+      { opponenttype: "team", opponentname: "LOUD", placement: 3, placementchange: 1, roundindex: 1, scoreboard: { points: 3, diff: -5, game: { d: 0, w: 2, l: 3 }, match: { d: 0, w: 1, l: 1 } }, wiki: "valorant" },
+      { opponenttype: "team", opponentname: "EDward Gaming", placement: 4, placementchange: 0, roundindex: 1, scoreboard: { points: 0, diff: -17, game: { d: 0, w: 1, l: 4 }, match: { d: 0, w: 0, l: 2 } }, wiki: "valorant" },
+    ],
+    wiki: "valorant",
+  },
+  {
+    title: "Group B", type: "league",
+    matches: ["CHAMP25GrB_0001", "CHAMP25GrB_0002", "CHAMP25GrB_0003", "CHAMP25GrB_0004", "CHAMP25GrB_0005"],
+    entries: [
+      { opponenttype: "team", opponentname: "NRG", placement: 1, placementchange: 0, roundindex: 1, scoreboard: { points: 6, diff: 18, game: { d: 0, w: 4, l: 0 }, match: { d: 0, w: 2, l: 0 } }, wiki: "valorant" },
+      { opponenttype: "team", opponentname: "Fnatic", placement: 2, placementchange: 1, roundindex: 1, scoreboard: { points: 3, diff: 6, game: { d: 0, w: 3, l: 1 }, match: { d: 0, w: 1, l: 1 } }, wiki: "valorant" },
+      { opponenttype: "team", opponentname: "DRX", placement: 3, placementchange: -1, roundindex: 1, scoreboard: { points: 3, diff: -4, game: { d: 0, w: 2, l: 3 }, match: { d: 0, w: 1, l: 1 } }, wiki: "valorant" },
+      { opponenttype: "team", opponentname: "ZETA DIVISION", placement: 4, placementchange: 0, roundindex: 1, scoreboard: { points: 0, diff: -20, game: { d: 0, w: 0, l: 4 }, match: { d: 0, w: 0, l: 2 } }, wiki: "valorant" },
+    ],
+    wiki: "valorant",
+  },
+  // LoL
+  {
+    title: "Group A", type: "league",
+    matches: ["WORLDS25GrA_0001", "WORLDS25GrA_0002", "WORLDS25GrA_0003"],
+    entries: [
+      { opponenttype: "team", opponentname: "T1", placement: 1, placementchange: 0, roundindex: 1, scoreboard: { points: 6, diff: 4, game: { d: 0, w: 3, l: 0 }, match: { d: 0, w: 3, l: 0 } }, wiki: "leagueoflegends" },
+      { opponenttype: "team", opponentname: "Cloud9", placement: 2, placementchange: 1, roundindex: 1, scoreboard: { points: 3, diff: 1, game: { d: 0, w: 2, l: 1 }, match: { d: 0, w: 2, l: 1 } }, wiki: "leagueoflegends" },
+      { opponenttype: "team", opponentname: "MAD Lions", placement: 3, placementchange: -1, roundindex: 1, scoreboard: { points: 3, diff: -1, game: { d: 0, w: 1, l: 2 }, match: { d: 0, w: 1, l: 2 } }, wiki: "leagueoflegends" },
+      { opponenttype: "team", opponentname: "PSG Talon", placement: 4, placementchange: 0, roundindex: 1, scoreboard: { points: 0, diff: -4, game: { d: 0, w: 0, l: 3 }, match: { d: 0, w: 0, l: 3 } }, wiki: "leagueoflegends" },
+    ],
+    wiki: "leagueoflegends",
+  },
+  {
+    title: "Group B", type: "league",
+    matches: ["WORLDS25GrB_0001", "WORLDS25GrB_0002", "WORLDS25GrB_0003"],
+    entries: [
+      { opponenttype: "team", opponentname: "G2 Esports", placement: 1, placementchange: 0, roundindex: 1, scoreboard: { points: 6, diff: 3, game: { d: 0, w: 3, l: 0 }, match: { d: 0, w: 3, l: 0 } }, wiki: "leagueoflegends" },
+      { opponenttype: "team", opponentname: "Gen.G", placement: 2, placementchange: 1, roundindex: 1, scoreboard: { points: 4, diff: 2, game: { d: 0, w: 2, l: 1 }, match: { d: 0, w: 2, l: 1 } }, wiki: "leagueoflegends" },
+      { opponenttype: "team", opponentname: "Team Liquid", placement: 3, placementchange: -1, roundindex: 1, scoreboard: { points: 2, diff: -2, game: { d: 0, w: 1, l: 2 }, match: { d: 0, w: 1, l: 2 } }, wiki: "leagueoflegends" },
+      { opponenttype: "team", opponentname: "NRG LoL", placement: 4, placementchange: 0, roundindex: 1, scoreboard: { points: 0, diff: -3, game: { d: 0, w: 0, l: 3 }, match: { d: 0, w: 0, l: 3 } }, wiki: "leagueoflegends" },
+    ],
+    wiki: "leagueoflegends",
+  },
+];
+
+// ── TEAMS ─────────────────────────────────────────────────────────────────────
+export const TEAMS = [
+  // VALORANT
+  {
+    name: "Team Liquid", region: "Europe",
+    logourl: "https://liquipedia.net/commons/images/thumb/f/f5/Team_Liquid_2024_full_lightmode.png/309px-Team_Liquid_2024_full_lightmode.png",
+    logodarkurl: "https://liquipedia.net/commons/images/thumb/2/28/Team_Liquid_2024_full_darkmode.png/309px-Team_Liquid_2024_full_darkmode.png",
+    textlesslogourl: "https://liquipedia.net/commons/images/thumb/0/01/Team_Liquid_2024_lightmode.png/351px-Team_Liquid_2024_lightmode.png",
+    textlesslogodarkurl: "https://liquipedia.net/commons/images/thumb/5/59/Team_Liquid_2024_darkmode.png/351px-Team_Liquid_2024_darkmode.png",
+    status: "active", createdate: "2020-08-07", disbanddate: "0000-01-01",
+    earnings: 738104,
+    earningsbyyear: { "2020": 18621, "2021": 257115, "2022": 103618, "2023": 185000, "2024": 3750, "2025": 170000 },
+    links: { tiktok: "https://tiktok.com/@teamliquid", instagram: "https://www.instagram.com/teamliquid" },
+    squad: [{ id: "soulcas", role: "Player" }, { id: "Jamppi", role: "Player" }, { id: "nAts", role: "Player" }, { id: "Redgar", role: "Coach" }],
+    wiki: "valorant",
+  },
+  {
+    name: "Fnatic", region: "Europe",
+    logourl: "https://liquipedia.net/commons/images/thumb/9/90/Fnatic_2022_lightmode.png/363px-Fnatic_2022_lightmode.png",
+    logodarkurl: "https://liquipedia.net/commons/images/thumb/a/a2/Fnatic_2022_darkmode.png/363px-Fnatic_2022_darkmode.png",
+    textlesslogourl: "https://liquipedia.net/commons/images/thumb/c/c8/Fnatic_2022_icon.png/320px-Fnatic_2022_icon.png",
+    textlesslogodarkurl: "https://liquipedia.net/commons/images/thumb/c/c8/Fnatic_2022_icon.png/320px-Fnatic_2022_icon.png",
+    status: "active", createdate: "2021-01-01", disbanddate: "0000-01-01",
+    earnings: 1245700,
+    earningsbyyear: { "2021": 150000, "2022": 280000, "2023": 390000, "2024": 120700, "2025": 305000 },
+    links: { twitter: "https://twitter.com/FNATIC", instagram: "https://www.instagram.com/fnatic", twitch: "https://www.twitch.tv/fnatic" },
+    squad: [{ id: "Boaster", role: "IGL" }, { id: "Alfajer", role: "Player" }, { id: "Leo", role: "Player" }, { id: "Derke", role: "Player" }, { id: "Chronicle", role: "Player" }],
+    wiki: "valorant",
+  },
+  {
+    name: "NRG", region: "Americas",
+    logourl: "https://liquipedia.net/commons/images/thumb/7/74/NRG_lightmode.png/380px-NRG_lightmode.png",
+    logodarkurl: "https://liquipedia.net/commons/images/thumb/d/d6/NRG_darkmode.png/380px-NRG_darkmode.png",
+    textlesslogourl: "https://liquipedia.net/commons/images/thumb/7/7a/NRG_icon.png/320px-NRG_icon.png",
+    textlesslogodarkurl: "https://liquipedia.net/commons/images/thumb/7/7a/NRG_icon.png/320px-NRG_icon.png",
+    status: "active", createdate: "2020-06-01", disbanddate: "0000-01-01",
+    earnings: 1862000,
+    earningsbyyear: { "2020": 50000, "2021": 200000, "2022": 350000, "2023": 540000, "2024": 122000, "2025": 600000 },
+    links: { twitter: "https://twitter.com/NRGgg", instagram: "https://www.instagram.com/nrggg", twitch: "https://www.twitch.tv/nrg" },
+    squad: [{ id: "s0m", role: "Player" }, { id: "ardiis", role: "Player" }, { id: "FNS", role: "IGL" }, { id: "eeiu", role: "Player" }, { id: "crashies", role: "Player" }],
+    wiki: "valorant",
+  },
+  {
+    name: "Paper Rex", region: "Pacific",
+    logourl: "https://liquipedia.net/commons/images/thumb/c/cd/Paper_Rex_lightmode.png/375px-Paper_Rex_lightmode.png",
+    logodarkurl: "https://liquipedia.net/commons/images/thumb/5/54/Paper_Rex_darkmode.png/375px-Paper_Rex_darkmode.png",
+    textlesslogourl: "https://liquipedia.net/commons/images/thumb/c/cd/Paper_Rex_icon.png/280px-Paper_Rex_icon.png",
+    textlesslogodarkurl: "https://liquipedia.net/commons/images/thumb/c/cd/Paper_Rex_icon.png/280px-Paper_Rex_icon.png",
+    status: "active", createdate: "2020-10-01", disbanddate: "0000-01-01",
+    earnings: 987500,
+    earningsbyyear: { "2021": 80000, "2022": 195000, "2023": 290000, "2024": 84500, "2025": 338000 },
+    links: { twitter: "https://twitter.com/paperrex", instagram: "https://www.instagram.com/paperrex", youtube: "https://www.youtube.com/paperrex" },
+    squad: [{ id: "f0rsakeN", role: "Player" }, { id: "mindfreak", role: "Player" }, { id: "Jinggg", role: "Player" }, { id: "something", role: "Player" }, { id: "d4v41", role: "IGL" }],
+    wiki: "valorant",
+  },
+  // CS2
+  {
+    name: "NAVI", region: "Europe",
+    logourl: "https://liquipedia.net/commons/images/thumb/a/ac/Natus_Vincere_2021_lightmode.png/363px-Natus_Vincere_2021_lightmode.png",
+    logodarkurl: "https://liquipedia.net/commons/images/thumb/4/4e/Natus_Vincere_2021_darkmode.png/363px-Natus_Vincere_2021_darkmode.png",
+    textlesslogourl: "https://liquipedia.net/commons/images/thumb/7/79/Natus_Vincere_icon.png/280px-Natus_Vincere_icon.png",
+    textlesslogodarkurl: "https://liquipedia.net/commons/images/thumb/7/79/Natus_Vincere_icon.png/280px-Natus_Vincere_icon.png",
+    status: "active", createdate: "2009-12-17", disbanddate: "0000-01-01",
+    earnings: 5820000,
+    earningsbyyear: { "2019": 800000, "2020": 750000, "2021": 1200000, "2022": 1100000, "2023": 890000, "2024": 680000, "2025": 400000 },
+    links: { twitter: "https://twitter.com/natusvincere", instagram: "https://www.instagram.com/natusvincere", twitch: "https://www.twitch.tv/navi" },
+    squad: [{ id: "s1mple", role: "AWPer" }, { id: "electroNic", role: "Rifler" }, { id: "b1t", role: "Rifler" }, { id: "Perfecto", role: "Support" }, { id: "npl", role: "IGL" }],
+    wiki: "counterstrike",
+  },
+  {
+    name: "G2 Esports", region: "Europe",
+    logourl: "https://liquipedia.net/commons/images/thumb/5/52/G2_Esports_2022_allmode.png/363px-G2_Esports_2022_allmode.png",
+    logodarkurl: "https://liquipedia.net/commons/images/thumb/5/52/G2_Esports_2022_allmode.png/363px-G2_Esports_2022_allmode.png",
+    textlesslogourl: "https://liquipedia.net/commons/images/thumb/0/04/G2_Esports_icon.png/280px-G2_Esports_icon.png",
+    textlesslogodarkurl: "https://liquipedia.net/commons/images/thumb/0/04/G2_Esports_icon.png/280px-G2_Esports_icon.png",
+    status: "active", createdate: "2014-08-04", disbanddate: "0000-01-01",
+    earnings: 3200000,
+    earningsbyyear: { "2020": 320000, "2021": 580000, "2022": 740000, "2023": 810000, "2024": 450000, "2025": 300000 },
+    links: { twitter: "https://twitter.com/G2esports", instagram: "https://www.instagram.com/g2esports", twitch: "https://www.twitch.tv/g2esports" },
+    squad: [{ id: "NiKo", role: "Rifler" }, { id: "huNter", role: "Rifler" }, { id: "jks", role: "Rifler" }, { id: "nexa", role: "IGL" }, { id: "Hooxi", role: "IGL" }],
+    wiki: "counterstrike",
+  },
+  // League of Legends
+  {
+    name: "T1", region: "Korea",
+    logourl: "https://liquipedia.net/commons/images/thumb/5/5c/T1_2019_logo.png/346px-T1_2019_logo.png",
+    logodarkurl: "https://liquipedia.net/commons/images/thumb/5/5c/T1_2019_logo.png/346px-T1_2019_logo.png",
+    textlesslogourl: "https://liquipedia.net/commons/images/thumb/e/e5/T1_icon.png/280px-T1_icon.png",
+    textlesslogodarkurl: "https://liquipedia.net/commons/images/thumb/e/e5/T1_icon.png/280px-T1_icon.png",
+    status: "active", createdate: "2013-02-12", disbanddate: "0000-01-01",
+    earnings: 12500000,
+    earningsbyyear: { "2019": 1200000, "2020": 950000, "2021": 1800000, "2022": 2100000, "2023": 2500000, "2024": 1900000, "2025": 2050000 },
+    links: { twitter: "https://twitter.com/T1LoL", instagram: "https://www.instagram.com/t1lol", youtube: "https://www.youtube.com/c/T1" },
+    squad: [{ id: "Zeus", role: "Top" }, { id: "Oner", role: "Jungle" }, { id: "Faker", role: "Mid" }, { id: "Ruler", role: "Bot" }, { id: "BeryL", role: "Support" }],
+    wiki: "leagueoflegends",
+  },
+  {
+    name: "G2 Esports", region: "Europe",
+    logourl: "https://liquipedia.net/commons/images/thumb/5/52/G2_Esports_2022_allmode.png/363px-G2_Esports_2022_allmode.png",
+    logodarkurl: "https://liquipedia.net/commons/images/thumb/5/52/G2_Esports_2022_allmode.png/363px-G2_Esports_2022_allmode.png",
+    textlesslogourl: "https://liquipedia.net/commons/images/thumb/0/04/G2_Esports_icon.png/280px-G2_Esports_icon.png",
+    textlesslogodarkurl: "https://liquipedia.net/commons/images/thumb/0/04/G2_Esports_icon.png/280px-G2_Esports_icon.png",
+    status: "active", createdate: "2015-01-24", disbanddate: "0000-01-01",
+    earnings: 7800000,
+    earningsbyyear: { "2020": 620000, "2021": 980000, "2022": 1200000, "2023": 1600000, "2024": 1800000, "2025": 1600000 },
+    links: { twitter: "https://twitter.com/G2esports", instagram: "https://www.instagram.com/g2esports", twitch: "https://www.twitch.tv/g2esports_lol" },
+    squad: [{ id: "BrokenBlade", role: "Top" }, { id: "Jankos", role: "Jungle" }, { id: "Caps", role: "Mid" }, { id: "Hans sama", role: "Bot" }, { id: "Mikyx", role: "Support" }],
+    wiki: "leagueoflegends",
+  },
+  {
+    name: "Cloud9", region: "Americas",
+    logourl: "https://liquipedia.net/commons/images/thumb/b/b4/Cloud9_2020_lightmode.png/363px-Cloud9_2020_lightmode.png",
+    logodarkurl: "https://liquipedia.net/commons/images/thumb/8/85/Cloud9_2020_darkmode.png/363px-Cloud9_2020_darkmode.png",
+    textlesslogourl: "https://liquipedia.net/commons/images/thumb/2/20/Cloud9_icon.png/280px-Cloud9_icon.png",
+    textlesslogodarkurl: "https://liquipedia.net/commons/images/thumb/2/20/Cloud9_icon.png/280px-Cloud9_icon.png",
+    status: "active", createdate: "2012-09-02", disbanddate: "0000-01-01",
+    earnings: 4200000,
+    earningsbyyear: { "2020": 320000, "2021": 580000, "2022": 820000, "2023": 1100000, "2024": 880000, "2025": 500000 },
+    links: { twitter: "https://twitter.com/Cloud9", instagram: "https://www.instagram.com/cloud9", twitch: "https://www.twitch.tv/cloud9" },
+    squad: [{ id: "Fudge", role: "Top" }, { id: "Blaber", role: "Jungle" }, { id: "Jensen", role: "Mid" }, { id: "Berserker", role: "Bot" }, { id: "Zven", role: "Support" }],
+    wiki: "leagueoflegends",
+  },
+];
+
+// ── TOURNAMENTS ───────────────────────────────────────────────────────────────
+export const TOURNAMENTS = [
+  {
+    id: "VALORANT_Champions_2025",
+    name: "VALORANT Champions 2025",
+    bannerurl: "https://liquipedia.net/commons/images/thumb/a/a2/VCT_Champions_Paris_2025.png/400px-VCT_Champions_Paris_2025.png",
+    iconurl: "https://liquipedia.net/commons/images/thumb/a/ae/VCT_Champions_icon_allmode.png/370px-VCT_Champions_icon_allmode.png",
+    seriespage: "VALORANT_Champions_Tour", patch: "11.05",
+    startdate: "2025-09-12", enddate: "2025-10-05",
+    locations: { venue: "Accor Arena", venuelink: "http://www.accorarena.com/", city: "Paris", country: "fr", region: "Europe" },
+    prizepool: 2250000, participantsnumber: 16,
+    liquipediatier: "1", liquipediatiertype: "",
+    format: "Groups + Double Elimination",
+    wiki: "valorant",
+  },
+  {
+    id: "VCT_EMEA_2025_Stage2",
+    name: "VCT EMEA 2025: Stage 2",
+    bannerurl: "",
+    iconurl: "https://liquipedia.net/commons/images/thumb/a/ae/VCT_Champions_icon_allmode.png/370px-VCT_Champions_icon_allmode.png",
+    seriespage: "VALORANT_Champions_Tour", patch: "10.08",
+    startdate: "2025-06-14", enddate: "2025-07-27",
+    locations: { venue: "Riot Berlin Studio", venuelink: "", city: "Berlin", country: "de", region: "Europe" },
+    prizepool: 700000, participantsnumber: 8,
+    liquipediatier: "2", liquipediatiertype: "Regional",
+    format: "Double Round Robin + Playoffs",
+    wiki: "valorant",
+  },
+  {
+    id: "EPL_Season21",
+    name: "ESL Pro League Season 21",
+    bannerurl: "", iconurl: "",
+    seriespage: "ESL_Pro_League", patch: "",
+    startdate: "2025-09-01", enddate: "2025-10-05",
+    locations: { venue: "ESL Arena Valletta", venuelink: "", city: "Malta", country: "mt", region: "Europe" },
+    prizepool: 850000, participantsnumber: 24,
+    liquipediatier: "2", liquipediatiertype: "",
+    format: "Groups + Single Elimination",
+    wiki: "counterstrike",
+  },
+  {
+    id: "Worlds_2025",
+    name: "Worlds 2025",
+    bannerurl: "https://liquipedia.net/commons/images/thumb/9/96/Worlds_2025_lightmode.png/400px-Worlds_2025_lightmode.png",
+    iconurl: "https://liquipedia.net/commons/images/thumb/a/ae/Worlds_icon_allmode.png/370px-Worlds_icon_allmode.png",
+    seriespage: "World_Championship", patch: "15.18",
+    startdate: "2025-10-08", enddate: "2025-11-02",
+    locations: { venue: "Mercedes-Benz Arena", venuelink: "https://www.mercedes-benz-arena-berlin.de/", city: "Shanghai", country: "cn", region: "Asia" },
+    prizepool: 2500000, participantsnumber: 22,
+    liquipediatier: "1", liquipediatiertype: "",
+    format: "Play-Ins + Groups + Double Elimination",
+    wiki: "leagueoflegends",
+  },
+  {
+    id: "LCK_2025_Summer",
+    name: "LCK 2025 Summer",
+    bannerurl: "", iconurl: "",
+    seriespage: "LCK", patch: "15.12",
+    startdate: "2025-07-01", enddate: "2025-08-24",
+    locations: { venue: "LoL Park", venuelink: "", city: "Seoul", country: "kr", region: "Korea" },
+    prizepool: 300000, participantsnumber: 10,
+    liquipediatier: "2", liquipediatiertype: "Regional",
+    format: "Regular Season + Playoffs",
+    wiki: "leagueoflegends",
+  },
+];
+
+// ── TRANSFERS ─────────────────────────────────────────────────────────────────
+export const TRANSFERS = [
+  { player: "tOfu", nationality: "Germany", fromteam: "Gaimin Gladiators", toteam: "Team Liquid", role1: "5", role2: "5", reference: { reference1: "https://x.com/teamliquiddota/status/1976180833196347673", reference1type: "web source" }, date: "2025-10-09 00:00:00", wiki: "dota2" },
+  { player: "Alfajer", nationality: "Turkey", fromteam: "EMEA Rising", toteam: "Fnatic", role1: "duelist", role2: "duelist", reference: { reference1: "https://twitter.com/FNATIC/status/1234567", reference1type: "web source" }, date: "2025-01-15 00:00:00", wiki: "valorant" },
+  { player: "nAts", nationality: "Russia", fromteam: "Natus Vincere", toteam: "Team Liquid", role1: "controller", role2: "controller", reference: { reference1: "https://twitter.com/TeamLiquid/status/1234568", reference1type: "web source" }, date: "2025-01-20 00:00:00", wiki: "valorant" },
+  { player: "s0m", nationality: "United States", fromteam: "Cloud9", toteam: "NRG", role1: "duelist", role2: "duelist", reference: { reference1: "https://twitter.com/NRGgg/status/9876543", reference1type: "web source" }, date: "2024-11-28 00:00:00", wiki: "valorant" },
+  { player: "ardiis", nationality: "Latvia", fromteam: "Fnatic", toteam: "NRG", role1: "initiator", role2: "initiator", reference: { reference1: "https://twitter.com/NRGgg/status/9876544", reference1type: "web source" }, date: "2024-12-05 00:00:00", wiki: "valorant" },
+  { player: "f0rsakeN", nationality: "Singapore", fromteam: "F4Q", toteam: "Paper Rex", role1: "duelist", role2: "duelist", reference: { reference1: "https://twitter.com/paperrex/status/1111222", reference1type: "web source" }, date: "2024-10-15 00:00:00", wiki: "valorant" },
+  { player: "NiKo", nationality: "Bosnia and Herzegovina", fromteam: "FaZe Clan", toteam: "G2 Esports", role1: "rifler", role2: "rifler", reference: { reference1: "https://twitter.com/G2esports/status/5432100", reference1type: "web source" }, date: "2024-09-01 00:00:00", wiki: "counterstrike" },
+  { player: "BrokenBlade", nationality: "Germany", fromteam: "Team Vitality", toteam: "G2 Esports", role1: "top", role2: "top", reference: { reference1: "https://twitter.com/G2esports/status/7654321", reference1type: "web source" }, date: "2025-01-10 00:00:00", wiki: "leagueoflegends" },
+  { player: "Ruler", nationality: "South Korea", fromteam: "Gen.G", toteam: "T1", role1: "bot", role2: "adc", reference: { reference1: "https://twitter.com/T1LoL/status/8888888", reference1type: "web source" }, date: "2024-11-15 00:00:00", wiki: "leagueoflegends" },
+];
+
+// ── API FUNCTIONS ─────────────────────────────────────────────────────────────
+export function getPlayers(wiki = "valorant") {
+  return PLAYERS.filter(p => p.wiki === wiki);
+}
+export function getPlayer(id) {
+  return PLAYERS.find(p => p.id.toLowerCase() === id.toLowerCase()) || null;
+}
+export function getTeams(wiki = "valorant") {
+  return TEAMS.filter(t => t.wiki === wiki);
+}
+export function getTeam(name) {
+  return TEAMS.find(t => t.name.toLowerCase() === decodeURIComponent(name).toLowerCase()) || null;
+}
+export function getTournaments(wiki = "valorant") {
+  return TOURNAMENTS.filter(t => t.wiki === wiki);
+}
+export function getTournament(id) {
+  return TOURNAMENTS.find(t => t.id === id) || null;
+}
+export function getMatches(wiki = "valorant") {
+  return MATCHES.filter(m => m.wiki === wiki);
+}
+export function getMatch(id) {
+  return MATCHES.find(m => m.id === id) || null;
+}
+export function getInterviews(wiki = "valorant") {
+  return INTERVIEWS.filter(i => i.wiki === wiki);
+}
+export function getTransfers() {
+  return TRANSFERS;
+}
+export function getStandings(wiki = "valorant") {
+  return STANDINGS.filter(s => s.wiki === wiki);
+}
+export function getPrizeResults(wiki = "valorant") {
+  return PRIZE_RESULTS.filter(p => p.wiki === wiki);
+}
+export function getGuests(wiki = "valorant") {
+  return GUESTS.filter(g => g.wiki === wiki);
+}
