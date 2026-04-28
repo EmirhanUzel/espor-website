@@ -107,10 +107,32 @@ function SocialIcon({ platform }) {
   return icons[platform] || null;
 }
 
+function RecentStats({ stats }) {
+  if (!stats) return null;
+  return (
+    <div className={styles.recentWrap}>
+      <div className={styles.recentGrid}>
+        {stats.stats.map(s => (
+          <div key={s.label} className={styles.recentItem}>
+            <span className={styles.recentVal}>{s.value}</span>
+            <span className={styles.recentLabel}>{s.label}</span>
+          </div>
+        ))}
+        {stats.highlight && (
+          <div className={`${styles.recentItem} ${styles.recentHighlight}`}>
+            <span className={styles.recentVal}>{stats.highlight.value}</span>
+            <span className={styles.recentLabel}>{stats.highlight.label}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CareerTimeline({ career }) {
   if (!career?.length) return null;
   return (
-    <div style={{ overflowX: "auto", paddingBottom: 8 }}>
+    <div style={{ overflowX: "auto", paddingBottom: 8, display: "flex", justifyContent: "center" }}>
       <div style={{ display: "flex", gap: 0, minWidth: "max-content", position: "relative" }}>
         {/* connecting line */}
         <div style={{
@@ -272,6 +294,24 @@ export default function PlayerProfile() {
             <section className={`${styles.card} ${styles.cardWide}`}>
               <h2 className={styles.cardTitle}>Career Timeline</h2>
               <CareerTimeline career={player.career} />
+            </section>
+          )}
+
+          {/* Recent Stats */}
+          {player.recentstats && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <div className={styles.cardTitleRow}>
+                <h2 className={styles.cardTitle}>Recent Form</h2>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span className={styles.recentPeriodBadge}>
+                    {player.recentstats.period} · {player.recentstats.games} {player.recentstats.gamesLabel}
+                  </span>
+                  <Link to={`/oyuncu/${player.id}/istatistikler`} className={styles.detailLink}>
+                    View Details ↗
+                  </Link>
+                </div>
+              </div>
+              <RecentStats stats={player.recentstats} />
             </section>
           )}
 

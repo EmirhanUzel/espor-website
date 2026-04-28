@@ -315,6 +315,16 @@ export const PLAYERS = [
       { year: "2024", team: "Fnatic", note: "VCT EMEA — team captain & IGL" },
       { year: "2025", team: "Fnatic", note: "Champions 2025 Grand Finalist (Paris)" },
     ],
+    recentstats: {
+      period: "Jan – Apr 2026", games: 31, gamesLabel: "maps",
+      stats: [
+        { label: "ACS", value: "168" },
+        { label: "K/D", value: "1.02" },
+        { label: "HS %", value: "21%" },
+        { label: "KAST", value: "74%" },
+      ],
+      highlight: { label: "Top Agent", value: "Gekko" },
+    },
     wiki: "valorant",
   },
   {
@@ -338,6 +348,16 @@ export const PLAYERS = [
       { year: "2024", team: "Fnatic", note: "VCT EMEA franchise — consistent S-tier duelist" },
       { year: "2025", team: "Fnatic", note: "Champions 2025 finalist (Paris)" },
     ],
+    recentstats: {
+      period: "Jan – Apr 2026", games: 38, gamesLabel: "maps",
+      stats: [
+        { label: "ACS", value: "256" },
+        { label: "K/D", value: "1.41" },
+        { label: "HS %", value: "33%" },
+        { label: "KAST", value: "71%" },
+      ],
+      highlight: { label: "Top Agent", value: "Jett" },
+    },
     wiki: "valorant",
   },
   {
@@ -363,6 +383,16 @@ export const PLAYERS = [
       { year: "2024", team: "NRG", note: "VCT Americas franchise" },
       { year: "2025", team: "NRG", note: "Champions 2025 Winner — Grand Final MVP" },
     ],
+    recentstats: {
+      period: "Jan – Apr 2026", games: 42, gamesLabel: "maps",
+      stats: [
+        { label: "ACS", value: "243" },
+        { label: "K/D", value: "1.37" },
+        { label: "HS %", value: "39%" },
+        { label: "KAST", value: "72%" },
+      ],
+      highlight: { label: "Top Agent", value: "Neon" },
+    },
     wiki: "valorant",
   },
   {
@@ -386,6 +416,16 @@ export const PLAYERS = [
       { year: "2024", team: "Paper Rex", note: "VCT Pacific — consistent high-level duelist" },
       { year: "2025", team: "Paper Rex", note: "Champions 2025 Semifinalist (Paris)" },
     ],
+    recentstats: {
+      period: "Jan – Apr 2026", games: 35, gamesLabel: "maps",
+      stats: [
+        { label: "ACS", value: "239" },
+        { label: "K/D", value: "1.32" },
+        { label: "HS %", value: "42%" },
+        { label: "KAST", value: "69%" },
+      ],
+      highlight: { label: "Top Agent", value: "Jett" },
+    },
     wiki: "valorant",
   },
   {
@@ -409,6 +449,16 @@ export const PLAYERS = [
       { year: "2024", team: "Fnatic", note: "VCT EMEA franchise — leading fragger" },
       { year: "2025", team: "Fnatic", note: "Champions 2025 finalist — Grand Final vs NRG" },
     ],
+    recentstats: {
+      period: "Jan – Apr 2026", games: 34, gamesLabel: "maps",
+      stats: [
+        { label: "ACS", value: "250" },
+        { label: "K/D", value: "1.38" },
+        { label: "HS %", value: "30%" },
+        { label: "KAST", value: "70%" },
+      ],
+      highlight: { label: "Top Agent", value: "Raze" },
+    },
     wiki: "valorant",
   },
   // CS2
@@ -437,6 +487,16 @@ export const PLAYERS = [
       { year: "2022", team: "NAVI", note: "IEM Katowice & Cologne champion" },
       { year: "2025", team: "NAVI", note: "EPL Season 21 — continued dominance" },
     ],
+    recentstats: {
+      period: "Jan – Apr 2026", games: 44, gamesLabel: "maps",
+      stats: [
+        { label: "Rating", value: "1.31" },
+        { label: "K/D", value: "1.44" },
+        { label: "KAST", value: "75%" },
+        { label: "HS %", value: "37%" },
+      ],
+      highlight: { label: "Best Map", value: "Mirage" },
+    },
     wiki: "counterstrike",
   },
   {
@@ -464,6 +524,16 @@ export const PLAYERS = [
       { year: "2023", team: "G2 Esports", note: "HLTV #3 — consistent top-3 ranking" },
       { year: "2025", team: "G2 Esports", note: "EPL Season 21 finalist" },
     ],
+    recentstats: {
+      period: "Jan – Apr 2026", games: 48, gamesLabel: "maps",
+      stats: [
+        { label: "Rating", value: "1.21" },
+        { label: "K/D", value: "1.28" },
+        { label: "KAST", value: "73%" },
+        { label: "HS %", value: "61%" },
+      ],
+      highlight: { label: "Best Map", value: "Inferno" },
+    },
     wiki: "counterstrike",
   },
   // League of Legends
@@ -491,6 +561,16 @@ export const PLAYERS = [
       { year: "2023", team: "T1", note: "World Champion (4th title) — historic run" },
       { year: "2025", team: "T1", note: "World Champion (5th title) — Worlds 2025 Shanghai" },
     ],
+    recentstats: {
+      period: "Jan – Apr 2026", games: 48, gamesLabel: "games",
+      stats: [
+        { label: "KDA", value: "4.2" },
+        { label: "Win Rate", value: "72%" },
+        { label: "CS/min", value: "8.8" },
+        { label: "Vision", value: "32" },
+      ],
+      highlight: { label: "Top Champion", value: "Azir" },
+    },
     wiki: "leagueoflegends",
   },
   {
@@ -516,6 +596,16 @@ export const PLAYERS = [
       { year: "2024", team: "G2 Esports", note: "Worlds finalist — best year with G2" },
       { year: "2025", team: "G2 Esports", note: "Worlds 2025 Finalist (Shanghai)" },
     ],
+    recentstats: {
+      period: "Jan – Apr 2026", games: 45, gamesLabel: "games",
+      stats: [
+        { label: "KDA", value: "3.8" },
+        { label: "Win Rate", value: "65%" },
+        { label: "CS/min", value: "9.1" },
+        { label: "Vision", value: "28" },
+      ],
+      highlight: { label: "Top Champion", value: "Viktor" },
+    },
     wiki: "leagueoflegends",
   },
   {
@@ -540,6 +630,16 @@ export const PLAYERS = [
       { year: "2024", team: "T1", note: "Signed with T1 — superteam formed" },
       { year: "2025", team: "T1", note: "World Champion with T1 — 2nd title" },
     ],
+    recentstats: {
+      period: "Jan – Apr 2026", games: 51, gamesLabel: "games",
+      stats: [
+        { label: "KDA", value: "5.1" },
+        { label: "Win Rate", value: "68%" },
+        { label: "CS/min", value: "9.8" },
+        { label: "Vision", value: "18" },
+      ],
+      highlight: { label: "Top Champion", value: "Jinx" },
+    },
     wiki: "leagueoflegends",
   },
   {
@@ -566,6 +666,16 @@ export const PLAYERS = [
       { year: "2023", team: "G2 Esports", note: "Returned to G2 — Worlds Semifinalist" },
       { year: "2025", team: "G2 Esports", note: "Worlds 2025 Finalist (Shanghai)" },
     ],
+    recentstats: {
+      period: "Jan – Apr 2026", games: 43, gamesLabel: "games",
+      stats: [
+        { label: "KDA", value: "3.2" },
+        { label: "Win Rate", value: "62%" },
+        { label: "CS/min", value: "4.9" },
+        { label: "Vision", value: "44" },
+      ],
+      highlight: { label: "Top Champion", value: "Vi" },
+    },
     wiki: "leagueoflegends",
   },
 ];

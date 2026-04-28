@@ -8,6 +8,7 @@ import TournamentPage from "./pages/TournamentPage";
 import MatchPage from "./pages/MatchPage";
 import NewsPage from "./pages/NewsPage";
 import TransfersPage from "./pages/TransfersPage";
+import PlayerStats from "./pages/PlayerStats";
 
 function Footer() {
   return (
@@ -49,7 +50,8 @@ export default function App() {
           <Route path="/"              element={<Home wiki={wiki} region={region} />} />
           <Route path="/turnuva/:id"   element={<TournamentPage wiki={wiki} />} />
           <Route path="/mac/:id"       element={<MatchPage />} />
-          <Route path="/oyuncu/:id"    element={<PlayerProfile />} />
+          <Route path="/oyuncu/:id"             element={<PlayerProfile />} />
+          <Route path="/oyuncu/:id/istatistikler" element={<PlayerStats />} />
           <Route path="/takim/:name"   element={<TeamPage wiki={wiki} />} />
           <Route path="/haberler"      element={<NewsPage wiki={wiki} />} />
           <Route path="/transferler"   element={<TransfersPage />} />
