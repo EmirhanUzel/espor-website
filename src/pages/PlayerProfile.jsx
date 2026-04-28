@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { getPlayer, formatDate, formatPrize, getFlag } from "../services/api";
+import { getPlayer, formatDate, formatPrize, getFlag, getMatches, getPrizeResults, getInterviews } from "../services/api";
 import styles from "./PlayerProfile.module.css";
 
 // ── Market Value Line Chart ────────────────────────────────────────────────────
@@ -199,6 +199,19 @@ export default function PlayerProfile() {
   const earningsYears = Object.entries(player.earningsbyyear).sort(([a], [b]) => a.localeCompare(b));
   const latestYear = earningsYears[earningsYears.length - 1];
 
+  const recentMatches = getMatches(player.wiki)
+    .filter(m => m.match2opponents.some(o => o.name === player.teampagename))
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 5);
+
+  const teamPrizes = getPrizeResults(player.wiki)
+    .filter(p => p.opponentname === player.teampagename)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const playerInterviews = getInterviews(player.wiki)
+    .filter(i => i.pagename === player.id)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
   return (
     <main>
       {/* Hero */}
@@ -312,6 +325,85 @@ export default function PlayerProfile() {
                 </div>
               </div>
               <RecentStats stats={player.recentstats} />
+            </section>
+          )}
+
+          {/* Last 5 Matches */}
+          {recentMatches.length > 0 && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <h2 className={styles.cardTitle} style={{ marginBottom: 16 }}>Recent Matches</h2>
+              <div className={styles.matchList}>
+                {recentMatches.map(match => {
+                  const pIdx = match.match2opponents.findIndex(o => o.name === player.teampagename);
+                  const oIdx = pIdx === 0 ? 1 : 0;
+                  const isWin = match.winner === String(pIdx + 1);
+                  const opp = match.match2opponents[oIdx];
+                  const myScore = match.match2opponents[pIdx]?.score ?? 0;
+                  const oppScore = opp?.score ?? 0;
+                  return (
+                    <Link key={match.id} to={`/mac/${match.id}`} className={styles.matchRow}>
+                      <span className={`${styles.matchResult} ${isWin ? styles.matchWin : styles.matchLoss}`}>
+                        {isWin ? "W" : "L"}
+                      </span>
+                      <div className={styles.matchOppInfo}>
+                        <span className={styles.matchOpp}>vs {opp?.name}</span>
+                        <span className={styles.matchTournament}>{match.match2bracketdata?.header} · {match.tournament}</span>
+                      </div>
+                      <span className={styles.matchScore}>
+                        {myScore}–{oppScore}
+                      </span>
+                      <span className={styles.matchDate}>{formatDate(match.date)}</span>
+                      <span className={styles.matchArrow}>→</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* Achievements */}
+          {teamPrizes.length > 0 && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <h2 className={styles.cardTitle} style={{ marginBottom: 16 }}>Achievements</h2>
+              <div className={styles.prizeList}>
+                {teamPrizes.map((p, i) => {
+                  const place = p.placement;
+                  const cls = place === "1" ? styles.prizeGold : place === "2" ? styles.prizeSilver : place === "3-4" ? styles.prizeBronze : styles.prizeOther;
+                  return (
+                    <div key={i} className={styles.prizeRow}>
+                      <span className={`${styles.prizePlacement} ${cls}`}>{place === "1" ? "🥇" : place === "2" ? "🥈" : place === "3-4" ? "🥉" : `#${place}`}</span>
+                      <div className={styles.prizeTournament}>
+                        <span className={styles.prizeName}>{p.qualifier || "Tournament"}</span>
+                        <span className={styles.prizeDate}>{formatDate(p.date)}</span>
+                      </div>
+                      <span className={styles.prizeMoney}>{formatPrize(p.prizemoney)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* Interviews */}
+          {playerInterviews.length > 0 && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <h2 className={styles.cardTitle} style={{ marginBottom: 16 }}>Interviews & News</h2>
+              <div className={styles.interviewList}>
+                {playerInterviews.map((item, i) => (
+                  <a key={i} href={item.link} target="_blank" rel="noreferrer" className={styles.interviewRow}>
+                    <div className={styles.interviewInfo}>
+                      <span className={styles.interviewTitle}>{item.title}</span>
+                      <div className={styles.interviewMeta}>
+                        <span className={styles.interviewPublisher}>{item.publisher}</span>
+                        <span className={styles.interviewDot}>·</span>
+                        <span className={styles.interviewDate}>{formatDate(item.date)}</span>
+                        <span className={styles.interviewType}>{item.type}</span>
+                      </div>
+                    </div>
+                    <span className={styles.interviewArrow}>↗</span>
+                  </a>
+                ))}
+              </div>
             </section>
           )}
 

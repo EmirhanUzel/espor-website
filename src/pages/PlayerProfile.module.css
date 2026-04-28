@@ -267,6 +267,95 @@
 
 .recentHighlight .recentLabel { color: rgba(255,255,255,0.55); }
 
+/* Last Matches */
+.matchList { display: flex; flex-direction: column; gap: 6px; }
+
+.matchRow {
+  display: flex; align-items: center; gap: 14px;
+  padding: 11px 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); text-decoration: none; color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.matchRow:hover { border-color: var(--text-1); background: var(--bg); }
+
+.matchResult {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.08em;
+  padding: 3px 9px; border-radius: var(--radius-sm);
+  flex-shrink: 0; min-width: 28px; text-align: center;
+}
+.matchWin  { background: rgba(22,163,74,0.12);  color: #16a34a; }
+.matchLoss { background: rgba(220,38,38,0.10); color: #dc2626; }
+
+.matchOppInfo { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.matchOpp { font-size: 13px; font-weight: 700; color: var(--text-1); }
+.matchTournament { font-size: 11px; color: var(--text-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.matchScore { font-size: 14px; font-weight: 800; color: var(--text-1); flex-shrink: 0; font-variant-numeric: tabular-nums; font-family: var(--font-display); }
+.matchDate  { font-size: 11px; color: var(--text-4); flex-shrink: 0; }
+.matchArrow { font-size: 14px; color: var(--text-4); transition: color 0.15s; }
+.matchRow:hover .matchArrow { color: var(--text-1); }
+
+/* Achievements */
+.prizeList { display: flex; flex-direction: column; }
+
+.prizeRow {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.prizeRow:last-child { border-bottom: none; }
+
+.prizePlacement {
+  font-size: 20px; flex-shrink: 0; width: 36px; text-align: center;
+  line-height: 1;
+}
+.prizeGold   { filter: none; }
+.prizeSilver { filter: grayscale(0.3); }
+.prizeBronze { filter: none; }
+.prizeOther  { font-size: 12px; font-weight: 700; color: var(--text-4); }
+
+.prizeTournament { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.prizeName { font-size: 13px; font-weight: 700; color: var(--text-1); }
+.prizeDate { font-size: 11px; color: var(--text-4); }
+
+.prizeMoney {
+  font-size: 14px; font-weight: 800; color: var(--text-1);
+  font-family: var(--font-display); font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* Interviews */
+.interviewList { display: flex; flex-direction: column; gap: 6px; }
+
+.interviewRow {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 16px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); text-decoration: none; color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.interviewRow:hover { border-color: var(--text-1); background: var(--bg); }
+
+.interviewInfo { flex: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.interviewTitle { font-size: 13px; font-weight: 700; color: var(--text-1); line-height: 1.4; }
+
+.interviewMeta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.interviewPublisher {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+  color: var(--text-3); background: var(--surface-2);
+  border: 1px solid var(--border); padding: 1px 7px;
+  border-radius: var(--radius-sm);
+}
+.interviewDot { color: var(--text-4); font-size: 11px; }
+.interviewDate { font-size: 11px; color: var(--text-4); }
+.interviewType {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-4);
+}
+.interviewArrow { font-size: 16px; color: var(--text-4); flex-shrink: 0; transition: color 0.15s; }
+.interviewRow:hover .interviewArrow { color: var(--text-1); }
+
 /* Responsive */
 @media (max-width: 1024px) {
   .grid { grid-template-columns: 1fr 1fr; }
