@@ -200,6 +200,13 @@ export default function PlayerProfile() {
                 <span className={styles.tag}>Team <strong>{player.teampagename}</strong></span>
                 <span className={styles.tag}>Born <strong>{formatDate(player.birthdate)}</strong></span>
                 <span className={styles.tag}>Game <strong>{player.wiki}</strong></span>
+                {Object.entries(player.links).map(([platform, url]) => (
+                  <a key={platform} href={url} target="_blank" rel="noreferrer"
+                    className={styles.heroSocialLink}
+                    title={platform.charAt(0).toUpperCase() + platform.slice(1)}>
+                    <SocialIcon platform={platform} />
+                  </a>
+                ))}
               </div>
             </div>
 
@@ -265,50 +272,6 @@ export default function PlayerProfile() {
               <CareerTimeline career={player.career} />
             </section>
           )}
-
-          {/* Social Links */}
-          <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Social Media & Links</h2>
-            <div className={styles.socialList}>
-              {Object.entries(player.links).map(([platform, url]) => (
-                <a key={platform} href={url} target="_blank" rel="noreferrer" className={styles.socialItem}>
-                  <span className={styles.socialIcon}><SocialIcon platform={platform} /></span>
-                  <div className={styles.socialTexts}>
-                    <span className={styles.socialPlatform}>{platform.charAt(0).toUpperCase() + platform.slice(1)}</span>
-                    <span className={styles.socialUrl}>{url.replace(/https?:\/\/(www\.)?/, "").split("/")[0]}</span>
-                  </div>
-                  <span className={styles.socialArrow}>↗</span>
-                </a>
-              ))}
-            </div>
-          </section>
-
-          {/* Player Info */}
-          <section className={styles.card}>
-            <h2 className={styles.cardTitle}>Player Info</h2>
-            <div className={styles.detailList}>
-              {[
-                ["Full Name", player.name],
-                ["Nationality", `${getFlag(player.nationality)} ${player.nationality}`],
-                ["Region", player.region],
-                ["Date of Birth", `${formatDate(player.birthdate)}${age ? ` (age ${age})` : ""}`],
-                ["Current Team", player.teampagename],
-                ["Status", player.status],
-                ["Game", player.wiki],
-                ["Total Earnings", formatPrize(player.earnings)],
-                player.marketvalue && ["Market Value", formatPrize(player.marketvalue)],
-              ].filter(Boolean).map(([k, v]) => (
-                <div key={k} className={styles.detailRow}>
-                  <span className={styles.detailLabel}>{k}</span>
-                  <span className={`${styles.detailVal} ${k === "Status" && player.status === "Active" ? styles.detailActive : k === "Market Value" ? styles.detailEarnings : ""}`}>
-                    {k === "Current Team" ? (
-                      <Link to={`/takim/${encodeURIComponent(player.teampagename)}`} className={styles.detailLink}>{v}</Link>
-                    ) : v}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
 
         </div>
       </div>
