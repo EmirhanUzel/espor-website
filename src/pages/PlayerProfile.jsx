@@ -70,16 +70,18 @@ function MarketValueChart({ history, current }) {
 function EarningsChart({ data }) {
   const entries = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
   const max = Math.max(...entries.map(([, v]) => v));
-  const barW = 36, gap = 16, padX = 8, padY = 12, H = 130;
-  const totalW = padX * 2 + entries.length * (barW + gap) - gap;
+  const barW = 28, gap = 14, padY = 12, H = 100;
+  const contentW = entries.length * (barW + gap) - gap;
+  const viewBoxW = Math.max(contentW + 32, 320);
+  const startX = (viewBoxW - contentW) / 2;
   const fmt = v => v >= 1000000 ? `$${(v / 1000000).toFixed(1)}M` : `$${Math.round(v / 1000)}K`;
 
   return (
     <div className={styles.chartWrap}>
-      <svg viewBox={`0 0 ${Math.max(totalW, 320)} ${H + 44}`} width="100%" style={{ display: "block", overflow: "visible" }}>
+      <svg viewBox={`0 0 ${viewBoxW} ${H + 44}`} width="100%" style={{ display: "block", overflow: "visible" }}>
         {entries.map(([year, val], i) => {
           const barH = max > 0 ? Math.max((val / max) * H, 4) : 4;
-          const x = padX + i * (barW + gap);
+          const x = startX + i * (barW + gap);
           const y = padY + H - barH;
           return (
             <g key={year}>
