@@ -14,8 +14,8 @@ const REGIONS = ["All", "Americas", "Europe", "Pacific", "Korea", "Asia"];
 const NAV_LINKS = [
   { label: "Tournaments", to: "/turnuva/VALORANT_Champions_2025" },
   { label: "Matches",     to: "/mac/CHAMP25GF" },
-  { label: "Teams",       to: "/takim/Fnatic" },
-  { label: "Players",     to: "/oyuncu/Boaster" },
+  { label: "Teams",       to: "/takimlar" },
+  { label: "Players",     to: "/oyuncular" },
   { label: "Rankings",    to: "/turnuva/VALORANT_Champions_2025" },
   { label: "News",        to: "/haberler" },
   { label: "Transfers",   to: "/transferler" },
