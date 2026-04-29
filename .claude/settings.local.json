@@ -6,7 +6,17 @@
       "Bash(npx --no-install eslint src/pages/MatchPage.jsx src/services/api.js)",
       "Bash(node --check src/pages/MatchPage.jsx)",
       "Bash(timeout 30 npx vite build)",
-      "Bash(grep -v \"^--$\")"
+      "Bash(grep -v \"^--$\")",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5176/forum)",
+      "Bash(curl -s http://localhost:5176/src/pages/ForumPage.jsx)",
+      "Bash(curl -s http://localhost:5176/src/services/forum.js)",
+      "Bash(curl -s http://localhost:5176/src/services/auth.jsx)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:5176/__TRACKED_VAR__)",
+      "Bash(jobs -p)",
+      "Bash(xargs -r kill)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(node -e ' *)"
     ]
   }
 }

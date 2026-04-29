@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./AuthModal.module.css";
+import { useAuth } from "../services/auth.jsx";
 
 function IconClose() {
   return (
@@ -29,6 +30,7 @@ function IconGoogle() {
   );
 }
 export default function AuthModal({ open, mode, onClose, onSwitchMode }) {
+  const { signIn, register } = useAuth();
   const [showPw, setShowPw] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", username: "", confirm: "" });
   const [error, setError] = useState("");
@@ -40,6 +42,7 @@ export default function AuthModal({ open, mode, onClose, onSwitchMode }) {
     setError("");
     setLoading(false);
     setShowPw(false);
+    setForm({ email: "", password: "", username: "", confirm: "" });
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
@@ -49,7 +52,7 @@ export default function AuthModal({ open, mode, onClose, onSwitchMode }) {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
     };
-  }, [open, onClose]);
+  }, [open, mode, onClose]);
 
   if (!open) return null;
 
@@ -69,10 +72,12 @@ export default function AuthModal({ open, mode, onClose, onSwitchMode }) {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      onClose();
-    }, 700);
+    const result = isRegister
+      ? register({ email: form.email, password: form.password, username: form.username })
+      : signIn({ email: form.email, password: form.password });
+    setLoading(false);
+    if (!result.ok) { setError(result.error); return; }
+    onClose();
   };
 
   const handleBackdrop = (e) => {

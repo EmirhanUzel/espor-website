@@ -105,14 +105,14 @@
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-md);
   overflow: hidden;
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .card:hover {
   border-color: var(--text-2);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 
 .teamRow {
@@ -136,6 +136,24 @@
   text-overflow: ellipsis;
   flex: 1;
   min-width: 0;
+}
+
+.teamNameLink {
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: 2px 4px;
+  margin: -2px -4px;
+  transition: background 0.12s, color 0.12s;
+}
+.teamNameLink:hover {
+  background: var(--surface-2);
+  color: var(--text-1);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.teamNameLink:focus-visible {
+  outline: 2px solid var(--text-1);
+  outline-offset: 1px;
 }
 
 .teamScore {

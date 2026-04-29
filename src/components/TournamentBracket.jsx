@@ -22,14 +22,50 @@ function BracketCard({ match }) {
   const done = match.finished === 1;
   const w = match.winner;
 
+  const goMatch = () => navigate(`/match/${match.id}`);
+  const goTeam = (e, name) => {
+    if (!name || name === "TBD") return;
+    e.stopPropagation();
+    navigate(`/team/${encodeURIComponent(name)}`);
+  };
+
+  const teamLabel = (t, side) => {
+    const isTbd = !t?.name;
+    const className = `${styles.teamName} ${!isTbd ? styles.teamNameLink : ""}`;
+    return (
+      <span
+        className={className}
+        onClick={isTbd ? undefined : (e) => goTeam(e, t.name)}
+        role={isTbd ? undefined : "link"}
+        tabIndex={isTbd ? undefined : 0}
+        onKeyDown={isTbd ? undefined : (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            goTeam(e, t.name);
+          }
+        }}
+        title={isTbd ? undefined : `View ${t.name}`}
+      >
+        {t?.name || "TBD"}
+      </span>
+    );
+  };
+
   return (
-    <div className={styles.card} onClick={() => navigate(`/match/${match.id}`)}>
+    <div
+      className={styles.card}
+      onClick={goMatch}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter") goMatch(); }}
+      title="View match"
+    >
       <div className={`${styles.teamRow} ${done ? (w === "1" ? styles.win : styles.lose) : ""}`}>
-        <span className={styles.teamName}>{t1?.name || "TBD"}</span>
+        {teamLabel(t1, 1)}
         {done && <span className={styles.teamScore}>{t1?.score ?? "—"}</span>}
       </div>
       <div className={`${styles.teamRow} ${done ? (w === "2" ? styles.win : styles.lose) : ""}`}>
-        <span className={styles.teamName}>{t2?.name || "TBD"}</span>
+        {teamLabel(t2, 2)}
         {done && <span className={styles.teamScore}>{t2?.score ?? "—"}</span>}
       </div>
     </div>

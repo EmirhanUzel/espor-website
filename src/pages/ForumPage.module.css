@@ -1,0 +1,389 @@
+/* ── Page hero ── */
+.pageHero {
+  background: var(--text-1);
+  color: #fff;
+  padding: 52px 0 44px;
+}
+
+.pageTitle {
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 900;
+  color: #fff;
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+  line-height: 1.05;
+}
+
+.pageSubtitle {
+  font-size: 15px;
+  color: rgba(255,255,255,0.55);
+  margin: 0 0 14px;
+}
+
+.pageMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+}
+
+/* ── Guest CTA ── */
+.guestCta {
+  margin-top: 28px;
+  padding: 18px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.guestCtaCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.guestCtaCopy strong {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-1);
+}
+.guestCtaCopy span {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.guestCtaActions { display: flex; gap: 8px; }
+
+/* ── Composer (signed-in) ── */
+.composerClosed {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.composerHint {
+  font-size: 12px;
+  color: var(--text-4);
+}
+.composerHint strong { color: var(--text-2); font-weight: 700; }
+
+.composer {
+  margin-top: 28px;
+  padding: 22px 24px;
+  background: var(--bg);
+  border: 1.5px solid var(--text-1);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.composerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.composerTitle {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-1);
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.composerClose {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  color: var(--text-4);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+.composerClose:hover { color: var(--text-1); }
+
+.composerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.composerError {
+  font-size: 12px;
+  color: var(--danger);
+  background: rgba(220,38,38,0.06);
+  border: 1px solid rgba(220,38,38,0.2);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.fieldInput {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-1);
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+.fieldInput:focus {
+  border-color: var(--text-1);
+  box-shadow: 0 0 0 3px rgba(9,9,11,0.06);
+}
+
+.fieldTextarea {
+  resize: vertical;
+  min-height: 110px;
+  line-height: 1.55;
+}
+
+.fieldRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.fieldRow .field { flex: 1; min-width: 180px; }
+
+/* ── Buttons ── */
+.btnSolid {
+  background: var(--text-1);
+  border: 1.5px solid var(--text-1);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  font-family: var(--font-body);
+}
+.btnSolid:hover { opacity: 0.85; transform: translateY(-1px); }
+
+.btnGhost {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  font-family: var(--font-body);
+}
+.btnGhost:hover { border-color: var(--text-1); color: var(--text-1); }
+
+/* ── Filters ── */
+.filterBar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 28px 0 0;
+}
+
+.filterBtn {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-3);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filterBtn:hover { border-color: var(--border-strong); color: var(--text-1); }
+
+.filterBtnActive,
+.filterBtnActive:hover {
+  background: var(--text-1) !important;
+  border-color: var(--text-1) !important;
+  color: #fff !important;
+}
+
+.sortHint {
+  font-size: 11px;
+  color: var(--text-4);
+  margin-left: auto;
+  font-weight: 500;
+}
+
+/* ── Topic list ── */
+.list {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 60px;
+}
+
+.row {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  padding: 18px 22px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+.row:hover {
+  border-color: var(--text-1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  transform: translateY(-1px);
+}
+
+.rowMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rowMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-4);
+}
+
+.rowAuthor strong { color: var(--text-2); font-weight: 700; }
+
+.rowDot { color: var(--text-4); }
+
+.rowDate { color: var(--text-4); }
+
+.rowTitle {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-1);
+  margin: 0;
+  line-height: 1.35;
+  font-family: var(--font-display);
+}
+
+.rowSnippet {
+  font-size: 13px;
+  color: var(--text-3);
+  margin: 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rowStats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.rowStatsBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+  padding: 6px 10px;
+  border-left: 1px solid var(--border);
+}
+
+.rowStatsBlockMuted .rowStatsVal { color: var(--text-3); }
+.rowStatsBlockMuted .rowStatsLabel { color: var(--text-4); }
+
+.rowStatsVal {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--text-1);
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.rowStatsLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  margin-top: 4px;
+}
+
+.rowArrow {
+  font-size: 22px;
+  color: var(--text-4);
+  align-self: center;
+  padding-right: 4px;
+}
+
+/* ── Category tag ── */
+.cat {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+.cat_VALORANT { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.cat_CS2      { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.cat_LoL      { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.cat_General  { background: var(--surface-2); color: var(--text-2); border-color: var(--border); }
+
+/* ── Empty ── */
+.empty {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--text-4);
+  font-size: 15px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Responsive ── */
+@media (max-width: 720px) {
+  .row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .rowStats { justify-content: flex-end; gap: 10px; }
+  .rowStatsBlock { border-left: none; border-top: 1px solid var(--border); padding-top: 8px; min-width: 70px; }
+  .sortHint { width: 100%; margin-left: 0; padding-top: 4px; }
+  .guestCta { flex-direction: column; align-items: flex-start; }
+  .guestCtaActions { width: 100%; }
+  .guestCtaActions button { flex: 1; }
+}

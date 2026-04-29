@@ -14,6 +14,8 @@ import PlayerStats from "./pages/PlayerStats";
 import TeamsRanking from "./pages/TeamsRanking";
 import PlayersRanking from "./pages/PlayersRanking";
 import TeamsRankingFull from "./pages/TeamsRankingFull";
+import ForumPage from "./pages/ForumPage";
+import ForumTopicPage from "./pages/ForumTopicPage";
 
 function Footer() {
   return (
@@ -66,6 +68,8 @@ export default function App() {
           <Route path="/team/:name"        element={<TeamPage wiki={wiki} />} />
           <Route path="/news"              element={<NewsPage wiki={wiki} />} />
           <Route path="/transfers"         element={<TransfersPage />} />
+          <Route path="/forum"             element={<ForumPage />} />
+          <Route path="/forum/:topicId"    element={<ForumTopicPage />} />
         </Routes>
       </div>
       <Footer />

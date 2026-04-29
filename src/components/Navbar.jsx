@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { TICKER_ITEMS, getTodayMatches, getLiveMatches, formatTime, searchEntities } from "../services/api";
 import styles from "./Navbar.module.css";
-import AuthModal from "./AuthModal";
+import { useAuth } from "../services/auth.jsx";
 
 const WIKIS = [
   { id: "valorant", label: "VALORANT" },
@@ -19,6 +19,7 @@ const NAV_LINKS = [
   { label: "Matches",     to: "/matches" },
   { label: "News",        to: "/news" },
   { label: "Transfers",   to: "/transfers" },
+  { label: "Forum",       to: "/forum" },
 ];
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -350,15 +351,56 @@ function DropdownRow({ match, navigate }) {
   );
 }
 
+// ── User Menu (signed-in) ─────────────────────────────────────────────────────
+function UserMenu({ user, onSignOut }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [open]);
+
+  const initial = user.username[0]?.toUpperCase() || "?";
+
+  return (
+    <div className={styles.userMenu} ref={ref}>
+      <button className={styles.userBtn} onClick={() => setOpen(o => !o)} aria-label="Account menu">
+        <span className={styles.userAvatar}>{initial}</span>
+        <span className={styles.userName}>{user.username}</span>
+        <span className={styles.userCaret}>▾</span>
+      </button>
+      {open && (
+        <div className={styles.userDropdown}>
+          <div className={styles.userInfo}>
+            <span className={styles.userInfoName}>{user.username}</span>
+            <span className={styles.userInfoEmail}>{user.email}</span>
+          </div>
+          <button
+            className={styles.userMenuItem}
+            onClick={() => { setOpen(false); onSignOut(); }}
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Navbar ────────────────────────────────────────────────────────────────
 export default function Navbar({ activeWiki, onWikiChange, activeRegion = "All", onRegionChange }) {
+  const { user, openAuth: openAuthCtx, signOut } = useAuth();
   const [menuOpen, setMenuOpen]       = useState(false);
   const [matchesOpen, setMatchesOpen] = useState(false);
   const [scrolled, setScrolled]       = useState(false);
-  const [authMode, setAuthMode]       = useState(null);
   const closeTimer                    = useRef(null);
 
-  const openAuth = (mode) => { setAuthMode(mode); setMenuOpen(false); };
+  const openAuth = (mode) => { openAuthCtx(mode); setMenuOpen(false); };
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 4);
@@ -378,6 +420,7 @@ export default function Navbar({ activeWiki, onWikiChange, activeRegion = "All",
     { label: "Players",     to: "/players" },
     { label: "News",        to: "/news" },
     { label: "Transfers",   to: "/transfers" },
+    { label: "Forum",       to: "/forum" },
   ];
 
   return (
@@ -411,10 +454,16 @@ export default function Navbar({ activeWiki, onWikiChange, activeRegion = "All",
           <SearchBox variant="desktop" />
 
 
-          <div className={styles.authBtns}>
-            <button className={styles.loginBtn} onClick={() => openAuth("signin")}>Sign In</button>
-            <button className={styles.registerBtn} onClick={() => openAuth("register")}>Register</button>
-          </div>
+          {user ? (
+            <div className={styles.authBtns}>
+              <UserMenu user={user} onSignOut={signOut} />
+            </div>
+          ) : (
+            <div className={styles.authBtns}>
+              <button className={styles.loginBtn} onClick={() => openAuth("signin")}>Sign In</button>
+              <button className={styles.registerBtn} onClick={() => openAuth("register")}>Register</button>
+            </div>
+          )}
 
           <button className={styles.hamburger} onClick={() => setMenuOpen(v => !v)} aria-label="Menu">
             {menuOpen ? <IconClose /> : <IconMenu />}
@@ -460,20 +509,31 @@ export default function Navbar({ activeWiki, onWikiChange, activeRegion = "All",
               ))}
             </ul>
 
-            <div className={styles.mobileAuth}>
-              <button className={styles.loginBtn} onClick={() => openAuth("signin")}>Sign In</button>
-              <button className={styles.registerBtn} onClick={() => openAuth("register")}>Register</button>
-            </div>
+            {user ? (
+              <div className={styles.mobileUser}>
+                <div className={styles.mobileUserInfo}>
+                  <span className={styles.userAvatar}>{user.username[0]?.toUpperCase()}</span>
+                  <div className={styles.mobileUserText}>
+                    <span className={styles.userInfoName}>{user.username}</span>
+                    <span className={styles.userInfoEmail}>{user.email}</span>
+                  </div>
+                </div>
+                <button
+                  className={styles.loginBtn}
+                  onClick={() => { signOut(); setMenuOpen(false); }}
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <div className={styles.mobileAuth}>
+                <button className={styles.loginBtn} onClick={() => openAuth("signin")}>Sign In</button>
+                <button className={styles.registerBtn} onClick={() => openAuth("register")}>Register</button>
+              </div>
+            )}
           </div>
         )}
       </nav>
-
-      <AuthModal
-        open={authMode !== null}
-        mode={authMode}
-        onClose={() => setAuthMode(null)}
-        onSwitchMode={setAuthMode}
-      />
     </>
   );
 }
