@@ -169,43 +169,104 @@
   flex-shrink: 0;
 }
 
-/* Games */
+/* Games — dikey satır listesi */
 .games {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.game {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
+  flex-direction: column;
+  gap: 2px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* Tek oyun satırı */
+.gameRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px;
+  border-left: 2px solid transparent;
   font-size: 11px;
+  transition: background 0.1s;
+}
+.gameRow:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+}
+
+/* Sol = team1 kazandı, Sağ = team2 kazandı */
+.gameRow {
+  border-left:  2px solid transparent;
+  border-right: 2px solid transparent;
+}
+.gameRowWin1 { border-left-color:  var(--text-1); }
+.gameRowWin2 { border-right-color: var(--text-1); }
+
+/* G1 G2 G3 numara */
+.gameNum {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--text-4);
+  letter-spacing: 0.06em;
+  min-width: 16px;
   flex-shrink: 0;
 }
 
-.gameWin1 { border-left: 2px solid var(--text-1); }
-.gameWin2 { border-right: 2px solid var(--text-1); }
-
+/* Map adı — kalan tüm alanı kaplar */
 .mapName {
+  flex: 1;
   font-weight: 700;
   color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
+/* Round skoru (13–7) */
 .mapScore {
+  font-size: 12px;
   font-weight: 800;
   color: var(--text-1);
   font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  min-width: 36px;
+  text-align: right;
 }
 
+/* Süre (40:34) */
 .mapLen {
-  color: var(--text-4);
   font-size: 10px;
+  color: var(--text-4);
+  flex-shrink: 0;
+  min-width: 36px;
+  text-align: right;
 }
+
+/* Kazanan takım adı (CS2/VAL satır sonu) */
+.gameWinner {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 48px;
+  text-align: right;
+}
+
+/* LoL: kazanan takım adı */
+.gameLoLWinner {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gameLoLWin  { color: var(--text-2); }
+.gameLoLLose { color: var(--text-2); }
+
 
 /* Foot */
 .foot {

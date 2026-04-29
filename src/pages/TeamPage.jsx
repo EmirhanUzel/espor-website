@@ -90,7 +90,7 @@ export default function TeamPage({ wiki }) {
               <h2 className={styles.cardTitle}>Current Roster</h2>
               <div className={styles.squadList}>
                 {team.squad.map((member, i) => (
-                  <div key={member.id} className={styles.squadRow} onClick={() => navigate(`/oyuncu/${member.id}`)}>
+                  <div key={member.id} className={styles.squadRow} onClick={() => navigate(`/player/${member.id}`)}>
                     <span className={styles.squadIdx}>{i + 1}</span>
                     <div className={styles.squadAvatar}>{member.id[0]}</div>
                     <div className={styles.squadInfo}>
@@ -133,7 +133,7 @@ export default function TeamPage({ wiki }) {
                   const opponent = isOpp1 ? opp2?.name : opp1?.name;
                   const won = (isOpp1 && match.winner === "1") || (!isOpp1 && match.winner === "2");
                   return (
-                    <div key={match.id} className={styles.matchRow} onClick={() => navigate(`/mac/${match.id}`)}>
+                    <div key={match.id} className={styles.matchRow} onClick={() => navigate(`/match/${match.id}`)}>
                       <span className={won ? styles.matchW : styles.matchL}>{won ? "W" : "L"}</span>
                       <span className={styles.matchOpp}>{opponent}</span>
                       <span className={styles.matchScore}>{myScore} – {theirScore}</span>

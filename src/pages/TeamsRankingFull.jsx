@@ -10,7 +10,7 @@ function RankBadge({ rank }) {
 }
 function TeamCell({ team }) {
   return (
-    <Link to={`/takim/${encodeURIComponent(team.name)}`} className={styles.teamCell}>
+    <Link to={`/team/${encodeURIComponent(team.name)}`} className={styles.teamCell}>
       {team.textlesslogourl
         ? <img src={team.textlesslogourl} alt={team.name} className={styles.teamLogo} />
         : <div className={styles.teamLogoFb}>{team.name[0]}</div>}
@@ -73,7 +73,7 @@ export default function TeamsRankingFull({ type }) {
     <main>
       <div className={styles.hero}>
         <div className="wrap">
-          <Link to="/takimlar" className={styles.back}>← Team Rankings</Link>
+          <Link to="/teams" className={styles.back}>← Team Rankings</Link>
           <h1 className={styles.heroTitle}>{title}</h1>
           <p className={styles.heroSub}>{subtitle}</p>
           <p className={styles.heroCount}>{sorted.length} teams</p>

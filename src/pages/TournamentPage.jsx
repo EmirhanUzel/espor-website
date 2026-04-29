@@ -5,6 +5,7 @@ import {
 } from "../services/api";
 import MatchCard from "../components/MatchCard";
 import GroupStandings from "../components/GroupStandings";
+import TournamentBracket from "../components/TournamentBracket";
 import styles from "./TournamentPage.module.css";
 
 const COUNTRY_FLAG = { fr:"🇫🇷", de:"🇩🇪", us:"🇺🇸", kr:"🇰🇷", cn:"🇨🇳", mt:"🇲🇹", gb:"🇬🇧", sg:"🇸🇬" };
@@ -80,10 +81,8 @@ export default function TournamentPage({ wiki }) {
 
         {bracketMatches.length > 0 && (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Bracket Stage</h2>
-            <div className={styles.matchGrid}>
-              {bracketMatches.map(m => <MatchCard key={m.id} match={m} />)}
-            </div>
+            <h2 className={styles.sectionTitle}>Bracket</h2>
+            <TournamentBracket matches={bracketMatches} />
           </section>
         )}
 
@@ -120,7 +119,7 @@ export default function TournamentPage({ wiki }) {
               {prizeResults.map((r, i) => (
                 <div key={i}
                   className={`${styles.prizeRow} ${r.placement === "1" ? styles.prizeRowGold : ""}`}
-                  onClick={() => navigate(`/takim/${encodeURIComponent(r.opponentname)}`)}
+                  onClick={() => navigate(`/team/${encodeURIComponent(r.opponentname)}`)}
                 >
                   <span className={styles.prizeColSmall}><span className={styles.placement}>{r.placement}</span></span>
                   <span className={styles.prizeColTeam}>

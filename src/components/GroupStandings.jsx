@@ -40,7 +40,7 @@ export default function GroupStandings({ groups }) {
                       <span className={styles.pos}>{entry.placement}</span>
                     </td>
                     <td className={styles.tdTeam}>
-                      <Link to={`/takim/${encodeURIComponent(entry.opponentname)}`} className={styles.teamLink}>
+                      <Link to={`/team/${encodeURIComponent(entry.opponentname)}`} className={styles.teamLink}>
                         <span className={styles.teamName}>{entry.opponentname}</span>
                         <PlacementChange change={entry.placementchange} />
                       </Link>

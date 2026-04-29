@@ -188,7 +188,7 @@ function MatchRow({ match }) {
   const winnerIdx  = match.winner != null ? parseInt(match.winner, 10) - 1 : -1;
 
   return (
-    <Link to={`/mac/${match.id}`} className={styles.upcomingRow}>
+    <Link to={`/match/${match.id}`} className={styles.upcomingRow}>
       <div className={styles.upcomingLeft}>
         {isLive
           ? <span className={styles.liveIndicator}>● LIVE</span>

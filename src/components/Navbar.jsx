@@ -13,12 +13,12 @@ const WIKIS = [
 const REGIONS = ["All", "Americas", "Europe", "Pacific", "Korea", "Asia"];
 
 const NAV_LINKS = [
-  { label: "Tournaments", to: "/turnuva/VALORANT_Champions_2025" },
-  { label: "Teams",       to: "/takimlar" },
-  { label: "Players",     to: "/oyuncular" },
-  { label: "Rankings",    to: "/turnuva/VALORANT_Champions_2025" },
-  { label: "News",        to: "/haberler" },
-  { label: "Transfers",   to: "/transferler" },
+  { label: "Tournaments", to: "/tournaments" },
+  { label: "Teams",       to: "/teams" },
+  { label: "Players",     to: "/players" },
+  { label: "Matches",     to: "/matches" },
+  { label: "News",        to: "/news" },
+  { label: "Transfers",   to: "/transfers" },
 ];
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -98,7 +98,7 @@ function ContextBar({ activeWiki, onWikiChange, activeRegion, onRegionChange }) 
         </div>
 
         <div className={styles.contextRight}>
-          <Link to="/maclar" className={styles.livePill}>
+          <Link to="/matches" className={styles.livePill}>
             <span className={styles.liveDot} />
             {liveCount} Live
           </Link>
@@ -314,7 +314,7 @@ function MatchesDropdown() {
       )}
 
       <div className={styles.mdFooter}>
-        <Link to="/maclar" className={styles.mdSeeAll}>See all matches →</Link>
+        <Link to="/matches" className={styles.mdSeeAll}>See all matches →</Link>
       </div>
     </div>
   );
@@ -326,7 +326,7 @@ function DropdownRow({ match, navigate }) {
   const isFinished = match.finished === 1;
 
   return (
-    <div className={styles.mdRow} onClick={() => navigate(`/mac/${match.id}`)}>
+    <div className={styles.mdRow} onClick={() => navigate(`/match/${match.id}`)}>
       <div className={styles.mdRowStatus}>
         {isLive     && <span className={styles.mdRowLive}>●</span>}
         {!isLive    && <span className={styles.mdRowTime}>{formatTime(match.date)}</span>}
@@ -372,13 +372,12 @@ export default function Navbar({ activeWiki, onWikiChange, activeRegion = "All",
   const handleRegionChange = onRegionChange || (() => {});
 
   const allNavLinks = [
-    { label: "Tournaments", to: "/turnuva/VALORANT_Champions_2025" },
-    { label: "Matches",     to: "/maclar", dropdown: true },
-    { label: "Teams",       to: "/takimlar" },
-    { label: "Players",     to: "/oyuncular" },
-    { label: "Rankings",    to: "/turnuva/VALORANT_Champions_2025" },
-    { label: "News",        to: "/haberler" },
-    { label: "Transfers",   to: "/transferler" },
+    { label: "Tournaments", to: "/tournaments" },
+    { label: "Matches",     to: "/matches", dropdown: true },
+    { label: "Teams",       to: "/teams" },
+    { label: "Players",     to: "/players" },
+    { label: "News",        to: "/news" },
+    { label: "Transfers",   to: "/transfers" },
   ];
 
   return (

@@ -48,7 +48,7 @@ function fmtViews(n) {
 
 function PlayerRow({ rank, player, metric }) {
   return (
-    <Link to={`/oyuncu/${player.id}`} className={styles.row}>
+    <Link to={`/player/${player.id}`} className={styles.row}>
       <span className={`${styles.rank} ${rank <= 3 ? styles[`rank${rank}`] : ""}`}>#{rank}</span>
 
       <div className={styles.avatar}>{player.id[0].toUpperCase()}</div>

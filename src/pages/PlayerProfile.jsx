@@ -319,7 +319,7 @@ export default function PlayerProfile() {
                   <span className={styles.recentPeriodBadge}>
                     {player.recentstats.period} · {player.recentstats.games} {player.recentstats.gamesLabel}
                   </span>
-                  <Link to={`/oyuncu/${player.id}/istatistikler`} className={styles.detailLink}>
+                  <Link to={`/player/${player.id}/stats`} className={styles.detailLink}>
                     View Details ↗
                   </Link>
                 </div>
@@ -341,7 +341,7 @@ export default function PlayerProfile() {
                   const myScore = match.match2opponents[pIdx]?.score ?? 0;
                   const oppScore = opp?.score ?? 0;
                   return (
-                    <Link key={match.id} to={`/mac/${match.id}`} className={styles.matchRow}>
+                    <Link key={match.id} to={`/match/${match.id}`} className={styles.matchRow}>
                       <span className={`${styles.matchResult} ${isWin ? styles.matchWin : styles.matchLoss}`}>
                         {isWin ? "W" : "L"}
                       </span>

@@ -7,7 +7,7 @@ const COUNTRY_FLAG = { fr:"🇫🇷", de:"🇩🇪", us:"🇺🇸", kr:"🇰🇷
 export default function TournamentCard({ tournament: t }) {
   const flag = COUNTRY_FLAG[t.locations?.country?.toLowerCase()] || "🌐";
   return (
-    <Link to={`/turnuva/${t.id}`} className={styles.card}>
+    <Link to={`/tournament/${t.id}`} className={styles.card}>
       <div className={styles.top}>
         <span className={`${styles.tier} ${t.liquipediatier === "1" ? styles.tierS : t.liquipediatier === "2" ? styles.tierA : styles.tierB}`}>
           {tierLabel(t.liquipediatier)}{t.liquipediatiertype ? ` · ${t.liquipediatiertype}` : ""}

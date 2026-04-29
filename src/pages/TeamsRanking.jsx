@@ -67,7 +67,7 @@ function FormDots({ form }) {
 
 function TeamCell({ team }) {
   return (
-    <Link to={`/takim/${encodeURIComponent(team.name)}`} className={styles.teamCell}>
+    <Link to={`/team/${encodeURIComponent(team.name)}`} className={styles.teamCell}>
       {team.textlesslogourl
         ? <img src={team.textlesslogourl} alt={team.name} className={styles.teamLogo} />
         : <div className={styles.teamLogoFb}>{team.name[0]}</div>}
@@ -177,7 +177,7 @@ function FormSection({ teams }) {
       </div>
       <div className={styles.formCards}>
         {withForm.map((team, i) => (
-          <Link key={team.name} to={`/takim/${encodeURIComponent(team.name)}`} className={styles.formCard}>
+          <Link key={team.name} to={`/team/${encodeURIComponent(team.name)}`} className={styles.formCard}>
             <div className={styles.formCardRank}>#{i + 1}</div>
             <div className={styles.formCardTeam}>
               {team.textlesslogourl
@@ -233,7 +233,7 @@ export default function TeamsRanking({ wiki }) {
                 <h2 className={styles.sectionTitle}>Official Standings</h2>
                 <p className={styles.sectionSub}>{officialLabel}</p>
               </div>
-              <Link to={`/takimlar/resmi?wiki=${wiki}`} className={styles.inceleBtn}>View All →</Link>
+              <Link to={`/teams/official?wiki=${wiki}`} className={styles.inceleBtn}>View All →</Link>
             </div>
             <CompactOfficialTable teams={enriched} shortLabel={officialShort} />
           </section>
@@ -245,7 +245,7 @@ export default function TeamsRanking({ wiki }) {
                 <h2 className={styles.sectionTitle}>eSPORMAX Rankings</h2>
                 <p className={styles.sectionSub}>Earnings · Roster MV · Tournaments · Form</p>
               </div>
-              <Link to={`/takimlar/espormax?wiki=${wiki}`} className={styles.inceleBtn}>View All →</Link>
+              <Link to={`/teams/espormax?wiki=${wiki}`} className={styles.inceleBtn}>View All →</Link>
             </div>
             <CompactESMTable teams={enriched} />
           </section>

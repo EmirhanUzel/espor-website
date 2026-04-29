@@ -5,7 +5,8 @@
       "PowerShell(npm run *)",
       "Bash(npx --no-install eslint src/pages/MatchPage.jsx src/services/api.js)",
       "Bash(node --check src/pages/MatchPage.jsx)",
-      "Bash(timeout 30 npx vite build)"
+      "Bash(timeout 30 npx vite build)",
+      "Bash(grep -v \"^--$\")"
     ]
   }
 }

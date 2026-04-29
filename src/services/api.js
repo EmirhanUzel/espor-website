@@ -1559,7 +1559,7 @@ export function searchEntities(query, perCategory = 5) {
       wiki: p.wiki,
       wikiShort: WIKI_SHORT[p.wiki] || "",
       flag: getFlag(p.nationality),
-      to: `/oyuncu/${encodeURIComponent(p.id)}`,
+      to: `/player/${encodeURIComponent(p.id)}`,
     }));
 
   const teamsRaw = TEAMS.filter(t => t.name.toLowerCase().includes(q));
@@ -1577,7 +1577,7 @@ export function searchEntities(query, perCategory = 5) {
       wiki: t.wiki,
       wikiShort: WIKI_SHORT[t.wiki] || "",
       logo: t.textlesslogourl || t.logourl || null,
-      to: `/takim/${encodeURIComponent(t.name)}`,
+      to: `/team/${encodeURIComponent(t.name)}`,
     });
     if (teams.length >= perCategory) break;
   }
@@ -1593,7 +1593,7 @@ export function searchEntities(query, perCategory = 5) {
       wiki: t.wiki,
       wikiShort: WIKI_SHORT[t.wiki] || "",
       icon: t.iconurl || null,
-      to: `/turnuva/${encodeURIComponent(t.id)}`,
+      to: `/tournament/${encodeURIComponent(t.id)}`,
     }));
 
   return { players, teams, tournaments, total: players.length + teams.length + tournaments.length };

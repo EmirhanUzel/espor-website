@@ -142,7 +142,7 @@ export default function PlayerStats() {
     return (
       <div className="wrap" style={{ paddingTop: 80, textAlign: "center" }}>
         <h2 style={{ color: "var(--text-3)" }}>İstatistik bulunamadı: {id}</h2>
-        <Link to={`/oyuncu/${id}`} style={{ color: "var(--text-1)", fontWeight: 700 }}>← Profile dön</Link>
+        <Link to={`/player/${id}`} style={{ color: "var(--text-1)", fontWeight: 700 }}>← Profile dön</Link>
       </div>
     );
   }
@@ -179,7 +179,7 @@ export default function PlayerStats() {
       {/* Hero header */}
       <div className={styles.hero}>
         <div className="wrap">
-          <Link to={`/oyuncu/${id}`} className={styles.back}>← {player.id}</Link>
+          <Link to={`/player/${id}`} className={styles.back}>← {player.id}</Link>
           <h1 className={styles.title}>İstatistikler</h1>
           {player.recentstats && (
             <p className={styles.period}>

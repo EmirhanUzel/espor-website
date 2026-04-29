@@ -7,6 +7,7 @@ import TeamPage from "./pages/TeamPage";
 import TournamentPage from "./pages/TournamentPage";
 import MatchPage from "./pages/MatchPage";
 import MatchesPage from "./pages/MatchesPage";
+import TournamentsPage from "./pages/TournamentsPage";
 import NewsPage from "./pages/NewsPage";
 import TransfersPage from "./pages/TransfersPage";
 import PlayerStats from "./pages/PlayerStats";
@@ -52,18 +53,19 @@ export default function App() {
       <div style={{ flex: 1 }}>
         <Routes>
           <Route path="/"              element={<Home wiki={wiki} region={region} />} />
-          <Route path="/turnuva/:id"   element={<TournamentPage wiki={wiki} />} />
-          <Route path="/maclar"          element={<MatchesPage />} />
-          <Route path="/mac/:id"       element={<MatchPage />} />
-          <Route path="/takimlar"                element={<TeamsRanking wiki={wiki} />} />
-          <Route path="/takimlar/resmi"         element={<TeamsRankingFull type="official" />} />
-          <Route path="/takimlar/espormax"      element={<TeamsRankingFull type="esm" />} />
-          <Route path="/oyuncular"              element={<PlayersRanking wiki={wiki} />} />
-          <Route path="/oyuncu/:id"             element={<PlayerProfile />} />
-          <Route path="/oyuncu/:id/istatistikler" element={<PlayerStats />} />
-          <Route path="/takim/:name"   element={<TeamPage wiki={wiki} />} />
-          <Route path="/haberler"      element={<NewsPage wiki={wiki} />} />
-          <Route path="/transferler"   element={<TransfersPage />} />
+          <Route path="/tournaments"         element={<TournamentsPage />} />
+          <Route path="/tournament/:id"    element={<TournamentPage wiki={wiki} />} />
+          <Route path="/matches"           element={<MatchesPage />} />
+          <Route path="/match/:id"         element={<MatchPage />} />
+          <Route path="/teams"             element={<TeamsRanking wiki={wiki} />} />
+          <Route path="/teams/official"    element={<TeamsRankingFull type="official" />} />
+          <Route path="/teams/espormax"    element={<TeamsRankingFull type="esm" />} />
+          <Route path="/players"           element={<PlayersRanking wiki={wiki} />} />
+          <Route path="/player/:id"        element={<PlayerProfile />} />
+          <Route path="/player/:id/stats"  element={<PlayerStats />} />
+          <Route path="/team/:name"        element={<TeamPage wiki={wiki} />} />
+          <Route path="/news"              element={<NewsPage wiki={wiki} />} />
+          <Route path="/transfers"         element={<TransfersPage />} />
         </Routes>
       </div>
       <Footer />

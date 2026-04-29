@@ -173,7 +173,7 @@ export default function MatchPage() {
           <div className={styles.heroBreadcrumb}>
             <Link to="/" className={styles.breadLink}>Home</Link>
             <span className={styles.breadSep}>›</span>
-            <Link to={`/turnuva/${match.tournament.replace(/ /g, "_")}`} className={styles.breadLink}>
+            <Link to={`/tournament/${match.tournament.replace(/ /g, "_")}`} className={styles.breadLink}>
               {match.tournament}
             </Link>
             <span className={styles.breadSep}>›</span>
@@ -199,7 +199,7 @@ export default function MatchPage() {
           <div className={styles.heroMatchup}>
             <div
               className={`${styles.heroTeam} ${winnerIdx === 0 ? styles.heroWinner : winnerIdx !== -1 ? styles.heroLoser : ""}`}
-              onClick={() => navigate(`/takim/${encodeURIComponent(opp1?.name)}`)}
+              onClick={() => navigate(`/team/${encodeURIComponent(opp1?.name)}`)}
             >
               <div className={styles.heroTeamAvatar}>{opp1?.name?.[0] || "?"}</div>
               <span className={styles.heroTeamName}>{opp1?.name}</span>
@@ -221,7 +221,7 @@ export default function MatchPage() {
 
             <div
               className={`${styles.heroTeam} ${styles.heroTeamRight} ${winnerIdx === 1 ? styles.heroWinner : winnerIdx !== -1 ? styles.heroLoser : ""}`}
-              onClick={() => navigate(`/takim/${encodeURIComponent(opp2?.name)}`)}
+              onClick={() => navigate(`/team/${encodeURIComponent(opp2?.name)}`)}
             >
               <div className={styles.heroTeamAvatar}>{opp2?.name?.[0] || "?"}</div>
               <span className={styles.heroTeamName}>{opp2?.name}</span>
@@ -303,7 +303,7 @@ export default function MatchPage() {
               {[opp1, opp2].map((opp, idx) => (
                 <div key={opp?.name}
                   className={`${styles.oppRow} ${winnerIdx === idx ? styles.oppWinner : ""}`}
-                  onClick={() => navigate(`/takim/${encodeURIComponent(opp?.name)}`)}>
+                  onClick={() => navigate(`/team/${encodeURIComponent(opp?.name)}`)}>
                   <div className={styles.oppAvatar}>{opp?.name?.[0]}</div>
                   <span className={styles.oppName}>{opp?.name}</span>
                   <span className={styles.oppType}>{opp?.type}</span>
