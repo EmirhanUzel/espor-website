@@ -188,9 +188,54 @@ export const MATCHES = [
       { type: "team", name: "NAVI", score: 2, match2players: [] },
       { type: "team", name: "G2 Esports", score: 0, match2players: [] },
     ],
+    veto: [
+      { type: "ban", team: "1", map: "Anubis" },
+      { type: "ban", team: "2", map: "Vertigo" },
+      { type: "pick", team: "1", map: "Mirage" },
+      { type: "pick", team: "2", map: "Inferno" },
+      { type: "ban", team: "1", map: "Ancient" },
+      { type: "ban", team: "2", map: "Nuke" },
+      { type: "decider", team: null, map: "Dust2" },
+    ],
     match2games: [
-      { map: "Mirage", scores: [16, 11], winner: "1", date: "2025-10-01 15:00:00", length: "42:30", vod: null },
-      { map: "Inferno", scores: [16, 12], winner: "1", date: "2025-10-01 17:00:00", length: "48:55", vod: null },
+      {
+        map: "Mirage", scores: [16, 11], winner: "1", date: "2025-10-01 15:00:00", length: "42:30", vod: null,
+        playerStats: {
+          team1: [
+            { name: "w0nderful", kills: 27, deaths: 14, adr: 96.2, kd: 1.93, swing: 13 },
+            { name: "Aleksib",   kills: 18, deaths: 16, adr: 71.4, kd: 1.13, swing:  2 },
+            { name: "iM",        kills: 21, deaths: 15, adr: 84.8, kd: 1.40, swing:  6 },
+            { name: "jL",        kills: 22, deaths: 17, adr: 88.0, kd: 1.29, swing:  5 },
+            { name: "b1t",       kills: 20, deaths: 18, adr: 78.6, kd: 1.11, swing:  2 },
+          ],
+          team2: [
+            { name: "NiKo",      kills: 22, deaths: 19, adr: 84.0, kd: 1.16, swing:  3 },
+            { name: "huNter-",   kills: 19, deaths: 20, adr: 72.4, kd: 0.95, swing: -1 },
+            { name: "m0NESY",    kills: 24, deaths: 18, adr: 88.6, kd: 1.33, swing:  6 },
+            { name: "HooXi",     kills: 11, deaths: 22, adr: 51.2, kd: 0.50, swing:-11 },
+            { name: "malbsMd",   kills: 16, deaths: 22, adr: 65.8, kd: 0.73, swing: -6 },
+          ],
+        },
+      },
+      {
+        map: "Inferno", scores: [16, 12], winner: "1", date: "2025-10-01 17:00:00", length: "48:55", vod: null,
+        playerStats: {
+          team1: [
+            { name: "w0nderful", kills: 25, deaths: 18, adr: 89.4, kd: 1.39, swing:  7 },
+            { name: "Aleksib",   kills: 17, deaths: 19, adr: 68.0, kd: 0.89, swing: -2 },
+            { name: "iM",        kills: 23, deaths: 17, adr: 86.5, kd: 1.35, swing:  6 },
+            { name: "jL",        kills: 24, deaths: 18, adr: 91.2, kd: 1.33, swing:  6 },
+            { name: "b1t",       kills: 22, deaths: 19, adr: 80.4, kd: 1.16, swing:  3 },
+          ],
+          team2: [
+            { name: "NiKo",      kills: 24, deaths: 20, adr: 86.2, kd: 1.20, swing:  4 },
+            { name: "huNter-",   kills: 18, deaths: 21, adr: 70.0, kd: 0.86, swing: -3 },
+            { name: "m0NESY",    kills: 25, deaths: 19, adr: 92.4, kd: 1.32, swing:  6 },
+            { name: "HooXi",     kills: 12, deaths: 22, adr: 48.0, kd: 0.55, swing:-10 },
+            { name: "malbsMd",   kills: 14, deaths: 22, adr: 62.4, kd: 0.64, swing: -8 },
+          ],
+        },
+      },
     ],
     wiki: "counterstrike",
   },
@@ -206,9 +251,54 @@ export const MATCHES = [
       { type: "team", name: "FaZe Clan", score: 0, match2players: [] },
       { type: "team", name: "G2 Esports", score: 2, match2players: [] },
     ],
+    veto: [
+      { type: "ban", team: "1", map: "Vertigo" },
+      { type: "ban", team: "2", map: "Anubis" },
+      { type: "pick", team: "1", map: "Ancient" },
+      { type: "pick", team: "2", map: "Nuke" },
+      { type: "ban", team: "1", map: "Dust2" },
+      { type: "ban", team: "2", map: "Inferno" },
+      { type: "decider", team: null, map: "Mirage" },
+    ],
     match2games: [
-      { map: "Ancient", scores: [12, 16], winner: "2", date: "2025-09-29 15:00:00", length: "44:20", vod: null },
-      { map: "Nuke", scores: [10, 16], winner: "2", date: "2025-09-29 17:00:00", length: "40:05", vod: null },
+      {
+        map: "Ancient", scores: [12, 16], winner: "2", date: "2025-09-29 15:00:00", length: "44:20", vod: null,
+        playerStats: {
+          team1: [
+            { name: "broky",   kills: 19, deaths: 21, adr: 74.0, kd: 0.90, swing: -2 },
+            { name: "rain",    kills: 14, deaths: 22, adr: 60.4, kd: 0.64, swing: -8 },
+            { name: "ropz",    kills: 22, deaths: 19, adr: 86.2, kd: 1.16, swing:  3 },
+            { name: "Twistzz", kills: 17, deaths: 20, adr: 70.8, kd: 0.85, swing: -3 },
+            { name: "frozen",  kills: 16, deaths: 21, adr: 68.0, kd: 0.76, swing: -5 },
+          ],
+          team2: [
+            { name: "NiKo",    kills: 24, deaths: 16, adr: 92.4, kd: 1.50, swing:  8 },
+            { name: "huNter-", kills: 20, deaths: 18, adr: 80.6, kd: 1.11, swing:  2 },
+            { name: "m0NESY",  kills: 26, deaths: 17, adr: 98.2, kd: 1.53, swing:  9 },
+            { name: "HooXi",   kills: 13, deaths: 18, adr: 56.4, kd: 0.72, swing: -5 },
+            { name: "malbsMd", kills: 18, deaths: 18, adr: 76.0, kd: 1.00, swing:  0 },
+          ],
+        },
+      },
+      {
+        map: "Nuke", scores: [10, 16], winner: "2", date: "2025-09-29 17:00:00", length: "40:05", vod: null,
+        playerStats: {
+          team1: [
+            { name: "broky",   kills: 18, deaths: 20, adr: 71.6, kd: 0.90, swing: -2 },
+            { name: "rain",    kills: 12, deaths: 22, adr: 54.8, kd: 0.55, swing:-10 },
+            { name: "ropz",    kills: 21, deaths: 19, adr: 82.0, kd: 1.11, swing:  2 },
+            { name: "Twistzz", kills: 16, deaths: 21, adr: 67.2, kd: 0.76, swing: -5 },
+            { name: "frozen",  kills: 14, deaths: 21, adr: 60.4, kd: 0.67, swing: -7 },
+          ],
+          team2: [
+            { name: "NiKo",    kills: 25, deaths: 14, adr: 96.8, kd: 1.79, swing: 11 },
+            { name: "huNter-", kills: 19, deaths: 16, adr: 78.0, kd: 1.19, swing:  3 },
+            { name: "m0NESY",  kills: 23, deaths: 15, adr: 90.2, kd: 1.53, swing:  8 },
+            { name: "HooXi",   kills: 12, deaths: 16, adr: 52.6, kd: 0.75, swing: -4 },
+            { name: "malbsMd", kills: 18, deaths: 16, adr: 74.4, kd: 1.13, swing:  2 },
+          ],
+        },
+      },
     ],
     wiki: "counterstrike",
   },
@@ -267,6 +357,159 @@ export const MATCHES = [
     match2games: [
       { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-10-15 09:00:00", length: "28:33", vod: null },
     ],
+    wiki: "leagueoflegends",
+  },
+
+  // ── TODAY'S MATCHES (2026-04-29) ──────────────────────────────────────────
+  // LIVE — VALORANT
+  {
+    id: "VCT2026K_QF1",
+    tournament: "VCT 2026 Kickoff",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 3, winner: null, finished: 0,
+    date: "2026-04-29 13:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/VALORANT" },
+    match2bracketdata: { type: "bracket", header: "Quarterfinal" },
+    match2opponents: [
+      { type: "team", name: "NRG", score: 1, match2players: [] },
+      { type: "team", name: "Paper Rex", score: 0, match2players: [] },
+    ],
+    match2games: [
+      { map: "Ascent", scores: [13, 8], winner: "1", date: "2026-04-29 13:00:00", length: "38:22", vod: null },
+    ],
+    wiki: "valorant",
+  },
+  // LIVE — CS2
+  {
+    id: "BLAST26_QF1",
+    tournament: "BLAST Premier Spring 2026",
+    liquipediatier: "2", liquipediatiertype: "",
+    bestof: 3, winner: null, finished: 0,
+    date: "2026-04-29 14:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/BLASTPremier" },
+    match2bracketdata: { type: "bracket", header: "Quarterfinal" },
+    match2opponents: [
+      { type: "team", name: "FaZe Clan", score: 0, match2players: [] },
+      { type: "team", name: "NAVI", score: 1, match2players: [] },
+    ],
+    veto: [
+      { type: "ban", team: "1", map: "Vertigo" },
+      { type: "ban", team: "2", map: "Anubis" },
+      { type: "pick", team: "1", map: "Mirage" },
+      { type: "pick", team: "2", map: "Inferno" },
+      { type: "ban", team: "1", map: "Ancient" },
+      { type: "ban", team: "2", map: "Nuke" },
+      { type: "decider", team: null, map: "Dust2" },
+    ],
+    match2games: [
+      {
+        map: "Mirage", scores: [9, 16], winner: "2", date: "2026-04-29 14:00:00", length: "41:05", vod: null,
+        playerStats: {
+          team1: [
+            { name: "broky",   kills: 17, deaths: 22, adr: 70.4, kd: 0.77, swing: -5 },
+            { name: "rain",    kills: 13, deaths: 22, adr: 58.2, kd: 0.59, swing: -9 },
+            { name: "ropz",    kills: 22, deaths: 19, adr: 84.6, kd: 1.16, swing:  3 },
+            { name: "Twistzz", kills: 16, deaths: 21, adr: 68.0, kd: 0.76, swing: -5 },
+            { name: "frozen",  kills: 14, deaths: 22, adr: 60.8, kd: 0.64, swing: -8 },
+          ],
+          team2: [
+            { name: "w0nderful", kills: 26, deaths: 14, adr: 95.4, kd: 1.86, swing: 12 },
+            { name: "Aleksib",   kills: 17, deaths: 16, adr: 70.0, kd: 1.06, swing:  1 },
+            { name: "iM",        kills: 22, deaths: 15, adr: 86.2, kd: 1.47, swing:  7 },
+            { name: "jL",        kills: 23, deaths: 17, adr: 89.6, kd: 1.35, swing:  6 },
+            { name: "b1t",       kills: 18, deaths: 17, adr: 76.4, kd: 1.06, swing:  1 },
+          ],
+        },
+      },
+    ],
+    wiki: "counterstrike",
+  },
+  // COMPLETED TODAY — VALORANT
+  {
+    id: "VCT2026K_R2_1",
+    tournament: "VCT 2026 Kickoff",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 3, winner: "1", finished: 1,
+    date: "2026-04-29 09:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/VALORANT" },
+    match2bracketdata: { type: "bracket", header: "Round of 16" },
+    match2opponents: [
+      { type: "team", name: "Fnatic", score: 2, match2players: [] },
+      { type: "team", name: "Team Liquid", score: 0, match2players: [] },
+    ],
+    match2games: [
+      { map: "Haven", scores: [13, 7], winner: "1", date: "2026-04-29 09:00:00", length: "39:12", vod: null },
+      { map: "Sunset", scores: [13, 9], winner: "1", date: "2026-04-29 10:30:00", length: "44:05", vod: null },
+    ],
+    wiki: "valorant",
+  },
+  // COMPLETED TODAY — LoL
+  {
+    id: "LCK26SPL_SF1",
+    tournament: "LCK Spring 2026 Playoffs",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 5, winner: "1", finished: 1,
+    date: "2026-04-29 10:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/lck" },
+    match2bracketdata: { type: "bracket", header: "Semi-Final" },
+    match2opponents: [
+      { type: "team", name: "T1", score: 3, match2players: [] },
+      { type: "team", name: "Gen.G", score: 1, match2players: [] },
+    ],
+    match2games: [
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2026-04-29 10:00:00", length: "28:44", vod: null },
+      { map: "Summoner's Rift", scores: [0, 1], winner: "2", date: "2026-04-29 11:15:00", length: "35:20", vod: null },
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2026-04-29 12:40:00", length: "31:05", vod: null },
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2026-04-29 13:50:00", length: "26:30", vod: null },
+    ],
+    wiki: "leagueoflegends",
+  },
+  // UPCOMING — VALORANT
+  {
+    id: "VCT2026K_QF2",
+    tournament: "VCT 2026 Kickoff",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 3, winner: null, finished: null,
+    date: "2026-04-29 17:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/VALORANT" },
+    match2bracketdata: { type: "bracket", header: "Quarterfinal" },
+    match2opponents: [
+      { type: "team", name: "Sentinels", score: null, match2players: [] },
+      { type: "team", name: "100 Thieves", score: null, match2players: [] },
+    ],
+    match2games: [],
+    wiki: "valorant",
+  },
+  // UPCOMING — CS2
+  {
+    id: "BLAST26_QF2",
+    tournament: "BLAST Premier Spring 2026",
+    liquipediatier: "2", liquipediatiertype: "",
+    bestof: 3, winner: null, finished: null,
+    date: "2026-04-29 19:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/BLASTPremier" },
+    match2bracketdata: { type: "bracket", header: "Quarterfinal" },
+    match2opponents: [
+      { type: "team", name: "G2 Esports", score: null, match2players: [] },
+      { type: "team", name: "Vitality", score: null, match2players: [] },
+    ],
+    match2games: [],
+    wiki: "counterstrike",
+  },
+  // UPCOMING — LoL
+  {
+    id: "LCK26SPL_SF2",
+    tournament: "LCK Spring 2026 Playoffs",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 5, winner: null, finished: null,
+    date: "2026-04-29 20:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/lck" },
+    match2bracketdata: { type: "bracket", header: "Semi-Final" },
+    match2opponents: [
+      { type: "team", name: "G2 Esports", score: null, match2players: [] },
+      { type: "team", name: "KT Rolster", score: null, match2players: [] },
+    ],
+    match2games: [],
     wiki: "leagueoflegends",
   },
 ];
@@ -1263,4 +1506,95 @@ export function getPrizeResults(wiki = "valorant") {
 }
 export function getGuests(wiki = "valorant") {
   return GUESTS.filter(g => g.wiki === wiki);
+}
+export function getTodayMatches(wiki = null) {
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  return MATCHES.filter(m => {
+    if (!m.date || m.date.startsWith("0000")) return false;
+    const dateMatch = m.date.slice(0, 10) === today;
+    const wikiMatch = wiki === null || m.wiki === wiki;
+    return dateMatch && wikiMatch;
+  });
+}
+export function getMatchesByDate(dateStr, wiki = null) {
+  return MATCHES.filter(m => {
+    if (!m.date || m.date.startsWith("0000")) return false;
+    const dateMatch = m.date.slice(0, 10) === dateStr;
+    const wikiMatch = wiki === null || m.wiki === wiki;
+    return dateMatch && wikiMatch;
+  });
+}
+export function getLiveMatches() {
+  return MATCHES.filter(m => m.finished === 0);
+}
+export function formatTime(dateStr) {
+  if (!dateStr || dateStr.startsWith("0000")) return "—";
+  const d = new Date(dateStr.replace(" ", "T"));
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
+const WIKI_SHORT = {
+  valorant: "VAL",
+  counterstrike: "CS2",
+  leagueoflegends: "LoL",
+};
+
+export function searchEntities(query, perCategory = 5) {
+  const q = query.trim().toLowerCase();
+  if (!q) return { players: [], teams: [], tournaments: [], total: 0 };
+
+  const players = PLAYERS
+    .filter(p =>
+      p.id.toLowerCase().includes(q) ||
+      (p.name && p.name.toLowerCase().includes(q))
+    )
+    .slice(0, perCategory)
+    .map(p => ({
+      kind: "player",
+      id: p.id,
+      title: p.id,
+      subtitle: [p.name, p.teampagename].filter(Boolean).join(" · "),
+      wiki: p.wiki,
+      wikiShort: WIKI_SHORT[p.wiki] || "",
+      flag: getFlag(p.nationality),
+      to: `/oyuncu/${encodeURIComponent(p.id)}`,
+    }));
+
+  const teamsRaw = TEAMS.filter(t => t.name.toLowerCase().includes(q));
+  const teamSeen = new Set();
+  const teams = [];
+  for (const t of teamsRaw) {
+    const key = t.name.toLowerCase();
+    if (teamSeen.has(key)) continue;
+    teamSeen.add(key);
+    teams.push({
+      kind: "team",
+      id: t.name,
+      title: t.name,
+      subtitle: t.region || "",
+      wiki: t.wiki,
+      wikiShort: WIKI_SHORT[t.wiki] || "",
+      logo: t.textlesslogourl || t.logourl || null,
+      to: `/takim/${encodeURIComponent(t.name)}`,
+    });
+    if (teams.length >= perCategory) break;
+  }
+
+  const tournaments = TOURNAMENTS
+    .filter(t => t.name.toLowerCase().includes(q) || (t.id && t.id.toLowerCase().includes(q)))
+    .slice(0, perCategory)
+    .map(t => ({
+      kind: "tournament",
+      id: t.id,
+      title: t.name,
+      subtitle: [t.locations?.city, t.startdate?.slice(0, 4)].filter(Boolean).join(" · "),
+      wiki: t.wiki,
+      wikiShort: WIKI_SHORT[t.wiki] || "",
+      icon: t.iconurl || null,
+      to: `/turnuva/${encodeURIComponent(t.id)}`,
+    }));
+
+  return { players, teams, tournaments, total: players.length + teams.length + tournaments.length };
 }

@@ -6,6 +6,7 @@ import PlayerProfile from "./pages/PlayerProfile";
 import TeamPage from "./pages/TeamPage";
 import TournamentPage from "./pages/TournamentPage";
 import MatchPage from "./pages/MatchPage";
+import MatchesPage from "./pages/MatchesPage";
 import NewsPage from "./pages/NewsPage";
 import TransfersPage from "./pages/TransfersPage";
 import PlayerStats from "./pages/PlayerStats";
@@ -52,6 +53,7 @@ export default function App() {
         <Routes>
           <Route path="/"              element={<Home wiki={wiki} region={region} />} />
           <Route path="/turnuva/:id"   element={<TournamentPage wiki={wiki} />} />
+          <Route path="/maclar"          element={<MatchesPage />} />
           <Route path="/mac/:id"       element={<MatchPage />} />
           <Route path="/takimlar"                element={<TeamsRanking wiki={wiki} />} />
           <Route path="/takimlar/resmi"         element={<TeamsRankingFull type="official" />} />
