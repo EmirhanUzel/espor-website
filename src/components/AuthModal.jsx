@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import styles from "./AuthModal.module.css";
 import { useAuth } from "../services/auth.jsx";
+import { useLanguage } from "../contexts/LanguageContext";
 
 function IconClose() {
   return (
@@ -29,8 +30,10 @@ function IconGoogle() {
     </svg>
   );
 }
+
 export default function AuthModal({ open, mode, onClose, onSwitchMode }) {
   const { signIn, register } = useAuth();
+  const { t } = useLanguage();
   const [showPw, setShowPw] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", username: "", confirm: "" });
   const [error, setError] = useState("");
@@ -64,11 +67,11 @@ export default function AuthModal({ open, mode, onClose, onSwitchMode }) {
     e.preventDefault();
     setError("");
 
-    if (!form.email.includes("@")) { setError("Please enter a valid email."); return; }
-    if (form.password.length < 6)  { setError("Password must be at least 6 characters."); return; }
+    if (!form.email.includes("@")) { setError(t("auth.validEmail")); return; }
+    if (form.password.length < 6)  { setError(t("auth.passwordMin")); return; }
     if (isRegister) {
-      if (form.username.trim().length < 3)        { setError("Username must be at least 3 characters."); return; }
-      if (form.password !== form.confirm)         { setError("Passwords do not match."); return; }
+      if (form.username.trim().length < 3)        { setError(t("auth.usernameMin")); return; }
+      if (form.password !== form.confirm)         { setError(t("auth.passwordMismatch")); return; }
     }
 
     setLoading(true);
@@ -98,31 +101,29 @@ export default function AuthModal({ open, mode, onClose, onSwitchMode }) {
             <span className={styles.brandMax}>MAX</span>
           </span>
           <h2 className={styles.title}>
-            {isRegister ? "Create your account" : "Welcome back"}
+            {isRegister ? t("auth.createAccount") : t("auth.welcomeBack")}
           </h2>
           <p className={styles.subtitle}>
-            {isRegister
-              ? "Join the esports community in seconds."
-              : "Sign in to follow matches, teams and players."}
+            {isRegister ? t("auth.joinCommunity") : t("auth.signInPrompt")}
           </p>
         </div>
 
         <div className={styles.socialRow}>
           <button type="button" className={styles.socialBtn}>
-            <IconGoogle /> <span>Continue with Google</span>
+            <IconGoogle /> <span>{t("auth.continueGoogle")}</span>
           </button>
         </div>
 
         <div className={styles.divider}>
           <span className={styles.dividerLine} />
-          <span className={styles.dividerText}>or</span>
+          <span className={styles.dividerText}>{t("auth.or")}</span>
           <span className={styles.dividerLine} />
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           {isRegister && (
             <label className={styles.field}>
-              <span className={styles.label}>Username</span>
+              <span className={styles.label}>{t("auth.username")}</span>
               <input
                 ref={firstFieldRef}
                 type="text"
@@ -136,7 +137,7 @@ export default function AuthModal({ open, mode, onClose, onSwitchMode }) {
           )}
 
           <label className={styles.field}>
-            <span className={styles.label}>Email</span>
+            <span className={styles.label}>{t("auth.email")}</span>
             <input
               ref={isRegister ? null : firstFieldRef}
               type="email"
@@ -150,8 +151,8 @@ export default function AuthModal({ open, mode, onClose, onSwitchMode }) {
 
           <label className={styles.field}>
             <span className={styles.labelRow}>
-              <span className={styles.label}>Password</span>
-              {!isRegister && <a href="#" className={styles.forgot} onClick={(e) => e.preventDefault()}>Forgot?</a>}
+              <span className={styles.label}>{t("auth.password")}</span>
+              {!isRegister && <a href="#" className={styles.forgot} onClick={(e) => e.preventDefault()}>{t("auth.forgot")}</a>}
             </span>
             <div className={styles.pwWrap}>
               <input
@@ -166,7 +167,7 @@ export default function AuthModal({ open, mode, onClose, onSwitchMode }) {
                 type="button"
                 className={styles.pwToggle}
                 onClick={() => setShowPw(v => !v)}
-                aria-label={showPw ? "Hide password" : "Show password"}
+                aria-label={showPw ? t("auth.hidePassword") : t("auth.showPassword")}
               >
                 <IconEye open={showPw} />
               </button>
@@ -175,7 +176,7 @@ export default function AuthModal({ open, mode, onClose, onSwitchMode }) {
 
           {isRegister && (
             <label className={styles.field}>
-              <span className={styles.label}>Confirm password</span>
+              <span className={styles.label}>{t("auth.confirmPassword")}</span>
               <input
                 type={showPw ? "text" : "password"}
                 className={styles.input}
@@ -190,24 +191,24 @@ export default function AuthModal({ open, mode, onClose, onSwitchMode }) {
           {error && <div className={styles.error}>{error}</div>}
 
           <button type="submit" className={styles.submitBtn} disabled={loading}>
-            {loading ? "Please wait…" : isRegister ? "Create account" : "Sign in"}
+            {loading ? t("auth.pleaseWait") : isRegister ? t("auth.createAccountBtn") : t("auth.signInBtn")}
           </button>
 
           {isRegister && (
             <p className={styles.terms}>
-              By creating an account you agree to our <a href="#" onClick={e => e.preventDefault()}>Terms</a> and <a href="#" onClick={e => e.preventDefault()}>Privacy Policy</a>.
+              {t("auth.terms")} <a href="#" onClick={e => e.preventDefault()}>{t("auth.termsLink")}</a> {t("auth.and")} <a href="#" onClick={e => e.preventDefault()}>{t("auth.privacyLink")}</a>.
             </p>
           )}
         </form>
 
         <div className={styles.footer}>
           {isRegister ? (
-            <>Already have an account?{" "}
-              <button type="button" className={styles.switchBtn} onClick={() => onSwitchMode("signin")}>Sign in</button>
+            <>{t("auth.alreadyHave")}{" "}
+              <button type="button" className={styles.switchBtn} onClick={() => onSwitchMode("signin")}>{t("auth.signInBtn")}</button>
             </>
           ) : (
-            <>Don't have an account?{" "}
-              <button type="button" className={styles.switchBtn} onClick={() => onSwitchMode("register")}>Register</button>
+            <>{t("auth.noAccount")}{" "}
+              <button type="button" className={styles.switchBtn} onClick={() => onSwitchMode("register")}>{t("auth.registerLink")}</button>
             </>
           )}
         </div>

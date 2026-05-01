@@ -16,8 +16,17 @@ import PlayersRanking from "./pages/PlayersRanking";
 import TeamsRankingFull from "./pages/TeamsRankingFull";
 import ForumPage from "./pages/ForumPage";
 import ForumTopicPage from "./pages/ForumTopicPage";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
+import { AuthProvider } from "./services/auth.jsx";
 
 function Footer() {
+  const { t } = useLanguage();
+  const links = [
+    { key: "footer.about", label: t("footer.about") },
+    { key: "footer.privacy", label: t("footer.privacy") },
+    { key: "footer.contact", label: t("footer.contact") },
+  ];
   return (
     <footer style={{ borderTop: "1px solid var(--border)", padding: "32px 40px", marginTop: "80px" }}>
       <div className="wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
@@ -25,14 +34,14 @@ function Footer() {
           eSPORMAX
         </span>
         <span style={{ fontSize: 12, color: "var(--text-4)" }}>
-          © 2025 eSPORMAX · Powered by Liquipedia API
+          {t("footer.copyright")}
         </span>
         <div style={{ display: "flex", gap: 20 }}>
-          {["About", "Privacy", "Contact"].map(l => (
-            <a key={l} href="#" style={{ fontSize: 12, color: "var(--text-3)", transition: "color 0.15s" }}
+          {links.map(l => (
+            <a key={l.key} href="#" style={{ fontSize: 12, color: "var(--text-3)", transition: "color 0.15s" }}
               onMouseEnter={e => e.target.style.color = "var(--text-1)"}
               onMouseLeave={e => e.target.style.color = "var(--text-3)"}
-            >{l}</a>
+            >{l.label}</a>
           ))}
         </div>
       </div>
@@ -40,7 +49,7 @@ function Footer() {
   );
 }
 
-export default function App() {
+function AppInner() {
   const [wiki, setWiki] = useState("valorant");
   const [region, setRegion] = useState("All");
 
@@ -74,5 +83,17 @@ export default function App() {
       </div>
       <Footer />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <AppInner />
+        </AuthProvider>
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }

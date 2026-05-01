@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getTeams, getPrizeResults, getMatches, formatPrize } from "../services/api";
 import { PLAYERS } from "../services/api";
 import styles from "./TeamsRanking.module.css";
+import { useLanguage } from "../contexts/LanguageContext";
 
 // ── Algorithm ─────────────────────────────────────────────────────────────────
 export function calcESM(team, allPrizes, allMatches) {
@@ -84,8 +85,9 @@ function RankBadge({ rank }) {
   return <span className={`${styles.rankBadge} ${cls}`}>#{rank}</span>;
 }
 
-// ── Compact tables (top 10, fewer columns) ────────────────────────────────────
+// ── Compact tables ────────────────────────────────────────────────────────────
 function CompactOfficialTable({ teams, shortLabel }) {
+  const { t } = useLanguage();
   const sorted = [...teams].sort((a, b) => (b.rankpoints || 0) - (a.rankpoints || 0)).slice(0, 10);
   return (
     <div className={styles.tableWrap}>
@@ -93,10 +95,10 @@ function CompactOfficialTable({ teams, shortLabel }) {
         <thead>
           <tr>
             <th className={styles.th}>#</th>
-            <th className={styles.th}>Team</th>
+            <th className={styles.th}>{t("teams.team")}</th>
             <th className={styles.th}>{shortLabel}</th>
-            <th className={styles.th}>Form</th>
-            <th className={styles.th}>Trend</th>
+            <th className={styles.th}>{t("teams.form")}</th>
+            <th className={styles.th}>{t("teams.trend")}</th>
           </tr>
         </thead>
         <tbody>
@@ -116,6 +118,7 @@ function CompactOfficialTable({ teams, shortLabel }) {
 }
 
 function CompactESMTable({ teams }) {
+  const { t } = useLanguage();
   const sorted = [...teams].sort((a, b) => b.esm - a.esm).slice(0, 10);
   const maxEsm = sorted[0]?.esm || 100;
   return (
@@ -124,10 +127,10 @@ function CompactESMTable({ teams }) {
         <thead>
           <tr>
             <th className={styles.th}>#</th>
-            <th className={styles.th}>Team</th>
-            <th className={`${styles.th} ${styles.thEsm}`}>eSPORMAX Score</th>
-            <th className={styles.th}>Form</th>
-            <th className={styles.th}>Trend</th>
+            <th className={styles.th}>{t("teams.team")}</th>
+            <th className={`${styles.th} ${styles.thEsm}`}>{t("teams.esmScore")}</th>
+            <th className={styles.th}>{t("teams.form")}</th>
+            <th className={styles.th}>{t("teams.trend")}</th>
           </tr>
         </thead>
         <tbody>
@@ -155,13 +158,14 @@ function CompactESMTable({ teams }) {
 
 // ── Form section ──────────────────────────────────────────────────────────────
 function FormSection({ teams }) {
+  const { t } = useLanguage();
   const withForm = teams
-    .map(t => {
-      const wins = t.form.filter(r => r === "W").length;
-      const total = t.form.length;
-      return { ...t, wins, total, winRate: total > 0 ? wins / total : -1 };
+    .map(team => {
+      const wins = team.form.filter(r => r === "W").length;
+      const total = team.form.length;
+      return { ...team, wins, total, winRate: total > 0 ? wins / total : -1 };
     })
-    .filter(t => t.total > 0)
+    .filter(team => team.total > 0)
     .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
     .slice(0, 5);
 
@@ -171,8 +175,8 @@ function FormSection({ teams }) {
     <section className={styles.formSection}>
       <div className={styles.sectionHead}>
         <div>
-          <h2 className={styles.sectionTitle}>Teams in Form</h2>
-          <p className={styles.sectionSub}>Best win rate in last 5 matches</p>
+          <h2 className={styles.sectionTitle}>{t("teams.inForm")}</h2>
+          <p className={styles.sectionSub}>{t("teams.formSub")}</p>
         </div>
       </div>
       <div className={styles.formCards}>
@@ -202,6 +206,7 @@ function FormSection({ teams }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function TeamsRanking({ wiki }) {
+  const { t } = useLanguage();
   const teams   = getTeams(wiki);
   const prizes  = getPrizeResults(wiki);
   const matches = getMatches(wiki);
@@ -219,37 +224,33 @@ export default function TeamsRanking({ wiki }) {
       <div className={styles.hero}>
         <div className="wrap">
           <p className={styles.heroEyebrow}>eSPORMAX</p>
-          <h1 className={styles.heroTitle}>Team Rankings</h1>
+          <h1 className={styles.heroTitle}>{t("teams.title")}</h1>
         </div>
       </div>
 
       <div className="wrap">
         <div className={styles.twoCol}>
-
-          {/* Official */}
           <section className={styles.colSection}>
             <div className={styles.sectionHead}>
               <div>
-                <h2 className={styles.sectionTitle}>Official Standings</h2>
+                <h2 className={styles.sectionTitle}>{t("teams.officialStandings")}</h2>
                 <p className={styles.sectionSub}>{officialLabel}</p>
               </div>
-              <Link to={`/teams/official?wiki=${wiki}`} className={styles.inceleBtn}>View All →</Link>
+              <Link to={`/teams/official?wiki=${wiki}`} className={styles.inceleBtn}>{t("teams.viewAll")}</Link>
             </div>
             <CompactOfficialTable teams={enriched} shortLabel={officialShort} />
           </section>
 
-          {/* eSPORMAX */}
           <section className={styles.colSection}>
             <div className={styles.sectionHead}>
               <div>
-                <h2 className={styles.sectionTitle}>eSPORMAX Rankings</h2>
+                <h2 className={styles.sectionTitle}>{t("teams.esmRankings")}</h2>
                 <p className={styles.sectionSub}>Earnings · Roster MV · Tournaments · Form</p>
               </div>
-              <Link to={`/teams/espormax?wiki=${wiki}`} className={styles.inceleBtn}>View All →</Link>
+              <Link to={`/teams/espormax?wiki=${wiki}`} className={styles.inceleBtn}>{t("teams.viewAll")}</Link>
             </div>
             <CompactESMTable teams={enriched} />
           </section>
-
         </div>
 
         <FormSection teams={enriched} />

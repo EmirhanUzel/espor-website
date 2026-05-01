@@ -1,7 +1,7 @@
 /* ── Ticker Bar ── */
 .ticker {
   width: 100%;
-  background: var(--text-1);
+  background: var(--hero-bg);
   color: #fff;
   height: 30px;
   display: flex;
@@ -15,7 +15,7 @@
   font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.15em;
-  color: var(--text-3);
+  color: rgba(255,255,255,0.5);
   background: rgba(255,255,255,0.06);
   border-right: 1px solid rgba(255,255,255,0.1);
   padding: 0 14px;
@@ -103,11 +103,10 @@
   background: var(--surface-2);
 }
 
-/* CRITICAL: prevent dark text on dark bg when active button is hovered */
 .wikiBtnActive,
 .wikiBtnActive:hover {
-  background: var(--text-1) !important;
-  color: #fff !important;
+  background: var(--btn-primary-bg) !important;
+  color: var(--btn-primary-text) !important;
 }
 
 .contextSep {
@@ -143,7 +142,6 @@
 
 .regionBtn:hover { color: var(--text-2); background: var(--surface-2); }
 
-/* Same hover fix for region active buttons */
 .regionBtnActive,
 .regionBtnActive:hover {
   color: var(--text-1) !important;
@@ -197,15 +195,15 @@
 .navbar {
   width: 100%;
   background: var(--bg);
-  border-bottom: 2px solid var(--text-1);
+  border-bottom: 2px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 200;
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, background 0.2s;
 }
 
 .navbarScrolled {
-  box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.12);
 }
 
 .inner {
@@ -326,7 +324,7 @@
 .searchInput:focus {
   border-color: var(--text-1);
   background: var(--bg);
-  box-shadow: 0 0 0 3px rgba(9,9,11,0.06);
+  box-shadow: 0 0 0 3px rgba(120,120,120,0.1);
 }
 
 /* ── Search Dropdown ── */
@@ -338,7 +336,7 @@
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
   padding: 6px;
   max-height: 420px;
   overflow-y: auto;
@@ -466,12 +464,61 @@
   font-weight: 500;
 }
 
+/* ── Icon Buttons (theme + lang) ── */
+.iconBtns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.iconBtn:hover {
+  border-color: var(--text-1);
+  color: var(--text-1);
+  background: var(--surface);
+}
+
+.langBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-3);
+  border-radius: var(--radius-md);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  font-family: var(--font-body);
+}
+.langBtn:hover {
+  border-color: var(--text-1);
+  color: var(--text-1);
+  background: var(--surface);
+}
+
 /* ── Auth ── */
 .authBtns {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-left: auto;
   flex-shrink: 0;
 }
 
@@ -492,9 +539,9 @@
 .loginBtn:hover { border-color: var(--text-1); color: var(--text-1); }
 
 .registerBtn {
-  background: var(--text-1);
-  border: 1.5px solid var(--text-1);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  border: 1.5px solid var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   padding: 6px 14px;
   border-radius: var(--radius-md);
   font-size: 13px;
@@ -535,8 +582,8 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: var(--text-1);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -566,7 +613,7 @@
   background: var(--bg);
   border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.16);
   z-index: 500;
   overflow: hidden;
   animation: dropdownIn 0.14s ease;
@@ -678,12 +725,11 @@
   cursor: pointer;
 }
 
-/* CRITICAL hover fix for active mobile wiki buttons */
 .mobileWikiBtnActive,
 .mobileWikiBtnActive:hover {
-  background: var(--text-1) !important;
-  border-color: var(--text-1) !important;
-  color: #fff !important;
+  background: var(--btn-primary-bg) !important;
+  border-color: var(--btn-primary-bg) !important;
+  color: var(--btn-primary-text) !important;
 }
 
 .mobileRegions {
@@ -706,9 +752,39 @@
 
 .mobileRegionBtnActive,
 .mobileRegionBtnActive:hover {
-  background: var(--text-1) !important;
-  border-color: var(--text-1) !important;
-  color: #fff !important;
+  background: var(--btn-primary-bg) !important;
+  border-color: var(--btn-primary-bg) !important;
+  color: var(--btn-primary-text) !important;
+}
+
+/* Mobile theme + language toggles */
+.mobileToggles {
+  display: flex;
+  gap: 8px;
+}
+
+.mobileIconBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text-2);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  font-family: var(--font-body);
+}
+.mobileIconBtn:hover { border-color: var(--text-1); color: var(--text-1); }
+
+.mobileLangIcon {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
 }
 
 .mobileSearch {
@@ -748,11 +824,6 @@
   text-align: center;
 }
 
-/* ── Matches dropdown item ── */
-.matchesItem {
-  position: relative;
-}
-
 /* ── Matches Dropdown Panel ── */
 .matchDropdown {
   position: absolute;
@@ -763,7 +834,7 @@
   background: var(--bg);
   border: 1.5px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: 0 10px 40px rgba(0,0,0,0.13), 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.06);
   z-index: 400;
   overflow: hidden;
   animation: dropdownIn 0.15s ease;
@@ -926,6 +997,7 @@
 
 @media (max-width: 960px) {
   .navLinks, .searchWrapper, .authBtns, .divider { display: none; }
+  .iconBtns { display: none; }
   .hamburger { display: flex; }
   .inner { padding: 0 20px; }
   .contextInner { padding: 0 20px; overflow-x: auto; }
@@ -935,4 +1007,5 @@
 @media (max-width: 640px) {
   .regionGroup { display: none; }
   .contextSep { display: none; }
+  .mobileToggles { flex-direction: column; }
 }

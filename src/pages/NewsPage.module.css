@@ -1,6 +1,6 @@
 /* Page Hero */
 .pageHero {
-  background: var(--text-1);
+  background: var(--hero-bg);
   color: #fff;
   padding: 52px 0 44px;
   margin-bottom: 0;
@@ -55,16 +55,16 @@
 .filterBtn:hover { border-color: var(--border-strong); color: var(--text-1); }
 
 .filterBtnActive {
-  background: var(--text-1);
-  border-color: var(--text-1);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  border-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
 }
 
 /* Hover fix: prevent dark text on dark bg when active */
 .filterBtnActive:hover {
-  background: var(--text-1) !important;
-  border-color: var(--text-1) !important;
-  color: #fff !important;
+  background: var(--btn-primary-bg) !important;
+  border-color: var(--btn-primary-bg) !important;
+  color: var(--btn-primary-text) !important;
 }
 
 .filterCount {
@@ -176,7 +176,7 @@
   padding: 2px 8px;
   border-radius: var(--radius-sm);
 }
-.typeInterview { background: var(--text-1); color: #fff; }
+.typeInterview { background: var(--btn-primary-bg); color: var(--btn-primary-text); }
 .typeArticle { border: 1.5px solid var(--text-1); color: var(--text-1); }
 
 .publisherBadge {

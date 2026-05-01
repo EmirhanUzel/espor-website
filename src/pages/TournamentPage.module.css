@@ -1,6 +1,6 @@
 /* Hero */
 .hero {
-  background: var(--text-1);
+  background: var(--hero-bg);
   color: #fff;
   padding: 48px 0 44px;
 }

@@ -1,5 +1,5 @@
 .hero {
-  background: var(--text-1);
+  background: var(--hero-bg);
   padding: 36px 0 28px;
   color: #fff;
 }

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getPlayers, formatPrize, getFlag } from "../services/api";
 import styles from "./PlayersRanking.module.css";
+import { useLanguage } from "../contexts/LanguageContext";
 
 // ── Form score ────────────────────────────────────────────────────────────────
 function calcFormScore(player) {
@@ -32,7 +33,6 @@ function calcFormScore(player) {
   return 0;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 const GAME_LABEL = {
   valorant: "VAL", counterstrike: "CS2", leagueoflegends: "LoL",
 };
@@ -50,38 +50,31 @@ function PlayerRow({ rank, player, metric }) {
   return (
     <Link to={`/player/${player.id}`} className={styles.row}>
       <span className={`${styles.rank} ${rank <= 3 ? styles[`rank${rank}`] : ""}`}>#{rank}</span>
-
       <div className={styles.avatar}>{player.id[0].toUpperCase()}</div>
-
       <div className={styles.info}>
         <span className={styles.nick}>{player.id}</span>
         <span className={styles.name}>{player.name}</span>
       </div>
-
       <span className={styles.team}>{player.teampagename}</span>
-
       <span className={`${styles.game} ${GAME_COLOR[player.wiki] || ""}`}>
         {GAME_LABEL[player.wiki] || player.wiki}
       </span>
-
       <div className={styles.metric}>{metric}</div>
-
       <span className={styles.arrow}>→</span>
     </Link>
   );
 }
 
-// ── Tab configs ───────────────────────────────────────────────────────────────
-const TABS = [
-  { id: "mv",    label: "Market Value"      },
-  { id: "form",  label: "In Form"           },
-  { id: "views", label: "Most Viewed"       },
-];
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function PlayersRanking({ wiki }) {
+  const { t } = useLanguage();
   const [tab, setTab] = useState("mv");
   const allPlayers = getPlayers(wiki);
+
+  const TABS = [
+    { id: "mv",    labelKey: "players.marketValue" },
+    { id: "form",  labelKey: "players.inForm" },
+    { id: "views", labelKey: "players.mostViewed" },
+  ];
 
   const ranked = useMemo(() => {
     if (tab === "mv") {
@@ -103,13 +96,11 @@ export default function PlayersRanking({ wiki }) {
     return allPlayers;
   }, [allPlayers, tab]);
 
-  const maxForm  = Math.max(...ranked.map(p => p._form || 0), 1);
+  const maxForm = Math.max(...ranked.map(p => p._form || 0), 1);
 
   function renderMetric(player) {
     if (tab === "mv") {
-      return (
-        <span className={styles.mvVal}>{formatPrize(player.marketvalue)}</span>
-      );
+      return <span className={styles.mvVal}>{formatPrize(player.marketvalue)}</span>;
     }
     if (tab === "form") {
       const score = Math.round(player._form || 0);
@@ -124,42 +115,40 @@ export default function PlayersRanking({ wiki }) {
       );
     }
     if (tab === "views") {
-      return <span className={styles.viewsVal}>{fmtViews(player.views)} <span className={styles.viewsLabel}>views</span></span>;
+      return <span className={styles.viewsVal}>{fmtViews(player.views)} <span className={styles.viewsLabel}>{t("players.views")}</span></span>;
     }
   }
 
+  const tabDesc = tab === "mv"
+    ? t("players.tabDescMv")
+    : tab === "form"
+    ? t("players.tabDescForm")
+    : t("players.tabDescViews");
+
   return (
     <main>
-      {/* Hero */}
       <div className={styles.hero}>
         <div className="wrap">
           <p className={styles.eyebrow}>eSPORMAX</p>
-          <h1 className={styles.title}>Player Rankings</h1>
+          <h1 className={styles.title}>{t("players.title")}</h1>
         </div>
       </div>
 
       <div className="wrap">
-        {/* Tabs */}
         <div className={styles.tabs}>
-          {TABS.map(t => (
+          {TABS.map(tabItem => (
             <button
-              key={t.id}
-              className={`${styles.tab} ${tab === t.id ? styles.tabActive : ""}`}
-              onClick={() => setTab(t.id)}
+              key={tabItem.id}
+              className={`${styles.tab} ${tab === tabItem.id ? styles.tabActive : ""}`}
+              onClick={() => setTab(tabItem.id)}
             >
-              {t.label}
+              {t(tabItem.labelKey)}
             </button>
           ))}
         </div>
 
-        {/* Tab description */}
-        <p className={styles.tabDesc}>
-          {tab === "mv"    && "Ranked by eSPORMAX Market Value Index™ — estimated from earnings, tier multipliers, regional demand and age curve."}
-          {tab === "form"  && "Form score calculated from recent stats: ACS + K/D + KAST for Valorant · Rating + KAST for CS2 · KDA + Win Rate + CS/min for LoL."}
-          {tab === "views" && "Most visited player profiles on eSPORMAX in the last 30 days."}
-        </p>
+        <p className={styles.tabDesc}>{tabDesc}</p>
 
-        {/* List */}
         <div className={styles.list}>
           {ranked.map((player, i) => (
             <PlayerRow
@@ -170,7 +159,7 @@ export default function PlayersRanking({ wiki }) {
             />
           ))}
           {ranked.length === 0 && (
-            <p className={styles.empty}>No data available for this game.</p>
+            <p className={styles.empty}>{t("players.noData")}</p>
           )}
         </div>
       </div>

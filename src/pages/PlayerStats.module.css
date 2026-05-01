@@ -1,6 +1,6 @@
 /* Hero */
 .hero {
-  background: var(--text-1);
+  background: var(--hero-bg);
   padding: 36px 0 28px;
   color: #fff;
 }
@@ -38,7 +38,7 @@
 }
 
 .summaryAccent {
-  background: var(--text-1);
+  background: var(--btn-primary-bg);
   border-color: var(--text-1);
 }
 
@@ -49,7 +49,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.summaryAccent .summaryVal { color: #fff; }
+.summaryAccent .summaryVal {  }
 
 .summaryLabel {
   font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
@@ -81,8 +81,8 @@
 }
 .chip:hover { border-color: var(--text-2); color: var(--text-1); }
 .chipActive {
-  background: var(--text-1) !important;
-  color: #fff !important;
+  background: var(--btn-primary-bg) !important;
+  
   border-color: var(--text-1) !important;
 }
 

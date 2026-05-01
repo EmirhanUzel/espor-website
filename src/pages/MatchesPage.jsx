@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getMatchesByDate, getLiveMatches, formatTime } from "../services/api";
 import styles from "./MatchesPage.module.css";
+import { useLanguage } from "../contexts/LanguageContext";
 
 function toDateStr(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -11,19 +12,13 @@ function shiftDate(dateStr, days) {
   d.setDate(d.getDate() + days);
   return toDateStr(d);
 }
-function formatDateLabel(dateStr) {
+function formatDateLabel(dateStr, locale) {
   const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
-}
-function relativeLabel(dateStr, todayStr) {
-  if (dateStr === todayStr) return "Today";
-  if (dateStr === shiftDate(todayStr, -1)) return "Yesterday";
-  if (dateStr === shiftDate(todayStr,  1)) return "Tomorrow";
-  return null;
+  return d.toLocaleDateString(locale, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 }
 
 const WIKI_TABS = [
-  { id: null,               label: "All Games" },
+  { id: null,               labelKey: "matches.allGames" },
   { id: "valorant",         label: "VALORANT" },
   { id: "counterstrike",    label: "CS2" },
   { id: "leagueoflegends",  label: "LoL" },
@@ -48,9 +43,12 @@ function EmptyState({ text }) {
 }
 
 export default function MatchesPage() {
+  const { t, lang } = useLanguage();
   const [activeWiki, setActiveWiki] = useState(null);
   const todayStr = useMemo(() => toDateStr(new Date()), []);
   const [selectedDate, setSelectedDate] = useState(todayStr);
+
+  const locale = lang === "tr" ? "tr-TR" : "en-US";
 
   const dateMatches  = getMatchesByDate(selectedDate, activeWiki);
   const isToday      = selectedDate === todayStr;
@@ -60,34 +58,40 @@ export default function MatchesPage() {
   const nextMatches  = dateMatches.filter(m => m.finished !== 0 && m.finished !== 1);
   const totalLive    = getLiveMatches().length;
 
-  const dateLabel = formatDateLabel(selectedDate);
-  const rel       = relativeLabel(selectedDate, todayStr);
+  const dateLabel = formatDateLabel(selectedDate, locale);
 
-  const resultsTitle  = isPast ? "Results"        : isToday ? "Today's Results"   : "Completed";
-  const upcomingTitle = isPast ? "Cancelled / TBD" : isToday ? "Upcoming Today"   : "Scheduled";
-  const emptyResults  = isPast ? "No completed matches on this date." : isToday ? "No completed matches yet today." : "No completed matches on this date.";
-  const emptyUpcoming = isPast ? "No remaining matches on this date." : isToday ? "No more matches scheduled today." : "No matches scheduled on this date.";
+  const relativeLabel = (() => {
+    if (selectedDate === todayStr) return t("matches.today");
+    if (selectedDate === shiftDate(todayStr, -1)) return t("matches.yesterday");
+    if (selectedDate === shiftDate(todayStr, 1)) return t("matches.tomorrow");
+    return null;
+  })();
+
+  const resultsTitle  = isPast ? t("matches.results") : isToday ? t("matches.todayResults") : t("matches.completed");
+  const upcomingTitle = isPast ? t("matches.cancelledTbd") : isToday ? t("matches.upcomingToday") : t("matches.scheduled");
+  const emptyResults  = isPast ? t("matches.noCompletedPast") : isToday ? t("matches.noCompletedToday") : t("matches.noCompletedPast");
+  const emptyUpcoming = isPast ? t("matches.noRemainingPast") : isToday ? t("matches.noMoreToday") : t("matches.noScheduled");
 
   return (
     <main>
       <div className={styles.hero}>
         <div className="wrap">
           <div className={styles.heroBreadcrumb}>
-            <Link to="/" className={styles.breadLink}>Home</Link>
+            <Link to="/" className={styles.breadLink}>{t("matches.home")}</Link>
             <span className={styles.breadSep}>›</span>
-            <span>Matches</span>
+            <span>{t("matches.title")}</span>
           </div>
 
           <div className={styles.heroRow}>
             <div>
-              <h1 className={styles.heroTitle}>Matches</h1>
+              <h1 className={styles.heroTitle}>{t("matches.title")}</h1>
               <div className={styles.heroMeta}>
-                {rel && <span className={styles.heroRel}>{rel}</span>}
+                {relativeLabel && <span className={styles.heroRel}>{relativeLabel}</span>}
                 <span className={styles.heroDate}>{dateLabel}</span>
                 {totalLive > 0 && (
                   <span className={styles.heroLive}>
                     <span className={styles.heroLiveDot} />
-                    {totalLive} Live
+                    {totalLive} {t("nav.live")}
                   </span>
                 )}
               </div>
@@ -121,7 +125,7 @@ export default function MatchesPage() {
                 type="button"
                 className={styles.dateTodayBtn}
                 onClick={() => setSelectedDate(todayStr)}
-              >Today</button>
+              >{t("matches.today")}</button>
             )}
           </div>
 
@@ -132,7 +136,7 @@ export default function MatchesPage() {
                 className={`${styles.wikiBtn} ${activeWiki === tab.id ? styles.wikiBtnActive : ""}`}
                 onClick={() => setActiveWiki(tab.id)}
               >
-                {tab.label}
+                {tab.labelKey ? t(tab.labelKey) : tab.label}
               </button>
             ))}
           </div>
@@ -143,7 +147,7 @@ export default function MatchesPage() {
 
         {liveMatches.length > 0 && (
           <section className={styles.section}>
-            <SectionHead live title="Live Now" count={liveMatches.length} />
+            <SectionHead live title={t("matches.liveNow")} count={liveMatches.length} />
             <div className={styles.upcomingList}>
               {liveMatches.map(m => <MatchRow key={m.id} match={m} />)}
             </div>
@@ -182,6 +186,7 @@ export default function MatchesPage() {
 }
 
 function MatchRow({ match }) {
+  const { t } = useLanguage();
   const [opp1, opp2] = match.match2opponents;
   const isLive     = match.finished === 0;
   const isFinished = match.finished === 1;
@@ -225,7 +230,7 @@ function MatchRow({ match }) {
             className={styles.upcomingStream}
             onClick={e => e.stopPropagation()}
           >
-            ▶ Watch
+            {t("matches.watch")}
           </a>
         )}
         <span className={styles.upcomingArrow}>›</span>

@@ -1,6 +1,6 @@
 /* Hero */
 .hero {
-  background: var(--text-1);
+  background: var(--hero-bg);
   padding: 48px 0 40px;
   color: #fff;
 }
@@ -341,7 +341,7 @@
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.06em;
-  background: var(--text-1);
+  background: var(--hero-bg);
   color: #fff;
   padding: 3px 8px;
   border-radius: var(--radius-sm);

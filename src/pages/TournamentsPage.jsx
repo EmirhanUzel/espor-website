@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { getTournaments, formatDate, formatPrize, tierLabel } from "../services/api";
 import styles from "./TournamentsPage.module.css";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const WIKIS = [
   { id: "valorant",       label: "VALORANT" },
@@ -17,6 +18,7 @@ const COUNTRY_FLAG = {
 };
 
 function TournamentRow({ tournament }) {
+  const { t } = useLanguage();
   const flag = COUNTRY_FLAG[tournament.locations?.country?.toLowerCase()] || "🌐";
   const tierClass = TIER_COLORS[tournament.liquipediatier] || styles.tierB;
   const isUpcoming = new Date(tournament.startdate) > new Date();
@@ -50,7 +52,7 @@ function TournamentRow({ tournament }) {
 
       <div className={styles.rowTeams}>
         <span>{tournament.participantsnumber}</span>
-        <span className={styles.rowLabel}>teams</span>
+        <span className={styles.rowLabel}>{t("tournaments.teamsUnit")}</span>
       </div>
 
       <div className={styles.rowPrize}>
@@ -59,10 +61,10 @@ function TournamentRow({ tournament }) {
 
       <div className={styles.rowStatus}>
         {isLive
-          ? <span className={styles.statusLive}>LIVE</span>
+          ? <span className={styles.statusLive}>{t("tournaments.live")}</span>
           : isUpcoming
-            ? <span className={styles.statusUpcoming}>Upcoming</span>
-            : <span className={styles.statusDone}>Completed</span>
+            ? <span className={styles.statusUpcoming}>{t("tournaments.upcoming")}</span>
+            : <span className={styles.statusDone}>{t("tournaments.completed")}</span>
         }
       </div>
 
@@ -72,6 +74,7 @@ function TournamentRow({ tournament }) {
 }
 
 export default function TournamentsPage() {
+  const { t } = useLanguage();
   const [wiki, setWiki] = useState("valorant");
   const tournaments = getTournaments(wiki);
 
@@ -79,9 +82,9 @@ export default function TournamentsPage() {
     <main>
       <div className={styles.pageHeader}>
         <div className="wrap">
-          <h1 className={styles.pageTitle}>Tournaments</h1>
+          <h1 className={styles.pageTitle}>{t("tournaments.title")}</h1>
           <p className={styles.pageSubtitle}>
-            {tournaments.length} tournament{tournaments.length !== 1 ? "s" : ""} · {WIKIS.find(w => w.id === wiki)?.label}
+            {tournaments.length} {tournaments.length !== 1 ? t("tournaments.subtitle.other") : t("tournaments.subtitle.one")} · {WIKIS.find(w => w.id === wiki)?.label}
           </p>
         </div>
       </div>
@@ -102,21 +105,21 @@ export default function TournamentsPage() {
         </div>
 
         {tournaments.length === 0 ? (
-          <div className={styles.empty}>No tournaments found.</div>
+          <div className={styles.empty}>{t("tournaments.empty")}</div>
         ) : (
           <div className={styles.table}>
             <div className={styles.tableHead}>
-              <span>Tier</span>
-              <span>Tournament</span>
-              <span>Location / Dates</span>
-              <span>Teams</span>
-              <span>Prize Pool</span>
-              <span>Status</span>
+              <span>{t("tournaments.tier")}</span>
+              <span>{t("tournaments.tournament")}</span>
+              <span>{t("tournaments.locationDates")}</span>
+              <span>{t("tournaments.teams")}</span>
+              <span>{t("tournaments.prizePool")}</span>
+              <span>{t("tournaments.status")}</span>
               <span />
             </div>
             <div className={styles.tableBody}>
-              {tournaments.map(t => (
-                <TournamentRow key={t.id} tournament={t} />
+              {tournaments.map(tr => (
+                <TournamentRow key={tr.id} tournament={tr} />
               ))}
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getTransfers, formatDate, getFlag } from "../services/api";
 import styles from "./TransfersPage.module.css";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const ROLE_LABEL = {
   duelist: "Duelist", controller: "Controller", initiator: "Initiator",
@@ -17,6 +18,7 @@ const WIKI_LABEL = {
 };
 
 function TransferCard({ transfer }) {
+  const { t } = useLanguage();
   return (
     <div className={styles.card}>
       <div className={styles.cardHead}>
@@ -35,7 +37,7 @@ function TransferCard({ transfer }) {
 
       <div className={styles.transferFlow}>
         <div className={styles.teamBlock}>
-          <span className={styles.teamLabel}>Previous Team</span>
+          <span className={styles.teamLabel}>{t("transfers.previousTeam")}</span>
           <span className={styles.teamName}>{transfer.fromteam}</span>
         </div>
         <div className={styles.arrowBlock}>
@@ -43,7 +45,7 @@ function TransferCard({ transfer }) {
           <span className={styles.arrowIcon}>→</span>
         </div>
         <div className={`${styles.teamBlock} ${styles.teamBlockRight}`}>
-          <span className={styles.teamLabel}>New Team</span>
+          <span className={styles.teamLabel}>{t("transfers.newTeam")}</span>
           <span className={`${styles.teamName} ${styles.teamNameNew}`}>{transfer.toteam}</span>
         </div>
       </div>
@@ -64,7 +66,7 @@ function TransferCard({ transfer }) {
         {transfer.reference?.reference1 && (
           <a href={transfer.reference.reference1} target="_blank" rel="noreferrer" className={styles.refLink}
             title={transfer.reference.reference1type}>
-            Source ↗
+            {t("transfers.source")}
           </a>
         )}
       </div>
@@ -108,31 +110,32 @@ function TransferRow({ transfer }) {
 }
 
 export default function TransfersPage() {
+  const { t } = useLanguage();
   const transfers = getTransfers();
   const [viewMode, setViewMode] = useState("cards");
   const [wikiFilter, setWikiFilter] = useState("All");
 
-  const wikis = ["All", ...new Set(transfers.map(t => t.wiki))];
-  const filtered = wikiFilter === "All" ? transfers : transfers.filter(t => t.wiki === wikiFilter);
+  const wikis = ["All", ...new Set(transfers.map(tr => tr.wiki))];
+  const filtered = wikiFilter === "All" ? transfers : transfers.filter(tr => tr.wiki === wikiFilter);
   const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const stats = {
     total: transfers.length,
-    valorant: transfers.filter(t => t.wiki === "valorant").length,
-    cs2: transfers.filter(t => t.wiki === "counterstrike").length,
-    dota2: transfers.filter(t => t.wiki === "dota2").length,
-    lol: transfers.filter(t => t.wiki === "leagueoflegends").length,
+    valorant: transfers.filter(tr => tr.wiki === "valorant").length,
+    cs2: transfers.filter(tr => tr.wiki === "counterstrike").length,
+    dota2: transfers.filter(tr => tr.wiki === "dota2").length,
+    lol: transfers.filter(tr => tr.wiki === "leagueoflegends").length,
   };
 
   return (
     <main>
       <div className={styles.pageHero}>
         <div className="wrap">
-          <h1 className={styles.pageTitle}>Transfer News</h1>
-          <p className={styles.pageSubtitle}>Player roster moves and team signings across all games</p>
+          <h1 className={styles.pageTitle}>{t("transfers.title")}</h1>
+          <p className={styles.pageSubtitle}>{t("transfers.subtitle")}</p>
           <div className={styles.heroStats}>
             {[
-              ["Total", stats.total],
+              [t("transfers.total"), stats.total],
               ["VALORANT", stats.valorant],
               ["CS2", stats.cs2],
               ["Dota 2", stats.dota2],
@@ -156,10 +159,10 @@ export default function TransfersPage() {
                 className={`${styles.filterBtn} ${wikiFilter === w ? styles.filterBtnActive : ""}`}
                 onClick={() => setWikiFilter(w)}
               >
-                {WIKI_LABEL[w] || w}
+                {w === "All" ? t("transfers.total") : (WIKI_LABEL[w] || w)}
                 {w !== "All" && (
                   <span className={styles.filterCount}>
-                    {transfers.filter(t => t.wiki === w).length}
+                    {transfers.filter(tr => tr.wiki === w).length}
                   </span>
                 )}
               </button>
@@ -169,24 +172,24 @@ export default function TransfersPage() {
           <div className={styles.viewToggle}>
             <button
               className={`${styles.viewBtn} ${viewMode === "cards" ? styles.viewBtnActive : ""}`}
-              onClick={() => setViewMode("cards")} title="Card view"
+              onClick={() => setViewMode("cards")} title={t("transfers.cardView")}
             >⊞</button>
             <button
               className={`${styles.viewBtn} ${viewMode === "table" ? styles.viewBtnActive : ""}`}
-              onClick={() => setViewMode("table")} title="List view"
+              onClick={() => setViewMode("table")} title={t("transfers.listView")}
             >≡</button>
           </div>
         </div>
 
         <p className={styles.resultCount}>
-          <strong>{sorted.length}</strong> transfers shown
+          <strong>{sorted.length}</strong> {t("transfers.shown")}
         </p>
 
         {viewMode === "cards" && (
           <section className={styles.section}>
             <div className={styles.grid}>
-              {sorted.map((t, i) => (
-                <TransferCard key={`${t.player}-${t.date}-${i}`} transfer={t} />
+              {sorted.map((tr, i) => (
+                <TransferCard key={`${tr.player}-${tr.date}-${i}`} transfer={tr} />
               ))}
             </div>
           </section>
@@ -196,24 +199,24 @@ export default function TransfersPage() {
           <section className={styles.section}>
             <div className={styles.table}>
               <div className={styles.tableHead}>
-                <span>Player</span>
-                <span>From</span>
+                <span>{t("transfers.player")}</span>
+                <span>{t("transfers.from")}</span>
                 <span></span>
-                <span>To</span>
-                <span>Role</span>
-                <span>Game</span>
-                <span>Date</span>
+                <span>{t("transfers.to")}</span>
+                <span>{t("transfers.role")}</span>
+                <span>{t("transfers.game")}</span>
+                <span>{t("transfers.date")}</span>
                 <span></span>
               </div>
-              {sorted.map((t, i) => (
-                <TransferRow key={`${t.player}-${t.date}-${i}`} transfer={t} />
+              {sorted.map((tr, i) => (
+                <TransferRow key={`${tr.player}-${tr.date}-${i}`} transfer={tr} />
               ))}
             </div>
           </section>
         )}
 
         {sorted.length === 0 && (
-          <div className={styles.empty}>No transfers found for this filter.</div>
+          <div className={styles.empty}>{t("transfers.empty")}</div>
         )}
       </div>
     </main>

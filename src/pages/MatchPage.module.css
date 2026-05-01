@@ -1,6 +1,6 @@
 /* Hero */
 .hero {
-  background: var(--text-1);
+  background: var(--hero-bg);
   color: #fff;
   padding: 36px 0 44px;
 }
@@ -299,7 +299,7 @@
   text-decoration: none;
   transition: background 0.12s;
 }
-.mapVod:hover { background: var(--text-1); color: #fff; }
+.mapVod:hover { background: var(--btn-primary-bg); color: var(--btn-primary-text); }
 
 .mapScores {
   display: flex;
@@ -567,7 +567,7 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: var(--text-1);
+  background: var(--hero-bg);
   color: #fff;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
@@ -640,7 +640,7 @@
 }
 
 .vetoTagBan      { background: var(--danger); color: #fff; }
-.vetoTagPick     { background: var(--text-1); color: #fff; }
+.vetoTagPick     { background: var(--btn-primary-bg); color: var(--btn-primary-text); }
 .vetoTagDecider  { background: var(--text-3); color: #fff; }
 
 .vetoTeamLabel {
@@ -758,7 +758,7 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: var(--text-1);
+  background: var(--hero-bg);
   color: #fff;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
@@ -813,8 +813,8 @@
 }
 
 .csDetailBtn {
-  background: var(--text-1);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   border: none;
   padding: 10px 22px;
   font-size: 11px;

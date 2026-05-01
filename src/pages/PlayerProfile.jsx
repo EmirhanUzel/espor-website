@@ -1,9 +1,11 @@
 import { useParams, Link } from "react-router-dom";
 import { getPlayer, formatDate, formatPrize, getFlag, getMatches, getPrizeResults, getInterviews } from "../services/api";
 import styles from "./PlayerProfile.module.css";
+import { useLanguage } from "../contexts/LanguageContext";
 
 // ── Market Value Line Chart ────────────────────────────────────────────────────
 function MarketValueChart({ history, current }) {
+  const { t } = useLanguage();
   if (!history?.length) return null;
   const W = 560, H = 130, padX = 16, padY = 20;
 
@@ -19,7 +21,6 @@ function MarketValueChart({ history, current }) {
     date: h.date,
   }));
 
-  // Smooth bezier path
   const linePath = pts.reduce((d, pt, i) => {
     if (i === 0) return `M ${pt.x},${pt.y}`;
     const prev = pts[i - 1];
@@ -59,8 +60,8 @@ function MarketValueChart({ history, current }) {
         ))}
       </svg>
       <div className={styles.mvAlgoNote}>
-        <span className={styles.mvAlgoTitle}>eSPORMAX Market Value Index™</span>
-        <span>Estimated from: tournament earnings trend · S-tier multiplier (×2.5) · regional demand · age curve (peak 22–26)</span>
+        <span className={styles.mvAlgoTitle}>{t("player.esmMvIndex")}</span>
+        <span>{t("player.esmAlgoNote")}</span>
       </div>
     </div>
   );
@@ -134,7 +135,6 @@ function CareerTimeline({ career }) {
   return (
     <div style={{ overflowX: "auto", paddingBottom: 8, display: "flex", justifyContent: "center" }}>
       <div style={{ display: "flex", gap: 0, minWidth: "max-content", position: "relative" }}>
-        {/* connecting line */}
         <div style={{
           position: "absolute", top: 18, left: 20, right: 20, height: 2,
           background: "var(--border)", zIndex: 0,
@@ -146,7 +146,6 @@ function CareerTimeline({ career }) {
               display: "flex", flexDirection: "column", alignItems: "center",
               minWidth: 140, padding: "0 8px", position: "relative", zIndex: 1,
             }}>
-              {/* dot */}
               <div style={{
                 width: isLast ? 16 : 12, height: isLast ? 16 : 12,
                 borderRadius: "50%",
@@ -154,17 +153,14 @@ function CareerTimeline({ career }) {
                 border: `2px solid var(--text-1)`,
                 marginBottom: 12, flexShrink: 0,
               }} />
-              {/* year */}
               <span style={{
                 fontSize: 13, fontWeight: 800, color: "var(--text-1)",
                 fontFamily: "var(--font-display)", marginBottom: 4,
               }}>{c.year}</span>
-              {/* team */}
               <span style={{
                 fontSize: 12, fontWeight: 700, color: "var(--text-2)",
                 textAlign: "center", marginBottom: 4, lineHeight: 1.2,
               }}>{c.team}</span>
-              {/* note */}
               <span style={{
                 fontSize: 10, color: "var(--text-4)", textAlign: "center",
                 lineHeight: 1.4, maxWidth: 120,
@@ -183,14 +179,15 @@ function calcAge(birthdate) {
 }
 
 export default function PlayerProfile() {
+  const { t } = useLanguage();
   const { id } = useParams();
   const player = getPlayer(id);
 
   if (!player) {
     return (
       <div className="wrap" style={{ paddingTop: 80, textAlign: "center" }}>
-        <h2 style={{ color: "var(--text-3)" }}>Player not found: {id}</h2>
-        <Link to="/" style={{ display: "inline-block", marginTop: 16, color: "var(--text-1)", fontWeight: 700 }}>← Home</Link>
+        <h2 style={{ color: "var(--text-3)" }}>{t("player.notFound")}: {id}</h2>
+        <Link to="/" style={{ display: "inline-block", marginTop: 16, color: "var(--text-1)", fontWeight: 700 }}>{t("player.homeLink")}</Link>
       </div>
     );
   }
@@ -214,7 +211,6 @@ export default function PlayerProfile() {
 
   return (
     <main>
-      {/* Hero */}
       <div className={styles.hero}>
         <div className="wrap">
           <div className={styles.heroInner}>
@@ -233,10 +229,10 @@ export default function PlayerProfile() {
               <h1 className={styles.nickname}>{player.id}</h1>
               <p className={styles.fullName}>{player.name}</p>
               <div className={styles.heroTags}>
-                {age && <span className={styles.tag}>Age <strong>{age}</strong></span>}
-                <span className={styles.tag}>Team <strong>{player.teampagename}</strong></span>
-                <span className={styles.tag}>Born <strong>{formatDate(player.birthdate)}</strong></span>
-                <span className={styles.tag}>Game <strong>{player.wiki}</strong></span>
+                {age && <span className={styles.tag}>{t("player.age")} <strong>{age}</strong></span>}
+                <span className={styles.tag}>{t("player.team")} <strong>{player.teampagename}</strong></span>
+                <span className={styles.tag}>{t("player.born")} <strong>{formatDate(player.birthdate)}</strong></span>
+                <span className={styles.tag}>{t("player.game")} <strong>{player.wiki}</strong></span>
                 {Object.entries(player.links).map(([platform, url]) => (
                   <a key={platform} href={url} target="_blank" rel="noreferrer"
                     className={styles.heroSocialLink}
@@ -251,13 +247,13 @@ export default function PlayerProfile() {
               {player.marketvalue && (
                 <div className={styles.marketValueBadge}>
                   <span className={styles.mvVal}>{formatPrize(player.marketvalue)}</span>
-                  <span className={styles.mvLabel}>Market Value</span>
-                  <span className={styles.mvNote}>eSPORMAX Index™</span>
+                  <span className={styles.mvLabel}>{t("player.marketValue")}</span>
+                  <span className={styles.mvNote}>{t("player.esmIndex")}</span>
                 </div>
               )}
               <div className={styles.earningsBadge}>
                 <span className={styles.earningsNum}>{formatPrize(player.earnings)}</span>
-                <span className={styles.earningsLabel}>Total Earnings</span>
+                <span className={styles.earningsLabel}>{t("player.totalEarnings")}</span>
                 {latestYear && (
                   <span className={styles.earningsLatest}>{latestYear[0]}: {formatPrize(latestYear[1])}</span>
                 )}
@@ -270,21 +266,19 @@ export default function PlayerProfile() {
       <div className="wrap">
         <div className={styles.grid}>
 
-          {/* Market Value Chart */}
           {player.marketvaluehistory?.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <div className={styles.cardTitleRow}>
-                <h2 className={styles.cardTitle}>Market Value History</h2>
+                <h2 className={styles.cardTitle}>{t("player.mvHistory")}</h2>
                 <span className={styles.currentMV}>{formatPrize(player.marketvalue)}</span>
               </div>
               <MarketValueChart history={player.marketvaluehistory} current={player.marketvalue} />
             </section>
           )}
 
-          {/* Earnings Chart */}
           <section className={`${styles.card} ${styles.cardWide}`}>
             <div className={styles.cardTitleRow}>
-              <h2 className={styles.cardTitle}>Annual Tournament Earnings</h2>
+              <h2 className={styles.cardTitle}>{t("player.annualEarnings")}</h2>
               <span className={styles.currentMV}>{formatPrize(player.earnings)}</span>
             </div>
             <EarningsChart data={player.earningsbyyear} />
@@ -302,25 +296,23 @@ export default function PlayerProfile() {
             </div>
           </section>
 
-          {/* Career Timeline */}
           {player.career?.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
-              <h2 className={styles.cardTitle}>Career Timeline</h2>
+              <h2 className={styles.cardTitle}>{t("player.careerTimeline")}</h2>
               <CareerTimeline career={player.career} />
             </section>
           )}
 
-          {/* Recent Stats */}
           {player.recentstats && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <div className={styles.cardTitleRow}>
-                <h2 className={styles.cardTitle}>Recent Form</h2>
+                <h2 className={styles.cardTitle}>{t("player.recentForm")}</h2>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span className={styles.recentPeriodBadge}>
                     {player.recentstats.period} · {player.recentstats.games} {player.recentstats.gamesLabel}
                   </span>
                   <Link to={`/player/${player.id}/stats`} className={styles.detailLink}>
-                    View Details ↗
+                    {t("player.viewDetails")}
                   </Link>
                 </div>
               </div>
@@ -328,10 +320,9 @@ export default function PlayerProfile() {
             </section>
           )}
 
-          {/* Last 5 Matches */}
           {recentMatches.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
-              <h2 className={styles.cardTitle} style={{ marginBottom: 16 }}>Recent Matches</h2>
+              <h2 className={styles.cardTitle} style={{ marginBottom: 16 }}>{t("player.recentMatches")}</h2>
               <div className={styles.matchList}>
                 {recentMatches.map(match => {
                   const pIdx = match.match2opponents.findIndex(o => o.name === player.teampagename);
@@ -349,9 +340,7 @@ export default function PlayerProfile() {
                         <span className={styles.matchOpp}>vs {opp?.name}</span>
                         <span className={styles.matchTournament}>{match.match2bracketdata?.header} · {match.tournament}</span>
                       </div>
-                      <span className={styles.matchScore}>
-                        {myScore}–{oppScore}
-                      </span>
+                      <span className={styles.matchScore}>{myScore}–{oppScore}</span>
                       <span className={styles.matchDate}>{formatDate(match.date)}</span>
                       <span className={styles.matchArrow}>→</span>
                     </Link>
@@ -361,10 +350,9 @@ export default function PlayerProfile() {
             </section>
           )}
 
-          {/* Achievements */}
           {teamPrizes.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
-              <h2 className={styles.cardTitle} style={{ marginBottom: 16 }}>Achievements</h2>
+              <h2 className={styles.cardTitle} style={{ marginBottom: 16 }}>{t("player.achievements")}</h2>
               <div className={styles.prizeList}>
                 {teamPrizes.map((p, i) => {
                   const place = p.placement;
@@ -384,10 +372,9 @@ export default function PlayerProfile() {
             </section>
           )}
 
-          {/* Interviews */}
           {playerInterviews.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
-              <h2 className={styles.cardTitle} style={{ marginBottom: 16 }}>Interviews & News</h2>
+              <h2 className={styles.cardTitle} style={{ marginBottom: 16 }}>{t("player.interviewsNews")}</h2>
               <div className={styles.interviewList}>
                 {playerInterviews.map((item, i) => (
                   <a key={i} href={item.link} target="_blank" rel="noreferrer" className={styles.interviewRow}>
