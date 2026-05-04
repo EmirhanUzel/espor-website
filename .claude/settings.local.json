@@ -16,7 +16,8 @@
       "Bash(jobs -p)",
       "Bash(xargs -r kill)",
       "Bash(pkill -f \"vite\")",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(PowerShell *)"
     ]
   }
 }

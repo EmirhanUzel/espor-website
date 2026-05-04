@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { getTransfers, formatDate, getFlag } from "../services/api";
 import styles from "./TransfersPage.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -23,9 +24,9 @@ function TransferCard({ transfer }) {
     <div className={styles.card}>
       <div className={styles.cardHead}>
         <div className={styles.playerBlock}>
-          <div className={styles.playerAvatar}>{transfer.player[0]}</div>
+          <Link to={`/player/${transfer.player}`} className={styles.playerAvatar} onClick={e => e.stopPropagation()}>{transfer.player[0]}</Link>
           <div className={styles.playerInfo}>
-            <span className={styles.playerName}>{transfer.player}</span>
+            <Link to={`/player/${transfer.player}`} className={styles.playerName} onClick={e => e.stopPropagation()}>{transfer.player}</Link>
             <span className={styles.playerNat}>{getFlag(transfer.nationality)} {transfer.nationality}</span>
           </div>
         </div>
@@ -38,7 +39,7 @@ function TransferCard({ transfer }) {
       <div className={styles.transferFlow}>
         <div className={styles.teamBlock}>
           <span className={styles.teamLabel}>{t("transfers.previousTeam")}</span>
-          <span className={styles.teamName}>{transfer.fromteam}</span>
+          <Link to={`/team/${encodeURIComponent(transfer.fromteam)}`} className={styles.teamName} onClick={e => e.stopPropagation()}>{transfer.fromteam}</Link>
         </div>
         <div className={styles.arrowBlock}>
           <div className={styles.arrowLine} />
@@ -46,7 +47,7 @@ function TransferCard({ transfer }) {
         </div>
         <div className={`${styles.teamBlock} ${styles.teamBlockRight}`}>
           <span className={styles.teamLabel}>{t("transfers.newTeam")}</span>
-          <span className={`${styles.teamName} ${styles.teamNameNew}`}>{transfer.toteam}</span>
+          <Link to={`/team/${encodeURIComponent(transfer.toteam)}`} className={`${styles.teamName} ${styles.teamNameNew}`} onClick={e => e.stopPropagation()}>{transfer.toteam}</Link>
         </div>
       </div>
 
@@ -78,18 +79,18 @@ function TransferRow({ transfer }) {
   return (
     <div className={styles.tableRow}>
       <div className={styles.tablePlayer}>
-        <div className={styles.tableAvatar}>{transfer.player[0]}</div>
+        <Link to={`/player/${transfer.player}`} className={styles.tableAvatar}>{transfer.player[0]}</Link>
         <div>
-          <span className={styles.tablePlayerName}>{transfer.player}</span>
+          <Link to={`/player/${transfer.player}`} className={styles.tablePlayerName}>{transfer.player}</Link>
           <span className={styles.tableNat}>{getFlag(transfer.nationality)} {transfer.nationality}</span>
         </div>
       </div>
       <div className={styles.tableFrom}>
-        <span className={styles.tableTeamFrom}>{transfer.fromteam}</span>
+        <Link to={`/team/${encodeURIComponent(transfer.fromteam)}`} className={styles.tableTeamFrom}>{transfer.fromteam}</Link>
       </div>
       <span className={styles.tableArrow}>→</span>
       <div className={styles.tableTo}>
-        <span className={styles.tableTeamTo}>{transfer.toteam}</span>
+        <Link to={`/team/${encodeURIComponent(transfer.toteam)}`} className={styles.tableTeamTo}>{transfer.toteam}</Link>
       </div>
       <div className={styles.tableRole}>
         {transfer.role1 && (

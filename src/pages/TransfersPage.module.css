@@ -181,7 +181,10 @@
   font-weight: 900;
   font-family: var(--font-display);
   flex-shrink: 0;
+  text-decoration: none;
+  transition: border-color 0.15s;
 }
+.playerAvatar:hover { border-color: var(--text-1); }
 
 .playerInfo {
   display: flex;
@@ -194,7 +197,10 @@
   font-weight: 900;
   color: var(--text-1);
   font-family: var(--font-display);
+  text-decoration: none;
+  transition: opacity 0.15s;
 }
+.playerName:hover { opacity: 0.7; }
 
 .playerNat {
   font-size: 12px;
@@ -258,13 +264,16 @@
   color: var(--text-3);
   text-decoration: line-through;
   text-decoration-color: var(--border-strong);
+  transition: opacity 0.15s;
 }
+.teamName:hover { opacity: 0.7; }
 
 .teamNameNew {
   color: var(--text-1);
   text-decoration: none;
   font-weight: 800;
 }
+.teamNameNew:hover { opacity: 0.7; }
 
 .arrowBlock {
   display: flex;
@@ -378,14 +387,20 @@
   color: var(--text-1);
   font-family: var(--font-display);
   flex-shrink: 0;
+  text-decoration: none;
+  transition: border-color 0.15s;
 }
+.tableAvatar:hover { border-color: var(--text-1); }
 
 .tablePlayerName {
   display: block;
   font-size: 14px;
   font-weight: 800;
   color: var(--text-1);
+  text-decoration: none;
+  transition: opacity 0.15s;
 }
+.tablePlayerName:hover { opacity: 0.7; }
 
 .tableNat {
   font-size: 10px;
@@ -401,13 +416,18 @@
   color: var(--text-3);
   text-decoration: line-through;
   text-decoration-color: var(--border-strong);
+  transition: opacity 0.15s;
 }
+.tableTeamFrom:hover { opacity: 0.7; }
 
 .tableTeamTo {
   font-size: 13px;
   font-weight: 800;
   color: var(--text-1);
+  text-decoration: none;
+  transition: opacity 0.15s;
 }
+.tableTeamTo:hover { opacity: 0.7; }
 
 .tableArrow {
   font-size: 14px;

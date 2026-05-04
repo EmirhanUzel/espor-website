@@ -90,6 +90,41 @@
 }
 .tag strong { color: rgba(255,255,255,0.95); }
 
+.heroBadges {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
+  align-items: flex-start;
+}
+
+.heroSocial {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.heroSocialLink {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.65);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 50%;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.heroSocialLink:hover {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+}
+
 .earningsBadge {
   flex-shrink: 0;
   display: flex;
@@ -100,7 +135,6 @@
   background: rgba(255,255,255,0.07);
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: var(--radius-lg);
-  margin-left: auto;
 }
 
 .earningsTotal {
@@ -152,77 +186,152 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* Squad */
-.squadList {
+/* Roster Cards */
+.rosterGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.playerCard {
   display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+  background: var(--surface);
+}
+.playerCard:hover {
+  border-color: var(--text-1);
+  transform: translateY(-2px);
+}
+
+.playerCardTop {
+  position: relative;
+  background: linear-gradient(135deg, var(--surface-2) 0%, var(--border) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 16px 20px;
   flex-direction: column;
   gap: 8px;
 }
 
-.squadRow {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-.squadRow:hover { border-color: var(--text-1); background: var(--bg); }
-
-.squadIdx {
-  font-size: 11px;
-  color: var(--text-4);
-  min-width: 16px;
-  font-variant-numeric: tabular-nums;
+.playerCardFlag {
+  font-size: 22px;
+  line-height: 1;
+  position: absolute;
+  top: 10px;
+  right: 10px;
 }
 
-.squadAvatar {
-  width: 36px;
-  height: 36px;
+.playerCardImg {
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--text-1);
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.2);
+}
+
+.playerCardInitial {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--hero-bg);
+  border: 2px solid rgba(255,255,255,0.15);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 28px;
   font-weight: 900;
+  color: #fff;
   font-family: var(--font-display);
-  flex-shrink: 0;
 }
 
-.squadInfo { flex: 1; }
+.playerCardBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 12px 8px;
+  gap: 2px;
+}
 
-.squadNick {
+.playerCardNick {
   font-size: 15px;
+  font-weight: 900;
+  color: var(--text-1);
+  font-family: var(--font-display);
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+.playerCardName {
+  font-size: 11px;
+  color: var(--text-4);
+  text-align: center;
+}
+
+.playerCardStats {
+  display: flex;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.playerCardStat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  gap: 2px;
+}
+.playerCardStat + .playerCardStat {
+  border-left: 1px solid var(--border);
+}
+
+.playerCardStatVal {
+  font-size: 13px;
   font-weight: 800;
   color: var(--text-1);
   font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
-.squadRole {
-  font-size: 11px;
+.playerCardStatLabel {
+  font-size: 9px;
   font-weight: 700;
   color: var(--text-4);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  text-transform: capitalize;
-  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1;
 }
 
-.squadArrow {
-  color: var(--text-4);
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: opacity 0.15s, transform 0.15s;
+.playerCardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 12px;
+  margin-top: auto;
 }
-.squadRow:hover .squadArrow { opacity: 1; transform: translateX(0); }
+
+.playerCardRole {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.playerCardMV {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-1);
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
 
 /* Earnings Bar Chart */
 .earningsBar {
@@ -388,18 +497,28 @@
   white-space: nowrap;
 }
 
-/* Social */
-.socialList {
+
+/* News + Forum row */
+.cardSpanWide { grid-column: span 2; }
+
+.newsForumRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+/* News */
+.newsList {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.socialItem {
+.newsItem {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -407,66 +526,202 @@
   color: inherit;
   transition: border-color 0.15s;
 }
-.socialItem:hover { border-color: var(--text-1); }
+.newsItem:hover { border-color: var(--text-1); }
 
-.socialPlatform {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-1);
-  flex: 1;
-}
-
-.socialUrl {
-  font-size: 11px;
-  color: var(--text-4);
-}
-
-.socialArrow {
-  font-size: 13px;
-  color: var(--text-4);
-}
-
-/* Info */
-.infoList {
-  display: flex;
-  flex-direction: column;
-}
-
-.infoRow {
+.newsItemTop {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-  gap: 12px;
+  gap: 8px;
 }
-.infoRow:last-child { border-bottom: none; }
 
-.infoLabel {
-  font-size: 12px;
+.newsBadge {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.newsBadgeInterview { background: var(--hero-bg); color: #fff; }
+.newsBadgeArticle   { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border); }
+
+.newsPublisher {
+  font-size: 11px;
   color: var(--text-4);
   font-weight: 600;
 }
 
-.infoVal {
+.newsDate {
+  font-size: 11px;
+  color: var(--text-4);
+  margin-left: auto;
+}
+
+.newsTitle {
   font-size: 13px;
   font-weight: 700;
   color: var(--text-1);
-  text-align: right;
+  line-height: 1.4;
+  margin: 0;
 }
 
-.infoActive { color: var(--success); }
-.infoInactive { color: var(--danger); }
-.infoEarnings {
-  font-size: 16px;
-  font-weight: 900;
+.newsSubject {
+  font-size: 11px;
+  color: var(--text-4);
+}
+
+/* Forum */
+.forumList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.forumItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s;
+}
+.forumItem:hover { border-color: var(--text-1); }
+
+.forumItemBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.forumCategory {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+
+.forumTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-1);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.forumMeta {
+  flex-shrink: 0;
+}
+
+.forumComments {
+  font-size: 11px;
+  color: var(--text-4);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Transfers */
+.transferList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.transferRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+
+.transferDir {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.transferIn  { background: rgba(22,163,74,0.15); color: #4ade80; border: 1px solid rgba(22,163,74,0.3); }
+.transferOut { background: rgba(220,38,38,0.12); color: #f87171; border: 1px solid rgba(220,38,38,0.3); }
+
+.transferPlayer {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-1);
   font-family: var(--font-display);
+  min-width: 80px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.transferPlayer:hover { opacity: 0.7; }
+
+.transferTeams {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.transferFrom, .transferTo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.transferFrom:hover, .transferTo:hover { opacity: 0.7; }
+
+.transferArrow {
+  font-size: 13px;
+  color: var(--text-4);
+}
+
+.transferRole {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  text-transform: capitalize;
+  flex-shrink: 0;
+}
+
+.transferDate {
+  font-size: 11px;
+  color: var(--text-4);
+  white-space: nowrap;
+  margin-left: auto;
 }
 
 /* Responsive */
+@media (max-width: 900px) {
+  .rosterGrid { grid-template-columns: repeat(3, 1fr); }
+  .newsForumRow { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 768px) {
   .grid { grid-template-columns: 1fr; }
   .cardWide { grid-column: span 1; }
-  .earningsBadge { margin-left: 0; width: 100%; }
+  .cardSpanWide { grid-column: span 1; }
+  .heroBadges { margin-left: 0; width: 100%; flex-wrap: wrap; }
+  .earningsBadge { flex: 1; min-width: 140px; }
   .matchHeader { display: none; }
+  .rosterGrid { grid-template-columns: repeat(2, 1fr); }
+  .newsForumRow { grid-template-columns: 1fr; }
 }

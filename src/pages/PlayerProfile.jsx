@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { getPlayer, formatDate, formatPrize, getFlag, getMatches, getPrizeResults, getInterviews } from "../services/api";
+import { getPlayer, getTeam, formatDate, formatPrize, getFlag, getMatches, getPrizeResults, getInterviews } from "../services/api";
 import styles from "./PlayerProfile.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -59,10 +59,6 @@ function MarketValueChart({ history, current }) {
           </g>
         ))}
       </svg>
-      <div className={styles.mvAlgoNote}>
-        <span className={styles.mvAlgoTitle}>{t("player.esmMvIndex")}</span>
-        <span>{t("player.esmAlgoNote")}</span>
-      </div>
     </div>
   );
 }
@@ -157,10 +153,16 @@ function CareerTimeline({ career }) {
                 fontSize: 13, fontWeight: 800, color: "var(--text-1)",
                 fontFamily: "var(--font-display)", marginBottom: 4,
               }}>{c.year}</span>
-              <span style={{
-                fontSize: 12, fontWeight: 700, color: "var(--text-2)",
-                textAlign: "center", marginBottom: 4, lineHeight: 1.2,
-              }}>{c.team}</span>
+              <Link
+                to={`/team/${encodeURIComponent(c.team)}`}
+                style={{
+                  fontSize: 12, fontWeight: 700, color: "var(--text-2)",
+                  textAlign: "center", marginBottom: 4, lineHeight: 1.2,
+                  textDecoration: "none", transition: "color 0.15s",
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = "var(--text-1)"}
+                onMouseLeave={e => e.currentTarget.style.color = "var(--text-2)"}
+              >{c.team}</Link>
               <span style={{
                 fontSize: 10, color: "var(--text-4)", textAlign: "center",
                 lineHeight: 1.4, maxWidth: 120,
@@ -192,6 +194,7 @@ export default function PlayerProfile() {
     );
   }
 
+  const team = getTeam(player.teampagename);
   const age = calcAge(player.birthdate);
   const earningsYears = Object.entries(player.earningsbyyear).sort(([a], [b]) => a.localeCompare(b));
   const latestYear = earningsYears[earningsYears.length - 1];
@@ -214,6 +217,15 @@ export default function PlayerProfile() {
       <div className={styles.hero}>
         <div className="wrap">
           <div className={styles.heroInner}>
+            {team && (
+              <Link to={`/team/${encodeURIComponent(team.name)}`} className={styles.teamLogoBox}>
+                {team.textlesslogourl
+                  ? <img src={team.textlesslogourl} alt={team.name} className={styles.teamLogoImg} />
+                  : <span className={styles.teamLogoFallback}>{team.name[0]}</span>
+                }
+              </Link>
+            )}
+
             <div className={styles.avatar}>
               <span className={styles.avatarLetter}>{player.id[0].toUpperCase()}</span>
             </div>
@@ -230,7 +242,9 @@ export default function PlayerProfile() {
               <p className={styles.fullName}>{player.name}</p>
               <div className={styles.heroTags}>
                 {age && <span className={styles.tag}>{t("player.age")} <strong>{age}</strong></span>}
-                <span className={styles.tag}>{t("player.team")} <strong>{player.teampagename}</strong></span>
+                <Link to={`/team/${encodeURIComponent(player.teampagename)}`} className={styles.tag} style={{ textDecoration: "none" }}>
+                  {t("player.team")} <strong>{player.teampagename}</strong>
+                </Link>
                 <span className={styles.tag}>{t("player.born")} <strong>{formatDate(player.birthdate)}</strong></span>
                 <span className={styles.tag}>{t("player.game")} <strong>{player.wiki}</strong></span>
                 {Object.entries(player.links).map(([platform, url]) => (
@@ -248,7 +262,6 @@ export default function PlayerProfile() {
                 <div className={styles.marketValueBadge}>
                   <span className={styles.mvVal}>{formatPrize(player.marketvalue)}</span>
                   <span className={styles.mvLabel}>{t("player.marketValue")}</span>
-                  <span className={styles.mvNote}>{t("player.esmIndex")}</span>
                 </div>
               )}
               <div className={styles.earningsBadge}>
@@ -362,7 +375,14 @@ export default function PlayerProfile() {
                       <span className={`${styles.prizePlacement} ${cls}`}>{place === "1" ? "🥇" : place === "2" ? "🥈" : place === "3-4" ? "🥉" : `#${place}`}</span>
                       <div className={styles.prizeTournament}>
                         <span className={styles.prizeName}>{p.qualifier || "Tournament"}</span>
-                        <span className={styles.prizeDate}>{formatDate(p.date)}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span className={styles.prizeDate}>{formatDate(p.date)}</span>
+                          {p.opponentname && (
+                            <Link to={`/team/${encodeURIComponent(p.opponentname)}`} className={styles.prizeOpponent}>
+                              vs {p.opponentname}
+                            </Link>
+                          )}
+                        </div>
                       </div>
                       <span className={styles.prizeMoney}>{formatPrize(p.prizemoney)}</span>
                     </div>

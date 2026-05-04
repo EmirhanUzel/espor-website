@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { getTodayMatches, getLiveMatches, formatTime, searchEntities } from "../services/api";
 import styles from "./Navbar.module.css";
 import { useAuth } from "../services/auth.jsx";
@@ -312,6 +312,8 @@ function UserMenu({ user, onSignOut }) {
   );
 }
 
+const WIKI_AWARE_PATHS = ["/", "/tournaments", "/matches", "/teams", "/players", "/news"];
+
 // ── Main Navbar ────────────────────────────────────────────────────────────────
 export default function Navbar({ activeWiki, onWikiChange }) {
   const { user, openAuth: openAuthCtx, signOut } = useAuth();
@@ -319,6 +321,14 @@ export default function Navbar({ activeWiki, onWikiChange }) {
   const { lang, toggleLang, t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  const handleWikiChange = (wikiId) => {
+    onWikiChange(wikiId);
+    const isWikiAware = WIKI_AWARE_PATHS.includes(pathname);
+    if (!isWikiAware) navigate("/");
+  };
 
   const liveCount = getLiveMatches().length;
   const now = new Date().toLocaleDateString(lang === "tr" ? "tr-TR" : "en-US", {
@@ -346,7 +356,7 @@ export default function Navbar({ activeWiki, onWikiChange }) {
               <button
                 key={w.id}
                 className={`${styles.wikiBtn} ${activeWiki === w.id ? styles.wikiBtnActive : ""}`}
-                onClick={() => onWikiChange(w.id)}
+                onClick={() => handleWikiChange(w.id)}
               >
                 {w.label}
               </button>
@@ -426,7 +436,7 @@ export default function Navbar({ activeWiki, onWikiChange }) {
               <button
                 key={w.id}
                 className={`${styles.mobileWikiBtn} ${activeWiki === w.id ? styles.mobileWikiBtnActive : ""}`}
-                onClick={() => { onWikiChange(w.id); setMenuOpen(false); }}
+                onClick={() => { handleWikiChange(w.id); setMenuOpen(false); }}
               >
                 {w.label}
               </button>

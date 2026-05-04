@@ -150,19 +150,18 @@ export default function PlayerStats() {
   const isValorant = player.wiki === "valorant";
   const isCS       = player.wiki === "counterstrike";
   const isLoL      = player.wiki === "leagueoflegends";
-  const filterLabel = isLoL ? "Şampiyona göre" : "Haritaya göre";
+  const filterKey   = isLoL ? "champ" : isValorant ? "agent" : "map";
+  const filterLabel = isLoL ? "Şampiyona göre" : isValorant ? "Ajana göre" : "Haritaya göre";
 
   // Unique filter options across all matches
   const filterOptions = useMemo(() => {
-    const key = isLoL ? "champ" : "map";
-    return [...new Set(statsData.matches.flatMap(m => m.maps.map(mp => mp[key])))].sort();
-  }, [statsData, isLoL]);
+    return [...new Set(statsData.matches.flatMap(m => m.maps.map(mp => mp[filterKey])))].sort();
+  }, [statsData, filterKey]);
 
   const filteredMatches = useMemo(() => {
     if (filter === "all") return statsData.matches;
-    const key = isLoL ? "champ" : "map";
-    return statsData.matches.filter(m => m.maps.some(mp => mp[key] === filter));
-  }, [statsData, filter, isLoL]);
+    return statsData.matches.filter(m => m.maps.some(mp => mp[filterKey] === filter));
+  }, [statsData, filter, filterKey]);
 
   const toggle = (i) => {
     setExpanded(prev => {
@@ -237,7 +236,7 @@ export default function PlayerStats() {
             const open = isOpen(i);
             const visibleMaps = filter === "all"
               ? match.maps
-              : match.maps.filter(mp => (isLoL ? mp.champ : mp.map) === filter);
+              : match.maps.filter(mp => mp[filterKey] === filter);
 
             return (
               <div key={i} className={styles.matchCard}>

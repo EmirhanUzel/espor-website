@@ -79,35 +79,90 @@
   background: rgba(255,255,255,0.25);
 }
 
-/* Stats Row */
-.statsRow {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin: 16px 0 0;
-}
-
-.statPill {
+/* Publisher Search */
+.publisherSearch {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
+  margin: 16px 0 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 6px 12px;
+  transition: border-color 0.15s;
+}
+.publisherSearch:focus-within { border-color: var(--text-1); }
+
+.publisherSearchIcon {
+  padding: 0 10px;
+  color: var(--text-4);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-.statPillVal {
-  font-size: 16px;
-  font-weight: 900;
+.publisherSearchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
   color: var(--text-1);
-  font-family: var(--font-display);
+  font-size: 14px;
+  font-family: var(--font-body);
+  padding: 10px 0;
+  outline: none;
+}
+.publisherSearchInput::placeholder { color: var(--text-4); }
+
+.publisherSearchClear {
+  background: none;
+  border: none;
+  color: var(--text-4);
+  cursor: pointer;
+  padding: 0 12px;
+  font-size: 12px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.publisherSearchClear:hover { color: var(--text-1); }
+
+.publisherDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  z-index: 20;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 }
 
-.statPillLabel {
-  font-size: 12px;
-  color: var(--text-3);
-  font-weight: 500;
+.publisherDropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.publisherDropdownItem:last-child { border-bottom: none; }
+.publisherDropdownItem:hover { background: var(--surface-2); }
+
+.publisherDropdownName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.publisherDropdownCount {
+  font-size: 11px;
+  color: var(--text-4);
 }
 
 /* Sections */

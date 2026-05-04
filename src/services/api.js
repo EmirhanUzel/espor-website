@@ -636,7 +636,7 @@ export const PRIZE_RESULTS = [
 export const PLAYERS = [
   // VALORANT
   {
-    id: "Boaster", name: "Jake Howlett", type: "player", views: 54000,
+    id: "Boaster", name: "Jake Howlett", type: "player", views: 54000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=Boaster&backgroundColor=b6e3f4",
     nationality: "United Kingdom", region: "Europe",
     birthdate: "1995-05-25", teampagename: "Fnatic",
     links: { tiktok: "https://tiktok.com/@officialboaster", instagram: "https://www.instagram.com/OfficialBoaster", youtube: "https://www.youtube.com/OfficialBoaster", twitch: "https://www.twitch.tv/OfficialBoaster" },
@@ -671,7 +671,7 @@ export const PLAYERS = [
     wiki: "valorant",
   },
   {
-    id: "Alfajer", name: "Emir Ali Beder", type: "player", views: 72000,
+    id: "Alfajer", name: "Emir Ali Beder", type: "player", views: 72000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=Alfajer&backgroundColor=c0aede",
     nationality: "Turkey", region: "Europe",
     birthdate: "2004-07-27", teampagename: "Fnatic",
     links: { instagram: "https://www.instagram.com/alfajerval", twitter: "https://twitter.com/alfajerval", twitch: "https://www.twitch.tv/alfajer" },
@@ -704,7 +704,7 @@ export const PLAYERS = [
     wiki: "valorant",
   },
   {
-    id: "s0m", name: "Samuel Oh", type: "player", views: 58000,
+    id: "s0m", name: "Samuel Oh", type: "player", views: 58000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=s0m&backgroundColor=ffd5dc",
     nationality: "United States", region: "Americas",
     birthdate: "2001-08-16", teampagename: "NRG",
     links: { twitter: "https://twitter.com/s0mcs", twitch: "https://www.twitch.tv/s0m", instagram: "https://www.instagram.com/s0mval" },
@@ -739,7 +739,7 @@ export const PLAYERS = [
     wiki: "valorant",
   },
   {
-    id: "f0rsakeN", name: "Jason Susanto", type: "player", views: 45000,
+    id: "f0rsakeN", name: "Jason Susanto", type: "player", views: 45000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=f0rsakeN&backgroundColor=ffdfbf",
     nationality: "Singapore", region: "Pacific",
     birthdate: "2002-03-07", teampagename: "Paper Rex",
     links: { twitter: "https://twitter.com/f0rsakeNCS", twitch: "https://www.twitch.tv/f0rsaken", instagram: "https://www.instagram.com/f0rsaken" },
@@ -772,7 +772,7 @@ export const PLAYERS = [
     wiki: "valorant",
   },
   {
-    id: "Derke", name: "Nikita Sirmitev", type: "player", views: 49000,
+    id: "Derke", name: "Nikita Sirmitev", type: "player", views: 49000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=Derke&backgroundColor=d1d4f9",
     nationality: "Finland", region: "Europe",
     birthdate: "2002-07-21", teampagename: "Fnatic",
     links: { twitter: "https://twitter.com/derkeCS", twitch: "https://www.twitch.tv/derke", instagram: "https://www.instagram.com/derke_val" },
@@ -805,7 +805,7 @@ export const PLAYERS = [
     wiki: "valorant",
   },
   {
-    id: "Chronicle", name: "Timofey Khromov", type: "player", views: 31000,
+    id: "Chronicle", name: "Timofey Khromov", type: "player", views: 31000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=Chronicle&backgroundColor=b6e3f4",
     nationality: "Russia", region: "Europe", birthdate: "2002-04-17", teampagename: "Fnatic",
     links: { twitter: "https://twitter.com/ChronicleVAL", twitch: "https://www.twitch.tv/chronicle" },
     status: "Active", earnings: 198000,
@@ -824,7 +824,7 @@ export const PLAYERS = [
     wiki: "valorant",
   },
   {
-    id: "Leo", name: "Leo Jannesson", type: "player", views: 28000,
+    id: "Leo", name: "Leo Jannesson", type: "player", views: 28000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=Leo&backgroundColor=c0aede",
     nationality: "Sweden", region: "Europe", birthdate: "2000-07-10", teampagename: "Fnatic",
     links: { twitter: "https://twitter.com/LeoVAL", twitch: "https://www.twitch.tv/leoval" },
     status: "Active", earnings: 172000,
@@ -842,7 +842,7 @@ export const PLAYERS = [
     wiki: "valorant",
   },
   {
-    id: "ardiis", name: "Ardis Svarenieks", type: "player", views: 42000,
+    id: "ardiis", name: "Ardis Svarenieks", type: "player", views: 42000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=ardiis&backgroundColor=ffd5dc",
     nationality: "Latvia", region: "Europe", birthdate: "1999-04-16", teampagename: "NRG",
     links: { twitter: "https://twitter.com/ardiis", twitch: "https://www.twitch.tv/ardiis" },
     status: "Active", earnings: 412000,
@@ -861,7 +861,7 @@ export const PLAYERS = [
     wiki: "valorant",
   },
   {
-    id: "crashies", name: "Austin Roberts", type: "player", views: 38000,
+    id: "crashies", name: "Austin Roberts", type: "player", views: 38000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=crashies&backgroundColor=ffdfbf",
     nationality: "United States", region: "Americas", birthdate: "2000-07-30", teampagename: "NRG",
     links: { twitter: "https://twitter.com/crashies", twitch: "https://www.twitch.tv/crashies" },
     status: "Active", earnings: 340000,
@@ -879,7 +879,7 @@ export const PLAYERS = [
     wiki: "valorant",
   },
   {
-    id: "Jinggg", name: "Wang Jing Jie", type: "player", views: 35000,
+    id: "Jinggg", name: "Wang Jing Jie", type: "player", views: 35000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=Jinggg&backgroundColor=d1d4f9",
     nationality: "Singapore", region: "Pacific", birthdate: "2001-08-14", teampagename: "Paper Rex",
     links: { twitter: "https://twitter.com/Jinggg_", twitch: "https://www.twitch.tv/jinggg" },
     status: "Active", earnings: 210000,
@@ -898,7 +898,7 @@ export const PLAYERS = [
   },
   // CS2
   {
-    id: "s1mple", name: "Oleksandr Kostyliev", type: "player", views: 98000,
+    id: "s1mple", name: "Oleksandr Kostyliev", type: "player", views: 98000, imageurl: "https://liquipedia.net/commons/images/thumb/d/d5/S1mple_at_IEM_Cologne_2022.jpg/265px-S1mple_at_IEM_Cologne_2022.jpg",
     nationality: "Ukraine", region: "Europe",
     birthdate: "1997-10-02", teampagename: "NAVI",
     links: { twitter: "https://twitter.com/s1mpleO", twitch: "https://www.twitch.tv/s1mple", instagram: "https://www.instagram.com/s1mple" },
@@ -935,7 +935,7 @@ export const PLAYERS = [
     wiki: "counterstrike",
   },
   {
-    id: "NiKo", name: "Nikola Kovač", type: "player", views: 87000,
+    id: "NiKo", name: "Nikola Kovač", type: "player", views: 87000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=NiKo&backgroundColor=c0aede",
     nationality: "Bosnia and Herzegovina", region: "Europe",
     birthdate: "1997-02-16", teampagename: "G2 Esports",
     links: { twitter: "https://twitter.com/NiKoCSGO", twitch: "https://www.twitch.tv/niko", instagram: "https://www.instagram.com/niko" },
@@ -972,7 +972,7 @@ export const PLAYERS = [
     wiki: "counterstrike",
   },
   {
-    id: "ZywOo", name: "Mathieu Herbaut", type: "player", views: 91000,
+    id: "ZywOo", name: "Mathieu Herbaut", type: "player", views: 91000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=ZywOo&backgroundColor=ffd5dc",
     nationality: "France", region: "Europe", birthdate: "2000-11-09", teampagename: "Team Vitality",
     links: { twitter: "https://twitter.com/ZywOo", twitch: "https://www.twitch.tv/zywoo" },
     status: "Active", earnings: 1240000,
@@ -991,7 +991,7 @@ export const PLAYERS = [
     wiki: "counterstrike",
   },
   {
-    id: "device", name: "Nicolai Reedtz", type: "player", views: 76000,
+    id: "device", name: "Nicolai Reedtz", type: "player", views: 76000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=device&backgroundColor=ffdfbf",
     nationality: "Denmark", region: "Europe", birthdate: "1996-08-08", teampagename: "Astralis",
     links: { twitter: "https://twitter.com/dev1ce", twitch: "https://www.twitch.tv/dev1ce" },
     status: "Active", earnings: 3200000,
@@ -1010,7 +1010,7 @@ export const PLAYERS = [
     wiki: "counterstrike",
   },
   {
-    id: "electronic", name: "Denis Sharipov", type: "player", views: 54000,
+    id: "electronic", name: "Denis Sharipov", type: "player", views: 54000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=electronic&backgroundColor=d1d4f9",
     nationality: "Russia", region: "Europe", birthdate: "1997-10-23", teampagename: "NAVI",
     links: { twitter: "https://twitter.com/electroNicCSGO", twitch: "https://www.twitch.tv/electronic" },
     status: "Active", earnings: 1400000,
@@ -1029,7 +1029,7 @@ export const PLAYERS = [
     wiki: "counterstrike",
   },
   {
-    id: "b1t", name: "Valentin Vakhovskiy", type: "player", views: 48000,
+    id: "b1t", name: "Valentin Vakhovskiy", type: "player", views: 48000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=b1t&backgroundColor=b6e3f4",
     nationality: "Ukraine", region: "Europe", birthdate: "2002-04-13", teampagename: "NAVI",
     links: { twitter: "https://twitter.com/b1t_cs", twitch: "https://www.twitch.tv/b1t" },
     status: "Active", earnings: 820000,
@@ -1047,7 +1047,7 @@ export const PLAYERS = [
     wiki: "counterstrike",
   },
   {
-    id: "huNter-", name: "Nemanja Kovač", type: "player", views: 61000,
+    id: "huNter-", name: "Nemanja Kovač", type: "player", views: 61000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=huNter&backgroundColor=c0aede",
     nationality: "Bosnia and Herzegovina", region: "Europe", birthdate: "1997-11-23", teampagename: "G2 Esports",
     links: { twitter: "https://twitter.com/huNtercsgo", twitch: "https://www.twitch.tv/hunter" },
     status: "Active", earnings: 1100000,
@@ -1066,7 +1066,7 @@ export const PLAYERS = [
     wiki: "counterstrike",
   },
   {
-    id: "ropz", name: "Robin Kool", type: "player", views: 58000,
+    id: "ropz", name: "Robin Kool", type: "player", views: 58000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=ropz&backgroundColor=ffd5dc",
     nationality: "Estonia", region: "Europe", birthdate: "2000-03-12", teampagename: "FaZe Clan",
     links: { twitter: "https://twitter.com/ropzCSGO", twitch: "https://www.twitch.tv/ropz" },
     status: "Active", earnings: 1200000,
@@ -1085,7 +1085,7 @@ export const PLAYERS = [
     wiki: "counterstrike",
   },
   {
-    id: "sh1ro", name: "Dmitry Sokolov", type: "player", views: 44000,
+    id: "sh1ro", name: "Dmitry Sokolov", type: "player", views: 44000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=sh1ro&backgroundColor=ffdfbf",
     nationality: "Russia", region: "Europe", birthdate: "2001-08-09", teampagename: "Cloud9",
     links: { twitter: "https://twitter.com/sh1ro_cs", twitch: "https://www.twitch.tv/sh1ro" },
     status: "Active", earnings: 700000,
@@ -1103,7 +1103,7 @@ export const PLAYERS = [
     wiki: "counterstrike",
   },
   {
-    id: "broky", name: "Helvijs Saukants", type: "player", views: 39000,
+    id: "broky", name: "Helvijs Saukants", type: "player", views: 39000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=broky&backgroundColor=d1d4f9",
     nationality: "Latvia", region: "Europe", birthdate: "2000-09-20", teampagename: "FaZe Clan",
     links: { twitter: "https://twitter.com/brokyCSGO", twitch: "https://www.twitch.tv/broky" },
     status: "Active", earnings: 900000,
@@ -1122,7 +1122,7 @@ export const PLAYERS = [
   },
   // League of Legends
   {
-    id: "Faker", name: "Lee Sang-hyeok", type: "player", views: 125000,
+    id: "Faker", name: "Lee Sang-hyeok", type: "player", views: 125000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=Faker&backgroundColor=b6e3f4",
     nationality: "South Korea", region: "Korea",
     birthdate: "1996-05-07", teampagename: "T1",
     links: { twitter: "https://twitter.com/faker", twitch: "https://www.twitch.tv/faker", instagram: "https://www.instagram.com/faker", youtube: "https://www.youtube.com/c/Faker" },
@@ -1158,7 +1158,7 @@ export const PLAYERS = [
     wiki: "leagueoflegends",
   },
   {
-    id: "Caps", name: "Rasmus Borregaard Winther", type: "player", views: 68000,
+    id: "Caps", name: "Rasmus Borregaard Winther", type: "player", views: 68000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=Caps&backgroundColor=c0aede",
     nationality: "Denmark", region: "Europe",
     birthdate: "1999-11-06", teampagename: "G2 Esports",
     links: { twitter: "https://twitter.com/G2Caps", twitch: "https://www.twitch.tv/caps", instagram: "https://www.instagram.com/g2caps" },
@@ -1193,7 +1193,7 @@ export const PLAYERS = [
     wiki: "leagueoflegends",
   },
   {
-    id: "Ruler", name: "Park Jae-hyuk", type: "player", views: 61000,
+    id: "Ruler", name: "Park Jae-hyuk", type: "player", views: 61000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=Ruler&backgroundColor=ffd5dc",
     nationality: "South Korea", region: "Korea",
     birthdate: "2000-07-18", teampagename: "T1",
     links: { twitter: "https://twitter.com/RulerLoL", instagram: "https://www.instagram.com/ruler_lol" },
@@ -1227,7 +1227,7 @@ export const PLAYERS = [
     wiki: "leagueoflegends",
   },
   {
-    id: "Jankos", name: "Marcin Jankowski", type: "player", views: 38000,
+    id: "Jankos", name: "Marcin Jankowski", type: "player", views: 38000, imageurl: "https://api.dicebear.com/7.x/micah/svg?seed=Jankos&backgroundColor=ffdfbf",
     nationality: "Poland", region: "Europe",
     birthdate: "1996-03-17", teampagename: "G2 Esports",
     links: { twitter: "https://twitter.com/Jankos", twitch: "https://www.twitch.tv/jankos", instagram: "https://www.instagram.com/jankosprimus" },

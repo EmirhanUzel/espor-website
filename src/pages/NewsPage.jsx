@@ -60,9 +60,19 @@ export default function NewsPage({ wiki }) {
   const guests = getGuests(wiki);
   const [filter, setFilter] = useState("All");
 
+  const [publisherSearch, setPublisherSearch] = useState("");
+
   const types = ["All", ...new Set(interviews.map(i => i.type))];
-  const filtered = filter === "All" ? interviews : interviews.filter(i => i.type === filter);
   const publishers = [...new Set(interviews.map(i => i.publisher))];
+
+  const byType = filter === "All" ? interviews : interviews.filter(i => i.type === filter);
+  const filtered = publisherSearch.trim()
+    ? byType.filter(i => i.publisher.toLowerCase().includes(publisherSearch.trim().toLowerCase()))
+    : byType;
+
+  const matchedPublishers = publisherSearch.trim()
+    ? publishers.filter(p => p.toLowerCase().includes(publisherSearch.trim().toLowerCase()))
+    : [];
 
   return (
     <main>
@@ -96,16 +106,32 @@ export default function NewsPage({ wiki }) {
           ))}
         </div>
 
-        <div className={styles.statsRow}>
-          {publishers.map(p => {
-            const count = interviews.filter(i => i.publisher === p).length;
-            return (
-              <div key={p} className={styles.statPill}>
-                <span className={styles.statPillVal}>{count}</span>
-                <span className={styles.statPillLabel}>{p}</span>
-              </div>
-            );
-          })}
+        <div className={styles.publisherSearch}>
+          <span className={styles.publisherSearchIcon}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input
+            className={styles.publisherSearchInput}
+            type="text"
+            placeholder="Haber kanalı ara... (VLR.gg, HLTV.org…)"
+            value={publisherSearch}
+            onChange={e => setPublisherSearch(e.target.value)}
+          />
+          {publisherSearch && (
+            <button className={styles.publisherSearchClear} onClick={() => setPublisherSearch("")}>✕</button>
+          )}
+          {matchedPublishers.length > 0 && (
+            <div className={styles.publisherDropdown}>
+              {matchedPublishers.map(p => (
+                <button key={p} className={styles.publisherDropdownItem} onClick={() => setPublisherSearch(p)}>
+                  <span className={styles.publisherDropdownName}>{p}</span>
+                  <span className={styles.publisherDropdownCount}>{interviews.filter(i => i.publisher === p).length} haber</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {filtered.length > 0 && (
