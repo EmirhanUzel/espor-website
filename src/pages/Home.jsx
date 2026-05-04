@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   getTournaments, getMatches, getInterviews, getTransfers,
-  getStandings, getPlayers, getPrizeResults, getGuests, getTeams, getLiveMatches,
+  getStandings, getPlayers, getGuests,
   formatDate, formatPrize, getFlag, tierLabel,
 } from "../services/api";
 import MatchCard from "../components/MatchCard";
@@ -92,15 +92,13 @@ function HeroBanner({ tournaments, allMatches }) {
             <div className={styles.heroScore}>
               <span className={styles.heroScoreLabel}>{t("home.grandFinal")}</span>
               <div className={styles.heroScoreRow}>
-                <div className={`${styles.heroTeam} ${grandFinal.winner === "1" ? styles.heroWinner : ""}`}>
-                  <span className={styles.heroTeamName}>{opp1.name}</span>
-                  <span className={styles.heroScoreNum}>{opp1.score}</span>
+                <span className={`${styles.heroTeamName} ${grandFinal.winner === "1" ? styles.heroWinner : ""}`}>{opp1.name}</span>
+                <div className={styles.heroScoreCenter}>
+                  <span className={`${styles.heroScoreNum} ${grandFinal.winner === "1" ? styles.heroWinnerScore : ""}`}>{opp1.score}</span>
+                  <span className={styles.heroVs}>-</span>
+                  <span className={`${styles.heroScoreNum} ${grandFinal.winner === "2" ? styles.heroWinnerScore : ""}`}>{opp2.score}</span>
                 </div>
-                <span className={styles.heroVs}>:</span>
-                <div className={`${styles.heroTeam} ${styles.heroTeamRight} ${grandFinal.winner === "2" ? styles.heroWinner : ""}`}>
-                  <span className={styles.heroScoreNum}>{opp2.score}</span>
-                  <span className={styles.heroTeamName}>{opp2.name}</span>
-                </div>
+                <span className={`${styles.heroTeamName} ${styles.heroTeamRight} ${grandFinal.winner === "2" ? styles.heroWinner : ""}`}>{opp2.name}</span>
               </div>
               <div className={styles.heroMaps}>
                 {grandFinal.match2games?.map((g, i) => (
@@ -130,34 +128,6 @@ function HeroBanner({ tournaments, allMatches }) {
   );
 }
 
-// ── Stats Bar ──────────────────────────────────────────────────────────────────
-function StatsBar({ wiki }) {
-  const { t } = useLanguage();
-  const tournaments = getTournaments(wiki);
-  const teams       = getTeams(wiki);
-  const liveCount   = getLiveMatches().length;
-  const totalPrize  = tournaments.reduce((s, tr) => s + (tr.prizepool || 0), 0);
-
-  const stats = [
-    { value: formatPrize(totalPrize), label: t("home.totalPrize") },
-    { value: tournaments.length,      label: t("home.tournamentsLabel") },
-    { value: teams.length,            label: t("home.activeTeams") },
-    { value: liveCount || "—",        label: t("home.liveNow"), live: liveCount > 0 },
-  ];
-
-  return (
-    <div className={styles.statsBar}>
-      {stats.map((s, i) => (
-        <div key={i} className={styles.statItem}>
-          <span className={`${styles.statValue} ${s.live ? styles.statLive : ""}`}>
-            {s.value}
-          </span>
-          <span className={styles.statLabel}>{s.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // ── Nav Cards ─────────────────────────────────────────────────────────────────
 function NavCards() {
@@ -242,81 +212,51 @@ function GuestCard({ guest }) {
   );
 }
 
-// ── Prize Row ─────────────────────────────────────────────────────────────────
-function PrizeRow({ result }) {
-  const { t } = useLanguage();
+// ── Player Carousel ────────────────────────────────────────────────────────────
+function PlayerCard({ player }) {
+  const navigate = useNavigate();
+
   return (
-    <div className={styles.prizeRow}>
-      <span className={`${styles.prizePlacement} ${result.placement === "1" ? styles.prizeGold : ""}`}>
-        {result.placement}
-      </span>
-      <span className={styles.prizeName}>{result.opponentname}</span>
-      <div className={styles.prizeQual}>
-        <span className={styles.prizeQualLabel}>{t("home.via")}</span>
-        <span>{result.qualifier}</span>
+    <div className={styles.playerCard} onClick={() => navigate(`/player/${player.id}`)}>
+      <div className={styles.playerCardAvatar}>{player.id[0].toUpperCase()}</div>
+      <div className={styles.playerCardInfo}>
+        <span className={styles.playerCardNick}>{player.id}</span>
+        <span className={styles.playerCardTeam}>
+          {getFlag(player.nationality)} {player.teampagename}
+        </span>
       </div>
-      {result.lastvsdata && (
-        <div className={styles.prizeLastVs}>
-          <span className={styles.prizeLastVsLabel}>{t("home.def")}</span>
-          <span>{result.lastvsdata.opponentname} ({result.lastvsdata.score})</span>
+      {player.marketvalue && (
+        <div className={styles.playerCardMarket}>
+          <span className={styles.playerCardMarketVal}>{formatPrize(player.marketvalue)}</span>
+          <span className={styles.playerCardMarketKey}>Piyasa Değeri</span>
         </div>
       )}
-      <span className={styles.prizeMoney}>{formatPrize(result.prizemoney)}</span>
     </div>
   );
 }
 
-// ── Player Spotlight ───────────────────────────────────────────────────────────
-function PlayerSpotlight({ player }) {
+function PlayerCarousel({ players }) {
   const { t } = useLanguage();
-  const navigate = useNavigate();
-  if (!player) return null;
-  const stats      = player.recentstats?.stats || [];
-  const years      = Object.keys(player.earningsbyyear || {}).sort();
-  const latestYear = years[years.length - 1];
+  if (!players.length) return null;
+
+  // İki kopya → sonsuz döngü için
+  const doubled = [...players, ...players];
+  const duration = Math.max(20, players.length * 5);
 
   return (
-    <div className={styles.spotlight} onClick={() => navigate(`/player/${player.id}`)}>
-      <div className={styles.spotlightLeft}>
-        <span className={styles.spotlightBadge}>{t("home.playerSpotlight")}</span>
-        <div className={styles.spotlightAvatar}>{player.id[0].toUpperCase()}</div>
-        <div className={styles.spotlightIdentity}>
-          <span className={styles.spotlightNick}>{player.id}</span>
-          <span className={styles.spotlightName}>{player.name}</span>
-          <span className={styles.spotlightMeta}>
-            {getFlag(player.nationality)} {player.nationality} · {player.teampagename}
-          </span>
+    <section className={styles.section}>
+      <SectionHead title={t("home.playerSpotlight")} to="/players" label={t("home.seeAll")} />
+      <div className={styles.playerCarousel}>
+        <div
+          className={styles.playerTrack}
+          style={{ animationDuration: `${duration}s` }}
+        >
+          {doubled.map((p, i) => (
+            <PlayerCard key={`${p.id}-${i}`} player={p} />
+          ))}
         </div>
       </div>
-
-      {stats.length > 0 && (
-        <div className={styles.spotlightStats}>
-          <span className={styles.spotlightStatsLabel}>
-            {player.recentstats.period} · {player.recentstats.games} {player.recentstats.gamesLabel}
-          </span>
-          <div className={styles.spotlightStatsGrid}>
-            {stats.map(s => (
-              <div key={s.label} className={styles.spotlightStat}>
-                <span className={styles.spotlightStatVal}>{s.value}</span>
-                <span className={styles.spotlightStatKey}>{s.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className={styles.spotlightEarnings}>
-        <span className={styles.spotlightEarVal}>{formatPrize(player.earnings)}</span>
-        <span className={styles.spotlightEarLabel}>{t("home.totalEarnings")}</span>
-        {latestYear && (
-          <span className={styles.spotlightEarYear}>
-            {latestYear}: {formatPrize(player.earningsbyyear[latestYear])}
-          </span>
-        )}
-      </div>
-
-      <span className={styles.spotlightArrow}>→</span>
-    </div>
+    </section>
   );
 }
 
@@ -329,8 +269,7 @@ export default function Home({ wiki, region }) {
   const allTransfers = getTransfers();
   const standings    = getStandings(wiki);
   const players      = getPlayers(wiki);
-  const prizeResults = getPrizeResults(wiki);
-  const guests       = getGuests(wiki);
+  const guests = getGuests(wiki);
 
   const filteredTournaments = region && region !== "All"
     ? tournaments.filter(tr => tr.locations?.region === region)
@@ -340,8 +279,7 @@ export default function Home({ wiki, region }) {
   const recentMatches       = matches.filter(m => m.finished === 1).slice(0, 3);
   const upcomingMatches     = matches.filter(m => m.finished !== 1).slice(0, 3);
   const recentInterviews    = interviews.slice(0, 3);
-  const recentTransfers     = allTransfers.slice(0, 6);
-  const spotlightPlayer     = players[0] || null;
+  const recentTransfers = allTransfers.slice(0, 6);
 
   if (!tournaments.length && !matches.length) {
     return (
@@ -358,7 +296,6 @@ export default function Home({ wiki, region }) {
       <HeroBanner tournaments={carouselTournaments} allMatches={matches} />
 
       <div className="wrap">
-        <StatsBar wiki={wiki} />
         <NavCards />
 
         <div className={styles.divider} />
@@ -426,22 +363,9 @@ export default function Home({ wiki, region }) {
           )}
         </div>
 
-        {prizeResults.length > 0 && (
-          <section className={styles.section}>
-            <SectionHead title={t("home.prizeDistribution")} />
-            <div className={styles.prizeTable}>
-              {prizeResults.slice(0, 8).map((r, i) => <PrizeRow key={i} result={r} />)}
-            </div>
-          </section>
-        )}
-
         <div className={styles.divider} />
 
-        {spotlightPlayer && (
-          <section className={styles.section}>
-            <PlayerSpotlight player={spotlightPlayer} />
-          </section>
-        )}
+        <PlayerCarousel players={players} />
 
       </div>
     </main>

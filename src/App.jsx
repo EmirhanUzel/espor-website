@@ -1,5 +1,11 @@
-import { useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import PlayerProfile from "./pages/PlayerProfile";
@@ -55,6 +61,7 @@ function AppInner() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
+      <ScrollToTop />
       <Navbar
         activeWiki={wiki}
         onWikiChange={setWiki}
@@ -64,9 +71,9 @@ function AppInner() {
       <div style={{ flex: 1 }}>
         <Routes>
           <Route path="/"              element={<Home wiki={wiki} region={region} />} />
-          <Route path="/tournaments"         element={<TournamentsPage />} />
+          <Route path="/tournaments"         element={<TournamentsPage wiki={wiki} />} />
           <Route path="/tournament/:id"    element={<TournamentPage wiki={wiki} />} />
-          <Route path="/matches"           element={<MatchesPage />} />
+          <Route path="/matches"           element={<MatchesPage wiki={wiki} />} />
           <Route path="/match/:id"         element={<MatchPage />} />
           <Route path="/teams"             element={<TeamsRanking wiki={wiki} />} />
           <Route path="/teams/official"    element={<TeamsRankingFull type="official" />} />

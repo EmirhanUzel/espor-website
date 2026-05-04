@@ -1,14 +1,7 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { getTournaments, formatDate, formatPrize, tierLabel } from "../services/api";
+import { getTournaments, getTeams, getLiveMatches, formatDate, formatPrize, tierLabel } from "../services/api";
 import styles from "./TournamentsPage.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
-
-const WIKIS = [
-  { id: "valorant",       label: "VALORANT" },
-  { id: "counterstrike",  label: "CS2" },
-  { id: "leagueoflegends",label: "LoL" },
-];
 
 const TIER_COLORS = { "1": styles.tierS, "2": styles.tierA, "3": styles.tierB };
 
@@ -73,10 +66,12 @@ function TournamentRow({ tournament }) {
   );
 }
 
-export default function TournamentsPage() {
+export default function TournamentsPage({ wiki = "valorant" }) {
   const { t } = useLanguage();
-  const [wiki, setWiki] = useState("valorant");
   const tournaments = getTournaments(wiki);
+  const teams       = getTeams(wiki);
+  const liveCount   = getLiveMatches().length;
+  const totalPrize  = tournaments.reduce((s, tr) => s + (tr.prizepool || 0), 0);
 
   return (
     <main>
@@ -84,23 +79,30 @@ export default function TournamentsPage() {
         <div className="wrap">
           <h1 className={styles.pageTitle}>{t("tournaments.title")}</h1>
           <p className={styles.pageSubtitle}>
-            {tournaments.length} {tournaments.length !== 1 ? t("tournaments.subtitle.other") : t("tournaments.subtitle.one")} · {WIKIS.find(w => w.id === wiki)?.label}
+            {tournaments.length} {tournaments.length !== 1 ? t("tournaments.subtitle.other") : t("tournaments.subtitle.one")}
           </p>
         </div>
       </div>
 
       <div className="wrap">
-        <div className={styles.controls}>
-          <div className={styles.wikiTabs}>
-            {WIKIS.map(w => (
-              <button
-                key={w.id}
-                className={`${styles.wikiTab} ${wiki === w.id ? styles.wikiTabActive : ""}`}
-                onClick={() => setWiki(w.id)}
-              >
-                {w.label}
-              </button>
-            ))}
+        <div className={styles.statsBar}>
+          <div className={styles.statItem}>
+            <span className={styles.statValue}>{formatPrize(totalPrize)}</span>
+            <span className={styles.statLabel}>{t("home.totalPrize")}</span>
+          </div>
+          <div className={styles.statItem}>
+            <span className={styles.statValue}>{tournaments.length}</span>
+            <span className={styles.statLabel}>{t("home.tournamentsLabel")}</span>
+          </div>
+          <div className={styles.statItem}>
+            <span className={styles.statValue}>{teams.length}</span>
+            <span className={styles.statLabel}>{t("home.activeTeams")}</span>
+          </div>
+          <div className={styles.statItem}>
+            <span className={`${styles.statValue} ${liveCount > 0 ? styles.statLive : ""}`}>
+              {liveCount || "—"}
+            </span>
+            <span className={styles.statLabel}>{t("home.liveNow")}</span>
           </div>
         </div>
 
@@ -124,6 +126,7 @@ export default function TournamentsPage() {
             </div>
           </div>
         )}
+
       </div>
     </main>
   );

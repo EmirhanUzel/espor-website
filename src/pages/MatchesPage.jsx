@@ -17,12 +17,6 @@ function formatDateLabel(dateStr, locale) {
   return d.toLocaleDateString(locale, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 }
 
-const WIKI_TABS = [
-  { id: null,               labelKey: "matches.allGames" },
-  { id: "valorant",         label: "VALORANT" },
-  { id: "counterstrike",    label: "CS2" },
-  { id: "leagueoflegends",  label: "LoL" },
-];
 
 function SectionHead({ live, title, count }) {
   return (
@@ -42,15 +36,14 @@ function EmptyState({ text }) {
   );
 }
 
-export default function MatchesPage() {
+export default function MatchesPage({ wiki = "valorant" }) {
   const { t, lang } = useLanguage();
-  const [activeWiki, setActiveWiki] = useState(null);
   const todayStr = useMemo(() => toDateStr(new Date()), []);
   const [selectedDate, setSelectedDate] = useState(todayStr);
 
   const locale = lang === "tr" ? "tr-TR" : "en-US";
 
-  const dateMatches  = getMatchesByDate(selectedDate, activeWiki);
+  const dateMatches  = getMatchesByDate(selectedDate, wiki);
   const isToday      = selectedDate === todayStr;
   const isPast       = selectedDate < todayStr;
   const liveMatches  = isToday ? dateMatches.filter(m => m.finished === 0) : [];
@@ -129,17 +122,6 @@ export default function MatchesPage() {
             )}
           </div>
 
-          <div className={styles.wikiFilter}>
-            {WIKI_TABS.map(tab => (
-              <button
-                key={String(tab.id)}
-                className={`${styles.wikiBtn} ${activeWiki === tab.id ? styles.wikiBtnActive : ""}`}
-                onClick={() => setActiveWiki(tab.id)}
-              >
-                {tab.labelKey ? t(tab.labelKey) : tab.label}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
 

@@ -118,32 +118,32 @@
 .matchup {
   display: flex;
   align-items: center;
-  gap: 16px;
-}
-
-.team {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-}
-
-.teamRight {
-  flex-direction: row-reverse;
-  text-align: right;
+  gap: 12px;
 }
 
 .teamName {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--text-3);
   font-family: var(--font-display);
   letter-spacing: -0.01em;
   transition: color 0.15s;
+  flex: 1;
 }
 
-.winner .teamName {
+.teamNameRight {
+  text-align: right;
+}
+
+.winnerName {
   color: var(--text-1);
+}
+
+.scoreBlock {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .score {
@@ -157,15 +157,14 @@
   text-align: center;
 }
 
-.winner .score {
+.winnerScore {
   color: var(--text-1);
 }
 
-.vs {
-  font-size: 10px;
-  font-weight: 900;
+.scoreDash {
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text-4);
-  letter-spacing: 0.12em;
   flex-shrink: 0;
 }
 

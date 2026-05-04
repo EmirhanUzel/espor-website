@@ -1,15 +1,25 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { TICKER_ITEMS, getTodayMatches, getLiveMatches, formatTime, searchEntities } from "../services/api";
+import { getTodayMatches, getLiveMatches, formatTime, searchEntities } from "../services/api";
 import styles from "./Navbar.module.css";
 import { useAuth } from "../services/auth.jsx";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLanguage } from "../contexts/LanguageContext";
 
 const WIKIS = [
-  { id: "valorant", label: "VALORANT" },
+  { id: "valorant",      label: "VALORANT" },
   { id: "counterstrike", label: "CS2" },
   { id: "leagueoflegends", label: "LoL" },
+];
+
+const NAV_LINKS = [
+  { labelKey: "nav.tournaments", to: "/tournaments" },
+  { labelKey: "nav.matches",     to: "/matches"     },
+  { labelKey: "nav.teams",       to: "/teams"        },
+  { labelKey: "nav.players",     to: "/players"      },
+  { labelKey: "nav.news",        to: "/news"         },
+  { labelKey: "nav.transfers",   to: "/transfers"    },
+  { labelKey: "nav.forum",       to: "/forum"        },
 ];
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -23,7 +33,9 @@ function IconSearch() {
 function IconMenu() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
     </svg>
   );
 }
@@ -38,14 +50,14 @@ function IconSun() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="5" />
-      <line x1="12" y1="1" x2="12" y2="3" />
+      <line x1="12" y1="1"  x2="12" y2="3"  />
       <line x1="12" y1="21" x2="12" y2="23" />
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+      <line x1="4.22"  y1="4.22"  x2="5.64"  y2="5.64"  />
       <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-      <line x1="1" y1="12" x2="3" y2="12" />
+      <line x1="1"  y1="12" x2="3"  y2="12" />
       <line x1="21" y1="12" x2="23" y2="12" />
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+      <line x1="4.22"  y1="19.78" x2="5.64"  y2="18.36" />
+      <line x1="18.36" y1="5.64"  x2="19.78" y2="4.22"  />
     </svg>
   );
 }
@@ -57,96 +69,16 @@ function IconMoon() {
   );
 }
 
-// ── Ticker Bar ─────────────────────────────────────────────────────────────────
-function TickerBar() {
-  const { t } = useLanguage();
-  const doubled = [...TICKER_ITEMS, ...TICKER_ITEMS];
-  return (
-    <div className={styles.ticker}>
-      <span className={styles.tickerLabel}>{t("nav.latest")}</span>
-      <div className={styles.tickerTrack}>
-        <div className={styles.tickerInner}>
-          {doubled.map((item, i) => (
-            <span key={i} className={styles.tickerItem}>
-              <span className={styles.tickerDot}>▸</span>
-              {item}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Context Bar ────────────────────────────────────────────────────────────────
-function ContextBar({ activeWiki, onWikiChange, activeRegion, onRegionChange }) {
-  const { t, lang } = useLanguage();
-
-  const REGIONS_I18N = [
-    { key: "All",      labelKey: "region.all" },
-    { key: "Americas", labelKey: "region.americas" },
-    { key: "Europe",   labelKey: "region.europe" },
-    { key: "Pacific",  labelKey: "region.pacific" },
-    { key: "Korea",    labelKey: "region.korea" },
-    { key: "Asia",     labelKey: "region.asia" },
-  ];
-
-  const now = new Date().toLocaleDateString(lang === "tr" ? "tr-TR" : "en-US", {
-    weekday: "short", month: "short", day: "numeric", year: "numeric",
-  });
-  const liveCount = getLiveMatches().length;
-
-  return (
-    <div className={styles.contextBar}>
-      <div className={styles.contextInner}>
-        <div className={styles.wikiGroup}>
-          {WIKIS.map(w => (
-            <button
-              key={w.id}
-              className={`${styles.wikiBtn} ${activeWiki === w.id ? styles.wikiBtnActive : ""}`}
-              onClick={() => onWikiChange(w.id)}
-            >
-              {w.label}
-            </button>
-          ))}
-        </div>
-
-        <div className={styles.contextSep} />
-
-        <div className={styles.regionGroup}>
-          {REGIONS_I18N.map(r => (
-            <button
-              key={r.key}
-              className={`${styles.regionBtn} ${activeRegion === r.key ? styles.regionBtnActive : ""}`}
-              onClick={() => onRegionChange(r.key)}
-            >
-              {t(r.labelKey)}
-            </button>
-          ))}
-        </div>
-
-        <div className={styles.contextRight}>
-          <Link to="/matches" className={styles.livePill}>
-            <span className={styles.liveDot} />
-            {liveCount} {t("nav.live")}
-          </Link>
-          <span className={styles.contextDate}>{now}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Search Box ────────────────────────────────────────────────────────────────
+// ── Search Box ─────────────────────────────────────────────────────────────────
 function SearchBox({ variant = "desktop", onSelect }) {
   const { t } = useLanguage();
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
+  const [query, setQuery]       = useState("");
+  const [open, setOpen]         = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const containerRef = useRef(null);
-  const navigate = useNavigate();
+  const navigate     = useNavigate();
 
-  const results = useMemo(() => searchEntities(query, 4), [query]);
+  const results  = useMemo(() => searchEntities(query, 4), [query]);
   const flatList = useMemo(
     () => [...results.players, ...results.teams, ...results.tournaments],
     [results]
@@ -157,9 +89,7 @@ function SearchBox({ variant = "desktop", onSelect }) {
   useEffect(() => {
     if (!open) return;
     const onDocClick = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setOpen(false);
-      }
+      if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false);
     };
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
@@ -196,8 +126,8 @@ function SearchBox({ variant = "desktop", onSelect }) {
   };
 
   const showDropdown = open && query.trim().length > 0;
-  const hasAny = results.total > 0;
-  const wrapClass = variant === "mobile" ? styles.mobileSearch : styles.searchWrapper;
+  const hasAny       = results.total > 0;
+  const wrapClass    = variant === "mobile" ? styles.mobileSearch : styles.searchWrapper;
 
   return (
     <div className={wrapClass} ref={containerRef}>
@@ -218,36 +148,18 @@ function SearchBox({ variant = "desktop", onSelect }) {
           {!hasAny && (
             <div className={styles.searchEmpty}>{t("nav.noResults", { q: query.trim() })}</div>
           )}
-
           {results.players.length > 0 && (
-            <SearchSection
-              label={t("nav.searchPlayers")}
-              items={results.players}
-              startIdx={0}
-              activeIdx={activeIdx}
-              onPick={pick}
-              onHover={setActiveIdx}
-            />
+            <SearchSection label={t("nav.searchPlayers")} items={results.players}
+              startIdx={0} activeIdx={activeIdx} onPick={pick} onHover={setActiveIdx} />
           )}
           {results.teams.length > 0 && (
-            <SearchSection
-              label={t("nav.searchTeams")}
-              items={results.teams}
-              startIdx={results.players.length}
-              activeIdx={activeIdx}
-              onPick={pick}
-              onHover={setActiveIdx}
-            />
+            <SearchSection label={t("nav.searchTeams")} items={results.teams}
+              startIdx={results.players.length} activeIdx={activeIdx} onPick={pick} onHover={setActiveIdx} />
           )}
           {results.tournaments.length > 0 && (
-            <SearchSection
-              label={t("nav.searchTournaments")}
-              items={results.tournaments}
+            <SearchSection label={t("nav.searchTournaments")} items={results.tournaments}
               startIdx={results.players.length + results.teams.length}
-              activeIdx={activeIdx}
-              onPick={pick}
-              onHover={setActiveIdx}
-            />
+              activeIdx={activeIdx} onPick={pick} onHover={setActiveIdx} />
           )}
         </div>
       )}
@@ -273,23 +185,17 @@ function SearchSection({ label, items, startIdx, activeIdx, onPick, onHover }) {
             onClick={() => onPick(item)}
           >
             <span className={styles.searchItemThumb}>
-              {item.kind === "team" && item.logo
-                ? <img src={item.logo} alt="" />
-                : item.kind === "tournament" && item.icon
-                ? <img src={item.icon} alt="" />
-                : item.kind === "player"
-                ? <span className={styles.searchItemFlag}>{item.flag}</span>
-                : <span className={styles.searchItemFallback}>{item.title.slice(0, 1).toUpperCase()}</span>}
+              {item.kind === "team"       && item.logo ? <img src={item.logo} alt="" />
+              : item.kind === "tournament" && item.icon ? <img src={item.icon} alt="" />
+              : item.kind === "player"
+              ? <span className={styles.searchItemFlag}>{item.flag}</span>
+              : <span className={styles.searchItemFallback}>{item.title.slice(0, 1).toUpperCase()}</span>}
             </span>
             <span className={styles.searchItemBody}>
               <span className={styles.searchItemTitle}>{item.title}</span>
-              {item.subtitle && (
-                <span className={styles.searchItemSub}>{item.subtitle}</span>
-              )}
+              {item.subtitle && <span className={styles.searchItemSub}>{item.subtitle}</span>}
             </span>
-            {item.wikiShort && (
-              <span className={styles.searchItemBadge}>{item.wikiShort}</span>
-            )}
+            {item.wikiShort && <span className={styles.searchItemBadge}>{item.wikiShort}</span>}
           </button>
         );
       })}
@@ -297,10 +203,10 @@ function SearchSection({ label, items, startIdx, activeIdx, onPick, onHover }) {
   );
 }
 
-// ── Matches Dropdown ──────────────────────────────────────────────────────────
+// ── Matches Dropdown ───────────────────────────────────────────────────────────
 function MatchesDropdown() {
   const { t } = useLanguage();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
   const todayAll  = getTodayMatches();
   const live      = todayAll.filter(m => m.finished === 0);
   const done      = todayAll.filter(m => m.finished === 1);
@@ -309,10 +215,7 @@ function MatchesDropdown() {
 
   return (
     <div className={styles.matchDropdown}>
-      {!hasContent && (
-        <div className={styles.mdEmpty}>{t("nav.noMatchesToday")}</div>
-      )}
-
+      {!hasContent && <div className={styles.mdEmpty}>{t("nav.noMatchesToday")}</div>}
       {live.length > 0 && (
         <div className={styles.mdSection}>
           <div className={styles.mdSectionHead}>
@@ -322,7 +225,6 @@ function MatchesDropdown() {
           {live.map(m => <DropdownRow key={m.id} match={m} navigate={navigate} />)}
         </div>
       )}
-
       {done.length > 0 && (
         <div className={styles.mdSection}>
           <div className={styles.mdSectionHead}>
@@ -331,7 +233,6 @@ function MatchesDropdown() {
           {done.map(m => <DropdownRow key={m.id} match={m} navigate={navigate} />)}
         </div>
       )}
-
       {upcoming.length > 0 && (
         <div className={styles.mdSection}>
           <div className={styles.mdSectionHead}>
@@ -340,7 +241,6 @@ function MatchesDropdown() {
           {upcoming.map(m => <DropdownRow key={m.id} match={m} navigate={navigate} />)}
         </div>
       )}
-
       <div className={styles.mdFooter}>
         <Link to="/matches" className={styles.mdSeeAll}>{t("nav.seeAllMatches")}</Link>
       </div>
@@ -352,12 +252,11 @@ function DropdownRow({ match, navigate }) {
   const [opp1, opp2] = match.match2opponents;
   const isLive     = match.finished === 0;
   const isFinished = match.finished === 1;
-
   return (
     <div className={styles.mdRow} onClick={() => navigate(`/match/${match.id}`)}>
       <div className={styles.mdRowStatus}>
-        {isLive     && <span className={styles.mdRowLive}>●</span>}
-        {!isLive    && <span className={styles.mdRowTime}>{formatTime(match.date)}</span>}
+        {isLive  ? <span className={styles.mdRowLive}>●</span>
+                 : <span className={styles.mdRowTime}>{formatTime(match.date)}</span>}
       </div>
       <div className={styles.mdRowMatchup}>
         <span className={`${styles.mdRowTeam} ${isFinished && match.winner === "1" ? styles.mdRowWinner : ""}`}>
@@ -370,15 +269,13 @@ function DropdownRow({ match, navigate }) {
           {opp2?.name}
         </span>
       </div>
-      <span className={styles.mdRowHeader}>
-        {match.match2bracketdata?.header || match.tournament}
-      </span>
+      <span className={styles.mdRowHeader}>{match.match2bracketdata?.header || match.tournament}</span>
       <span className={styles.mdRowArrow}>›</span>
     </div>
   );
 }
 
-// ── User Menu (signed-in) ─────────────────────────────────────────────────────
+// ── User Menu ──────────────────────────────────────────────────────────────────
 function UserMenu({ user, onSignOut }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -393,12 +290,10 @@ function UserMenu({ user, onSignOut }) {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [open]);
 
-  const initial = user.username[0]?.toUpperCase() || "?";
-
   return (
     <div className={styles.userMenu} ref={ref}>
       <button className={styles.userBtn} onClick={() => setOpen(o => !o)} aria-label={t("nav.accountMenu")}>
-        <span className={styles.userAvatar}>{initial}</span>
+        <span className={styles.userAvatar}>{user.username[0]?.toUpperCase() || "?"}</span>
         <span className={styles.userName}>{user.username}</span>
         <span className={styles.userCaret}>▾</span>
       </button>
@@ -408,10 +303,7 @@ function UserMenu({ user, onSignOut }) {
             <span className={styles.userInfoName}>{user.username}</span>
             <span className={styles.userInfoEmail}>{user.email}</span>
           </div>
-          <button
-            className={styles.userMenuItem}
-            onClick={() => { setOpen(false); onSignOut(); }}
-          >
+          <button className={styles.userMenuItem} onClick={() => { setOpen(false); onSignOut(); }}>
             {t("nav.signOut")}
           </button>
         </div>
@@ -421,12 +313,17 @@ function UserMenu({ user, onSignOut }) {
 }
 
 // ── Main Navbar ────────────────────────────────────────────────────────────────
-export default function Navbar({ activeWiki, onWikiChange, activeRegion = "All", onRegionChange }) {
+export default function Navbar({ activeWiki, onWikiChange }) {
   const { user, openAuth: openAuthCtx, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { lang, toggleLang, t } = useLanguage();
-  const [menuOpen, setMenuOpen]       = useState(false);
-  const [scrolled, setScrolled]       = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  const liveCount = getLiveMatches().length;
+  const now = new Date().toLocaleDateString(lang === "tr" ? "tr-TR" : "en-US", {
+    weekday: "short", month: "short", day: "numeric", year: "numeric",
+  });
 
   const openAuth = (mode) => { openAuthCtx(mode); setMenuOpen(false); };
 
@@ -436,49 +333,46 @@ export default function Navbar({ activeWiki, onWikiChange, activeRegion = "All",
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  const handleRegionChange = onRegionChange || (() => {});
-
-  const allNavLinks = [
-    { labelKey: "nav.tournaments", to: "/tournaments" },
-    { labelKey: "nav.matches",     to: "/matches" },
-    { labelKey: "nav.teams",       to: "/teams" },
-    { labelKey: "nav.players",     to: "/players" },
-    { labelKey: "nav.news",        to: "/news" },
-    { labelKey: "nav.transfers",   to: "/transfers" },
-    { labelKey: "nav.forum",       to: "/forum" },
-  ];
-
   return (
-    <>
-      <TickerBar />
-      <ContextBar
-        activeWiki={activeWiki}
-        onWikiChange={onWikiChange}
-        activeRegion={activeRegion}
-        onRegionChange={handleRegionChange}
-      />
+    <nav className={`${styles.navbar} ${scrolled ? styles.navbarScrolled : ""}`}>
 
-      <nav className={`${styles.navbar} ${scrolled ? styles.navbarScrolled : ""}`}>
-        <div className={styles.inner}>
+      {/* ── Üst satır: wiki seçici | logo | boşluk | arama | live | tarih | tema | auth ── */}
+      <div className={styles.topBar}>
+
+        {/* Sol: oyun seçici + ayırıcı + logo */}
+        <div className={styles.topLeft}>
+          <div className={styles.wikiGroup}>
+            {WIKIS.map(w => (
+              <button
+                key={w.id}
+                className={`${styles.wikiBtn} ${activeWiki === w.id ? styles.wikiBtnActive : ""}`}
+                onClick={() => onWikiChange(w.id)}
+              >
+                {w.label}
+              </button>
+            ))}
+          </div>
+
+          <div className={styles.divider} />
+
           <Link to="/" className={styles.logo}>
             <span className={styles.logoEs}>eS</span>
             <span className={styles.logoPor}>POR</span>
             <span className={styles.logoMax}>MAX</span>
           </Link>
+        </div>
 
-          <div className={styles.divider} />
-
-          <ul className={styles.navLinks}>
-            {allNavLinks.map(link => (
-              <li key={link.labelKey}>
-                <Link to={link.to} className={styles.navLink}>{t(link.labelKey)}</Link>
-              </li>
-            ))}
-          </ul>
-
+        {/* Sağ: arama + live + tarih + tema/dil + auth */}
+        <div className={styles.topRight}>
           <SearchBox variant="desktop" />
 
-          {/* Theme + Language toggles */}
+          <Link to="/matches" className={styles.livePill}>
+            <span className={styles.liveDot} />
+            {liveCount} {t("nav.live")}
+          </Link>
+
+          <span className={styles.contextDate}>{now}</span>
+
           <div className={styles.iconBtns}>
             <button
               className={styles.iconBtn}
@@ -499,12 +393,10 @@ export default function Navbar({ activeWiki, onWikiChange, activeRegion = "All",
           </div>
 
           {user ? (
-            <div className={styles.authBtns}>
-              <UserMenu user={user} onSignOut={signOut} />
-            </div>
+            <UserMenu user={user} onSignOut={signOut} />
           ) : (
             <div className={styles.authBtns}>
-              <button className={styles.loginBtn} onClick={() => openAuth("signin")}>{t("nav.signIn")}</button>
+              <button className={styles.loginBtn}    onClick={() => openAuth("signin")}>{t("nav.signIn")}</button>
               <button className={styles.registerBtn} onClick={() => openAuth("register")}>{t("nav.register")}</button>
             </div>
           )}
@@ -513,89 +405,78 @@ export default function Navbar({ activeWiki, onWikiChange, activeRegion = "All",
             {menuOpen ? <IconClose /> : <IconMenu />}
           </button>
         </div>
+      </div>
 
-        {menuOpen && (
-          <div className={styles.mobileMenu}>
-            <div className={styles.mobileWikis}>
-              {WIKIS.map(w => (
-                <button
-                  key={w.id}
-                  className={`${styles.mobileWikiBtn} ${activeWiki === w.id ? styles.mobileWikiBtnActive : ""}`}
-                  onClick={() => { onWikiChange(w.id); setMenuOpen(false); }}
-                >
-                  {w.label}
-                </button>
-              ))}
-            </div>
+      {/* ── Alt satır: nav linkleri — sadece desktop ── */}
+      <div className={styles.navLinksBar}>
+        <ul className={styles.navLinks}>
+          {NAV_LINKS.map(link => (
+            <li key={link.to}>
+              <Link to={link.to} className={styles.navLink}>{t(link.labelKey)}</Link>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-            <div className={styles.mobileRegions}>
-              {[
-                { key: "All", labelKey: "region.all" },
-                { key: "Americas", labelKey: "region.americas" },
-                { key: "Europe", labelKey: "region.europe" },
-                { key: "Pacific", labelKey: "region.pacific" },
-                { key: "Korea", labelKey: "region.korea" },
-                { key: "Asia", labelKey: "region.asia" },
-              ].map(r => (
-                <button
-                  key={r.key}
-                  className={`${styles.mobileRegionBtn} ${activeRegion === r.key ? styles.mobileRegionBtnActive : ""}`}
-                  onClick={() => { handleRegionChange(r.key); setMenuOpen(false); }}
-                >
-                  {t(r.labelKey)}
-                </button>
-              ))}
-            </div>
-
-            <SearchBox variant="mobile" onSelect={() => setMenuOpen(false)} />
-
-            {/* Mobile theme + lang toggles */}
-            <div className={styles.mobileToggles}>
-              <button className={styles.mobileIconBtn} onClick={toggleTheme}>
-                {theme === "dark" ? <IconSun /> : <IconMoon />}
-                <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+      {/* ── Mobil menü ── */}
+      {menuOpen && (
+        <div className={styles.mobileMenu}>
+          <div className={styles.mobileWikis}>
+            {WIKIS.map(w => (
+              <button
+                key={w.id}
+                className={`${styles.mobileWikiBtn} ${activeWiki === w.id ? styles.mobileWikiBtnActive : ""}`}
+                onClick={() => { onWikiChange(w.id); setMenuOpen(false); }}
+              >
+                {w.label}
               </button>
-              <button className={styles.mobileIconBtn} onClick={toggleLang}>
-                <span className={styles.mobileLangIcon}>{lang === "en" ? "TR" : "EN"}</span>
-                <span>{lang === "en" ? "Türkçe" : "English"}</span>
-              </button>
-            </div>
-
-            <ul className={styles.mobileNavLinks}>
-              {allNavLinks.map(link => (
-                <li key={link.labelKey}>
-                  <Link to={link.to} className={styles.mobileNavLink} onClick={() => setMenuOpen(false)}>
-                    {t(link.labelKey)}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-
-            {user ? (
-              <div className={styles.mobileUser}>
-                <div className={styles.mobileUserInfo}>
-                  <span className={styles.userAvatar}>{user.username[0]?.toUpperCase()}</span>
-                  <div className={styles.mobileUserText}>
-                    <span className={styles.userInfoName}>{user.username}</span>
-                    <span className={styles.userInfoEmail}>{user.email}</span>
-                  </div>
-                </div>
-                <button
-                  className={styles.loginBtn}
-                  onClick={() => { signOut(); setMenuOpen(false); }}
-                >
-                  {t("nav.signOut")}
-                </button>
-              </div>
-            ) : (
-              <div className={styles.mobileAuth}>
-                <button className={styles.loginBtn} onClick={() => openAuth("signin")}>{t("nav.signIn")}</button>
-                <button className={styles.registerBtn} onClick={() => openAuth("register")}>{t("nav.register")}</button>
-              </div>
-            )}
+            ))}
           </div>
-        )}
-      </nav>
-    </>
+
+          <SearchBox variant="mobile" onSelect={() => setMenuOpen(false)} />
+
+          <div className={styles.mobileToggles}>
+            <button className={styles.mobileIconBtn} onClick={toggleTheme}>
+              {theme === "dark" ? <IconSun /> : <IconMoon />}
+              <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+            </button>
+            <button className={styles.mobileIconBtn} onClick={toggleLang}>
+              <span className={styles.mobileLangIcon}>{lang === "en" ? "TR" : "EN"}</span>
+              <span>{lang === "en" ? "Türkçe" : "English"}</span>
+            </button>
+          </div>
+
+          <ul className={styles.mobileNavLinks}>
+            {NAV_LINKS.map(link => (
+              <li key={link.to}>
+                <Link to={link.to} className={styles.mobileNavLink} onClick={() => setMenuOpen(false)}>
+                  {t(link.labelKey)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {user ? (
+            <div className={styles.mobileUser}>
+              <div className={styles.mobileUserInfo}>
+                <span className={styles.userAvatar}>{user.username[0]?.toUpperCase()}</span>
+                <div className={styles.mobileUserText}>
+                  <span className={styles.userInfoName}>{user.username}</span>
+                  <span className={styles.userInfoEmail}>{user.email}</span>
+                </div>
+              </div>
+              <button className={styles.loginBtn} onClick={() => { signOut(); setMenuOpen(false); }}>
+                {t("nav.signOut")}
+              </button>
+            </div>
+          ) : (
+            <div className={styles.mobileAuth}>
+              <button className={styles.loginBtn}    onClick={() => openAuth("signin")}>{t("nav.signIn")}</button>
+              <button className={styles.registerBtn} onClick={() => openAuth("register")}>{t("nav.register")}</button>
+            </div>
+          )}
+        </div>
+      )}
+    </nav>
   );
 }

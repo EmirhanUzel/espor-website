@@ -51,15 +51,13 @@ export default function MatchCard({ match }) {
 
       {/* Skor */}
       <div className={styles.matchup}>
-        <div className={`${styles.team} ${winnerIdx === 0 ? styles.winner : ""}`}>
-          <span className={styles.teamName}>{opp1?.name}</span>
-          <span className={styles.score}>{opp1?.score ?? "—"}</span>
+        <span className={`${styles.teamName} ${winnerIdx === 0 ? styles.winnerName : ""}`}>{opp1?.name}</span>
+        <div className={styles.scoreBlock}>
+          <span className={`${styles.score} ${winnerIdx === 0 ? styles.winnerScore : ""}`}>{opp1?.score ?? "—"}</span>
+          <span className={styles.scoreDash}>-</span>
+          <span className={`${styles.score} ${winnerIdx === 1 ? styles.winnerScore : ""}`}>{opp2?.score ?? "—"}</span>
         </div>
-        <div className={styles.vs}>VS</div>
-        <div className={`${styles.team} ${styles.teamRight} ${winnerIdx === 1 ? styles.winner : ""}`}>
-          <span className={styles.score}>{opp2?.score ?? "—"}</span>
-          <span className={styles.teamName}>{opp2?.name}</span>
-        </div>
+        <span className={`${styles.teamName} ${styles.teamNameRight} ${winnerIdx === 1 ? styles.winnerName : ""}`}>{opp2?.name}</span>
       </div>
 
       {/* Oyunlar — dikey satır listesi */}

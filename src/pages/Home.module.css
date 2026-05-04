@@ -216,22 +216,24 @@
   gap: 12px;
 }
 
-.heroTeam {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  opacity: 0.45;
-  transition: opacity 0.2s;
-}
-.heroTeamRight { flex-direction: row-reverse; text-align: right; }
-.heroWinner    { opacity: 1; }
-
 .heroTeamName {
   font-size: 15px;
   font-weight: 800;
   color: #fff;
   font-family: var(--font-display);
+  flex: 1;
+  opacity: 0.45;
+  transition: opacity 0.2s;
+}
+
+.heroTeamRight { text-align: right; }
+.heroWinner    { opacity: 1; }
+
+.heroScoreCenter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .heroScoreNum {
@@ -241,10 +243,14 @@
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  opacity: 0.45;
+  transition: opacity 0.2s;
 }
 
+.heroWinnerScore { opacity: 1; }
+
 .heroVs {
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 700;
   color: rgba(255,255,255,0.3);
 }
@@ -709,166 +715,131 @@
 
 
 /* ═══════════════════════════════════════════════════════
-   6. PLAYER SPOTLIGHT
+   6. PLAYER CAROUSEL
 ═══════════════════════════════════════════════════════ */
-.spotlight {
+.playerCarousel {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Kenar solma efekti */
+.playerCarousel::before,
+.playerCarousel::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  z-index: 1;
+  pointer-events: none;
+}
+.playerCarousel::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg), transparent);
+}
+.playerCarousel::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg), transparent);
+}
+
+/* Kayan şerit */
+.playerTrack {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  animation: carouselScroll linear infinite;
+  padding-bottom: 4px;
+}
+.playerTrack:hover {
+  animation-play-state: paused;
+}
+
+@keyframes carouselScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Tek oyuncu kartı */
+.playerCard {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 32px;
-  padding: 28px 32px;
+  gap: 14px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
   cursor: pointer;
-  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
-  flex-wrap: wrap;
-  position: relative;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
-.spotlight:hover {
+.playerCard:hover {
   border-color: var(--text-2);
-  box-shadow: 0 6px 32px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
   transform: translateY(-2px);
 }
-.spotlight:hover .spotlightArrow {
-  opacity: 1;
-  transform: translateX(0);
-}
 
-.spotlightLeft {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-shrink: 0;
-}
-
-.spotlightBadge {
-  position: absolute;
-  top: -1px;
-  left: 32px;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+.playerCardAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   background: var(--btn-primary-bg);
   color: var(--btn-primary-text);
-  padding: 3px 10px;
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-}
-
-.spotlightAvatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  background: var(--bg);
-  color: var(--text-1);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 900;
   font-family: var(--font-display);
   flex-shrink: 0;
 }
 
-.spotlightIdentity {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.spotlightNick {
-  font-size: 22px;
-  font-weight: 900;
-  color: var(--text-1);
-  font-family: var(--font-display);
-  letter-spacing: -0.02em;
-}
-
-.spotlightName { font-size: 13px; color: var(--text-3); font-weight: 500; }
-
-.spotlightMeta { font-size: 12px; color: var(--text-3); font-weight: 600; }
-
-/* Stats grid */
-.spotlightStats {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  flex: 1;
-  min-width: 200px;
-}
-
-.spotlightStatsLabel {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-4);
-}
-
-.spotlightStatsGrid {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.spotlightStat {
+.playerCardInfo {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.spotlightStatVal {
-  font-size: 20px;
-  font-weight: 900;
+.playerCardNick {
+  font-size: 15px;
+  font-weight: 800;
   color: var(--text-1);
   font-family: var(--font-display);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
-.spotlightStatKey {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-4);
+.playerCardTeam {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-/* Earnings */
-.spotlightEarnings {
+.playerCardMarket {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 3px;
+  gap: 1px;
   flex-shrink: 0;
+  margin-left: 12px;
 }
 
-.spotlightEarVal {
-  font-size: 20px;
+.playerCardMarketVal {
+  font-size: 13px;
   font-weight: 900;
   color: var(--text-1);
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.spotlightEarLabel {
-  font-size: 10px;
+.playerCardMarketKey {
+  font-size: 9px;
   font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
   color: var(--text-4);
-}
-
-.spotlightEarYear { font-size: 12px; color: var(--text-3); }
-
-.spotlightArrow {
-  font-size: 20px;
-  color: var(--text-4);
-  opacity: 0;
-  transform: translateX(-6px);
-  transition: opacity 0.18s, transform 0.18s;
-  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 
@@ -886,9 +857,6 @@
 
 @media (max-width: 768px) {
   .navCards { grid-template-columns: repeat(2, 1fr); }
-  .spotlight { gap: 20px; padding: 24px 20px; }
-  .spotlightEarnings { align-items: flex-start; }
-  .spotlightArrow { display: none; }
   .matchGrid { grid-template-columns: 1fr; }
   .interviewGrid { grid-template-columns: 1fr; }
 }
@@ -901,9 +869,8 @@
   .prizeRow { flex-wrap: wrap; }
   .prizeLastVs { display: none; }
   .transferNationality { display: none; }
-  .spotlightLeft { flex-direction: column; align-items: flex-start; gap: 12px; }
-  .spotlightStats { min-width: unset; }
-  .spotlight { padding-top: 36px; }
+  .playerCard { gap: 10px; padding: 12px 14px; }
+  .playerCardMarket { display: none; }
 }
 
 @media (max-width: 420px) {
