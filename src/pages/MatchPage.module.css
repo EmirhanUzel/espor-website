@@ -123,7 +123,7 @@
 }
 .heroTeam:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); }
 
-.heroTeamRight { align-items: flex-end; }
+.heroTeamRight { align-items: center; }
 
 .heroTeamAvatar {
   width: 64px;
@@ -367,6 +367,33 @@
   font-size: 10px;
   color: var(--text-4);
 }
+
+/* LoL Game Summary */
+.lolGameSummary {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.lolGameRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.lolGameRow:last-child { border-bottom: none; }
+.lolGameRow:hover { background: var(--surface-2); }
+.lolGameRowActive { background: var(--surface-2); border-left: 3px solid var(--accent); }
+
+.lolGameNum { font-size: 13px; font-weight: 700; color: var(--text-3); width: 52px; flex-shrink: 0; }
+.lolGameWinner { flex: 1; font-size: 15px; font-weight: 600; color: var(--text-1); }
+.lolGameLen { font-size: 13px; color: var(--text-3); }
 
 /* Map Summary Table */
 .mapSummary {

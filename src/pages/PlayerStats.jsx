@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getPlayer, formatDate } from "../services/api";
 import { getPlayerStats } from "../services/playerStats";
+import { useLanguage } from "../contexts/LanguageContext";
 import styles from "./PlayerStats.module.css";
 
 function StatCell({ value, highlight, bad }) {
@@ -13,12 +14,13 @@ function StatCell({ value, highlight, bad }) {
 }
 
 function ValorantTable({ maps }) {
+  const { t } = useLanguage();
   return (
     <div className={styles.tableWrap}>
       <table className={styles.table}>
         <thead>
           <tr>
-            {["Harita","Ajan","Skor","ACS","K","D","A","HS%","KAST","ADR","FK","FD"].map(h => (
+            {[t("stats.map"),t("stats.agent"),t("stats.score"),"ACS","K","D","A","HS%","KAST","ADR","FK","FD"].map(h => (
               <th key={h} className={styles.th}>{h}</th>
             ))}
           </tr>
@@ -47,12 +49,13 @@ function ValorantTable({ maps }) {
 }
 
 function CS2Table({ maps }) {
+  const { t } = useLanguage();
   return (
     <div className={styles.tableWrap}>
       <table className={styles.table}>
         <thead>
           <tr>
-            {["Harita","Skor","Rating","K","D","A","HS%","KAST","ADR","Util Dmg","FK","FD"].map(h => (
+            {[t("stats.map"),t("stats.score"),"Rating","K","D","A","HS%","KAST","ADR","Util Dmg","FK","FD"].map(h => (
               <th key={h} className={styles.th}>{h}</th>
             ))}
           </tr>
@@ -81,12 +84,13 @@ function CS2Table({ maps }) {
 }
 
 function LoLTable({ maps }) {
+  const { t, lang } = useLanguage();
   return (
     <div className={styles.tableWrap}>
       <table className={styles.table}>
         <thead>
           <tr>
-            {["","Şampiyon","Süre","K/D/A","CS","CS/dk","Hasar","Vision"].map(h => (
+            {["",t("stats.champion"),t("stats.duration"),"K/D/A","CS","CS/min",t("stats.damage"),"Vision"].map(h => (
               <th key={h} className={styles.th}>{h}</th>
             ))}
           </tr>
@@ -100,7 +104,7 @@ function LoLTable({ maps }) {
               <StatCell value={mp.stats.kda} highlight />
               <td className={styles.td}>{mp.stats.cs}</td>
               <td className={styles.td}>{mp.stats.csmin}</td>
-              <td className={styles.td}>{mp.stats.dmg?.toLocaleString("tr-TR")}</td>
+              <td className={styles.td}>{mp.stats.dmg?.toLocaleString(lang === "tr" ? "tr-TR" : "en-US")}</td>
               <td className={styles.td}>{mp.stats.vision}</td>
             </tr>
           ))}
@@ -133,16 +137,18 @@ function matchAvg(match, wiki) {
 
 export default function PlayerStats() {
   const { id } = useParams();
+  const { t } = useLanguage();
   const player = getPlayer(id);
   const statsData = getPlayerStats(id);
   const [expanded, setExpanded] = useState(new Set());
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
 
   if (!player || !statsData) {
     return (
       <div className="wrap" style={{ paddingTop: 80, textAlign: "center" }}>
-        <h2 style={{ color: "var(--text-3)" }}>İstatistik bulunamadı: {id}</h2>
-        <Link to={`/player/${id}`} style={{ color: "var(--text-1)", fontWeight: 700 }}>← Profile dön</Link>
+        <h2 style={{ color: "var(--text-3)" }}>{t("stats.notFound")}: {id}</h2>
+        <Link to={`/player/${id}`} style={{ color: "var(--text-1)", fontWeight: 700 }}>← {t("stats.backToProfile")}</Link>
       </div>
     );
   }
@@ -151,17 +157,23 @@ export default function PlayerStats() {
   const isCS       = player.wiki === "counterstrike";
   const isLoL      = player.wiki === "leagueoflegends";
   const filterKey   = isLoL ? "champ" : isValorant ? "agent" : "map";
-  const filterLabel = isLoL ? "Şampiyona göre" : isValorant ? "Ajana göre" : "Haritaya göre";
+  const filterLabel = isLoL ? t("stats.filterByChampion") : isValorant ? t("stats.filterByAgent") : t("stats.filterByMap");
 
   // Unique filter options across all matches
   const filterOptions = useMemo(() => {
     return [...new Set(statsData.matches.flatMap(m => m.maps.map(mp => mp[filterKey])))].sort();
   }, [statsData, filterKey]);
 
+  const visibleOptions = useMemo(() => {
+    if (!search.trim()) return filterOptions;
+    return filterOptions.filter(o => o.toLowerCase().includes(search.toLowerCase()));
+  }, [filterOptions, search]);
+
   const filteredMatches = useMemo(() => {
-    if (filter === "all") return statsData.matches;
-    return statsData.matches.filter(m => m.maps.some(mp => mp[filterKey] === filter));
-  }, [statsData, filter, filterKey]);
+    const byFilter = filter === "all" ? statsData.matches : statsData.matches.filter(m => m.maps.some(mp => mp[filterKey] === filter));
+    if (!search.trim() || filter !== "all") return byFilter;
+    return byFilter.filter(m => m.maps.some(mp => mp[filterKey]?.toLowerCase().includes(search.toLowerCase())));
+  }, [statsData, filter, filterKey, search]);
 
   const toggle = (i) => {
     setExpanded(prev => {
@@ -179,7 +191,7 @@ export default function PlayerStats() {
       <div className={styles.hero}>
         <div className="wrap">
           <Link to={`/player/${id}`} className={styles.back}>← {player.id}</Link>
-          <h1 className={styles.title}>İstatistikler</h1>
+          <h1 className={styles.title}>{t("stats.title")}</h1>
           {player.recentstats && (
             <p className={styles.period}>
               {player.recentstats.period} · {player.recentstats.games} {player.recentstats.gamesLabel}
@@ -210,19 +222,30 @@ export default function PlayerStats() {
 
         {/* Filter bar */}
         <div className={styles.filterWrap}>
-          <span className={styles.filterLabel}>{filterLabel}:</span>
+          <div className={styles.filterTop}>
+            <span className={styles.filterLabel}>{filterLabel}:</span>
+            {(isLoL || isValorant) && (
+              <input
+                className={styles.filterSearch}
+                type="text"
+                placeholder={isLoL ? t("stats.searchChampion") : t("stats.searchAgent")}
+                value={search}
+                onChange={e => { setSearch(e.target.value); setFilter("all"); }}
+              />
+            )}
+          </div>
           <div className={styles.filterBar}>
             <button
               className={`${styles.chip} ${filter === "all" ? styles.chipActive : ""}`}
-              onClick={() => setFilter("all")}
+              onClick={() => { setFilter("all"); setSearch(""); }}
             >
-              Tümü
+              {t("stats.all")}
             </button>
-            {filterOptions.map(opt => (
+            {visibleOptions.map(opt => (
               <button
                 key={opt}
                 className={`${styles.chip} ${filter === opt ? styles.chipActive : ""}`}
-                onClick={() => setFilter(opt)}
+                onClick={() => { setFilter(opt); setSearch(""); }}
               >
                 {opt}
               </button>

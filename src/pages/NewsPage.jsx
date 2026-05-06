@@ -115,7 +115,7 @@ export default function NewsPage({ wiki }) {
           <input
             className={styles.publisherSearchInput}
             type="text"
-            placeholder="Haber kanalı ara... (VLR.gg, HLTV.org…)"
+            placeholder={t("news.searchPublisher")}
             value={publisherSearch}
             onChange={e => setPublisherSearch(e.target.value)}
           />
@@ -127,7 +127,7 @@ export default function NewsPage({ wiki }) {
               {matchedPublishers.map(p => (
                 <button key={p} className={styles.publisherDropdownItem} onClick={() => setPublisherSearch(p)}>
                   <span className={styles.publisherDropdownName}>{p}</span>
-                  <span className={styles.publisherDropdownCount}>{interviews.filter(i => i.publisher === p).length} haber</span>
+                  <span className={styles.publisherDropdownCount}>{interviews.filter(i => i.publisher === p).length} {t("news.articlesUnit")}</span>
                 </button>
               ))}
             </div>

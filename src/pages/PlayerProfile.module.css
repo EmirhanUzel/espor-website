@@ -334,13 +334,24 @@
 .prizeRow:last-child { border-bottom: none; }
 
 .prizePlacement {
-  font-size: 20px; flex-shrink: 0; width: 36px; text-align: center;
-  line-height: 1;
+  flex-shrink: 0; width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--text-4);
 }
-.prizeGold   { filter: none; }
-.prizeSilver { filter: grayscale(0.3); }
-.prizeBronze { filter: none; }
-.prizeOther  { font-size: 12px; font-weight: 700; color: var(--text-4); }
+
+.prizeTournamentIcon {
+  width: 36px; height: 36px; object-fit: contain;
+}
+
+.prizePlacementBadge {
+  flex-shrink: 0;
+  font-size: 11px; font-weight: 800; padding: 3px 8px;
+  border-radius: 4px; letter-spacing: 0.04em;
+}
+.prizeGold   { color: #f59e0b; background: #f59e0b18; }
+.prizeSilver { color: #9ca3af; background: #9ca3af18; }
+.prizeBronze { color: #cd7c4a; background: #cd7c4a18; }
+.prizeOther  { color: var(--text-4); background: var(--surface-2); }
 
 .prizeTournament { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .prizeName { font-size: 13px; font-weight: 700; color: var(--text-1); }

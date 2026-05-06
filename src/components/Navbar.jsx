@@ -303,6 +303,9 @@ function UserMenu({ user, onSignOut }) {
             <span className={styles.userInfoName}>{user.username}</span>
             <span className={styles.userInfoEmail}>{user.email}</span>
           </div>
+          <Link to="/profile" className={styles.userMenuItem} onClick={() => setOpen(false)}>
+            {t("nav.myProfile")}
+          </Link>
           <button className={styles.userMenuItem} onClick={() => { setOpen(false); onSignOut(); }}>
             {t("nav.signOut")}
           </button>

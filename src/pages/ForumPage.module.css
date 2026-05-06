@@ -225,9 +225,9 @@
 
 .filterBtnActive,
 .filterBtnActive:hover {
-  background: var(--text-1) !important;
-  border-color: var(--text-1) !important;
-  color: #fff !important;
+  background: var(--btn-primary-bg) !important;
+  border-color: var(--btn-primary-bg) !important;
+  color: var(--btn-primary-text) !important;
 }
 
 .sortHint {

@@ -1,6 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getTeam, getPlayer, getMatches, formatDate, formatPrize, getFlag, INTERVIEWS, TRANSFERS } from "../services/api";
 import { getTopics } from "../services/forum";
+import { useLanguage } from "../contexts/LanguageContext";
 import styles from "./TeamPage.module.css";
 
 const SOCIAL_ICONS = {
@@ -43,6 +44,7 @@ function EarningsBar({ data }) {
 export default function TeamPage({ wiki }) {
   const { name } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const team = getTeam(name);
   const allMatches = getMatches(wiki);
 
@@ -83,6 +85,13 @@ export default function TeamPage({ wiki }) {
     t.fromteam.toLowerCase() === team.name.toLowerCase() ||
     t.toteam.toLowerCase() === team.name.toLowerCase()
   );
+
+  // Placeholder — algorithm to be implemented later
+  const rumors = [
+    { id: 1, text: `${team.name} is reportedly in talks with a top-tier IGL ahead of the next season.`, source: "insider_anon", date: "2025-10-15", reliability: "low" },
+    { id: 2, text: `Roster shuffle expected at ${team.name} after disappointing playoff run.`, source: "esports_wire", date: "2025-10-10", reliability: "medium" },
+    { id: 3, text: `${team.name} linked with two international signings from EU region.`, source: "transfer_watch", date: "2025-10-05", reliability: "low" },
+  ];
 
   const WIKI_TO_CATEGORY = { valorant: "VALORANT", counterstrike: "CS2", leagueoflegends: "LoL" };
   const forumCategory = WIKI_TO_CATEGORY[team.wiki] || "General";
@@ -291,6 +300,25 @@ export default function TeamPage({ wiki }) {
               </section>
             )}
           </div>
+
+          {/* ── Rumors ── */}
+          <section className={`${styles.card} ${styles.cardWide}`}>
+            <h2 className={styles.cardTitle}>{t("team.rumors")}</h2>
+            <div className={styles.rumorList}>
+              {rumors.map(r => (
+                <div key={r.id} className={styles.rumorRow}>
+                  <span className={`${styles.rumorBadge} ${r.reliability === "medium" ? styles.rumorMedium : styles.rumorLow}`}>
+                    {r.reliability === "medium" ? t("team.rumorMedium") : t("team.rumorLow")}
+                  </span>
+                  <span className={styles.rumorText}>{r.text}</span>
+                  <div className={styles.rumorMeta}>
+                    <span className={styles.rumorSource}>@{r.source}</span>
+                    <span className={styles.rumorDate}>{formatDate(r.date)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
 
           {/* ── Transfers ── */}
           {teamTransfers.length > 0 && (

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   getTournaments, getMatches, getInterviews, getTransfers,
-  getStandings, getPlayers, getGuests,
+  getPlayers, getGuests,
   formatDate, formatPrize, getFlag, tierLabel,
 } from "../services/api";
 import { getTopics, formatRelative } from "../services/forum";
@@ -197,7 +197,7 @@ function ForumTopicRow({ topic }) {
       <span className={styles.forumCat}>{topic.category}</span>
       <span className={styles.forumTitle}>{topic.title}</span>
       <span className={styles.forumMeta}>
-        <span>{topic.commentCount} yorum</span>
+        <span>{topic.commentCount} {t("home.comments")}</span>
         <span>·</span>
         <span>{formatRelative(topic.createdAt)}</span>
       </span>
@@ -260,7 +260,6 @@ export default function Home({ wiki, region }) {
   const matches      = getMatches(wiki);
   const interviews   = getInterviews(wiki);
   const allTransfers = getTransfers();
-  const standings    = getStandings(wiki);
   const players      = getPlayers(wiki);
   const guests = getGuests(wiki);
 
@@ -274,6 +273,12 @@ export default function Home({ wiki, region }) {
   const recentInterviews    = interviews.slice(0, 3);
   const recentTransfers = allTransfers.slice(0, 6);
   const recentTopics    = getTopics().slice(0, 5);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const pastTournaments = tournaments
+    .filter(tr => tr.enddate && tr.enddate <= today)
+    .sort((a, b) => b.enddate.localeCompare(a.enddate))
+    .slice(0, 5);
 
   if (!tournaments.length && !matches.length) {
     return (
@@ -318,8 +323,10 @@ export default function Home({ wiki, region }) {
             </div>
           </section>
           <section className={styles.section}>
-            <SectionHead title={t("home.groupStandings")} />
-            <GroupStandings groups={standings} />
+            <SectionHead title={t("home.recentTournaments")} to="/tournaments" label={t("home.seeAll")} />
+            <div className={styles.tournamentList}>
+              {pastTournaments.map(tr => <TournamentCard key={tr.id} tournament={tr} />)}
+            </div>
           </section>
         </div>
 

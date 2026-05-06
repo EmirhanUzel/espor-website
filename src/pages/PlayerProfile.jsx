@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { getPlayer, getTeam, formatDate, formatPrize, getFlag, getMatches, getPrizeResults, getInterviews } from "../services/api";
+import { getPlayer, getTeam, formatDate, formatPrize, getFlag, getMatches, getPrizeResults, getInterviews, TOURNAMENTS } from "../services/api";
 import styles from "./PlayerProfile.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -279,6 +279,44 @@ export default function PlayerProfile() {
       <div className="wrap">
         <div className={styles.grid}>
 
+          {teamPrizes.length > 0 && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <h2 className={styles.cardTitle} style={{ marginBottom: 16 }}>{t("player.achievements")}</h2>
+              <div className={styles.prizeList}>
+                {teamPrizes.map((p, i) => {
+                  const place = p.placement;
+                  const cls = place === "1" ? styles.prizeGold : place === "2" ? styles.prizeSilver : place === "3-4" ? styles.prizeBronze : styles.prizeOther;
+                  const tournamentIcon = TOURNAMENTS.find(tr =>
+                    tr.name.toLowerCase().includes(p.qualifier?.split(" (#")[0]?.toLowerCase() || "___")
+                  )?.iconurl;
+                  return (
+                    <div key={i} className={styles.prizeRow}>
+                      <div className={`${styles.prizePlacement} ${cls}`}>
+                        {tournamentIcon
+                          ? <img src={tournamentIcon} alt={p.qualifier} className={styles.prizeTournamentIcon} onError={e => { e.currentTarget.style.display = "none"; e.currentTarget.nextSibling.style.display = "inline"; }} />
+                          : null}
+                        <span style={{ display: tournamentIcon ? "none" : "inline" }}>#{place}</span>
+                      </div>
+                      <div className={styles.prizeTournament}>
+                        <span className={styles.prizeName}>{p.qualifier || "Tournament"}</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span className={styles.prizeDate}>{formatDate(p.date)}</span>
+                          {p.opponentname && (
+                            <Link to={`/team/${encodeURIComponent(p.opponentname)}`} className={styles.prizeOpponent}>
+                              vs {p.opponentname}
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                      <span className={`${styles.prizePlacementBadge} ${cls}`}>#{place}</span>
+                      <span className={styles.prizeMoney}>{formatPrize(p.prizemoney)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {player.marketvaluehistory?.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <div className={styles.cardTitleRow}>
@@ -363,34 +401,7 @@ export default function PlayerProfile() {
             </section>
           )}
 
-          {teamPrizes.length > 0 && (
-            <section className={`${styles.card} ${styles.cardWide}`}>
-              <h2 className={styles.cardTitle} style={{ marginBottom: 16 }}>{t("player.achievements")}</h2>
-              <div className={styles.prizeList}>
-                {teamPrizes.map((p, i) => {
-                  const place = p.placement;
-                  const cls = place === "1" ? styles.prizeGold : place === "2" ? styles.prizeSilver : place === "3-4" ? styles.prizeBronze : styles.prizeOther;
-                  return (
-                    <div key={i} className={styles.prizeRow}>
-                      <span className={`${styles.prizePlacement} ${cls}`}>{place === "1" ? "🥇" : place === "2" ? "🥈" : place === "3-4" ? "🥉" : `#${place}`}</span>
-                      <div className={styles.prizeTournament}>
-                        <span className={styles.prizeName}>{p.qualifier || "Tournament"}</span>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <span className={styles.prizeDate}>{formatDate(p.date)}</span>
-                          {p.opponentname && (
-                            <Link to={`/team/${encodeURIComponent(p.opponentname)}`} className={styles.prizeOpponent}>
-                              vs {p.opponentname}
-                            </Link>
-                          )}
-                        </div>
-                      </div>
-                      <span className={styles.prizeMoney}>{formatPrize(p.prizemoney)}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
+          {/* achievements moved below — rendered first in JSX order */}
 
           {playerInterviews.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>

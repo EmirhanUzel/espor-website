@@ -49,26 +49,42 @@
   font-variant-numeric: tabular-nums;
 }
 
-.summaryAccent .summaryVal {  }
+.summaryAccent .summaryVal { color: var(--btn-primary-text); }
+.summaryAccent .summaryLabel { color: var(--btn-primary-text); opacity: 0.65; }
 
 .summaryLabel {
   font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--text-4);
 }
 
-.summaryAccent .summaryLabel { color: rgba(255,255,255,0.55); }
 
 /* Filter */
 .filterWrap {
-  display: flex; align-items: center; gap: 10px;
-  flex-wrap: wrap; margin: 20px 0 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  margin: 20px 0 16px;
 }
+
+.filterTop { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
 .filterLabel {
   font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--text-4);
   flex-shrink: 0;
 }
+
+.filterSearch {
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface-2);
+  color: var(--text-1);
+  font-size: 13px;
+  outline: none;
+  width: 200px;
+  transition: border-color 0.15s;
+}
+.filterSearch:focus { border-color: var(--accent); }
+.filterSearch::placeholder { color: var(--text-4); }
 
 .filterBar { display: flex; gap: 6px; flex-wrap: wrap; }
 
@@ -82,8 +98,8 @@
 .chip:hover { border-color: var(--text-2); color: var(--text-1); }
 .chipActive {
   background: var(--btn-primary-bg) !important;
-  
-  border-color: var(--text-1) !important;
+  border-color: var(--btn-primary-bg) !important;
+  color: var(--btn-primary-text) !important;
 }
 
 /* Match list */

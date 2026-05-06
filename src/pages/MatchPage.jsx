@@ -115,6 +115,112 @@ function CsMapPanel({ game, opp1Name, opp2Name }) {
   );
 }
 
+function LolStatTable({ players }) {
+  return (
+    <table className={styles.csStatTable}>
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Champion</th>
+          <th>K</th>
+          <th>D</th>
+          <th>A</th>
+          <th>KDA</th>
+          <th>CS</th>
+          <th>Gold</th>
+          <th>Damage</th>
+          <th>Vision</th>
+        </tr>
+      </thead>
+      <tbody>
+        {players.map(p => {
+          const kda = p.deaths === 0 ? "Perfect" : ((p.kills + p.assists) / p.deaths).toFixed(2);
+          return (
+            <tr key={p.name}>
+              <td>{p.name}</td>
+              <td>{p.champion}</td>
+              <td>{p.kills}</td>
+              <td>{p.deaths}</td>
+              <td>{p.assists}</td>
+              <td>{kda}</td>
+              <td>{p.cs}</td>
+              <td>{(p.gold / 1000).toFixed(1)}k</td>
+              <td>{(p.damage / 1000).toFixed(1)}k</td>
+              <td>{p.visionScore}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+function LolMatchDetails({ match, opp1Name, opp2Name }) {
+  const games = match.match2games || [];
+  const [activeIdx, setActiveIdx] = useState(0);
+  if (!games.length) return null;
+  const activeGame = games[activeIdx];
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>Match Statistics</h2>
+
+      {/* Game-by-game winner summary */}
+      <div className={styles.lolGameSummary}>
+        {games.map((g, i) => {
+          const winner = g.winner === "1" ? opp1Name : g.winner === "2" ? opp2Name : null;
+          return (
+            <div
+              key={i}
+              className={`${styles.lolGameRow} ${i === activeIdx ? styles.lolGameRowActive : ""}`}
+              onClick={() => setActiveIdx(i)}
+            >
+              <span className={styles.lolGameNum}>Game {i + 1}</span>
+              <span className={styles.lolGameWinner}>{winner ?? "—"}</span>
+              {g.length && <span className={styles.lolGameLen}>{g.length}</span>}
+            </div>
+          );
+        })}
+      </div>
+
+      {games.length > 1 && (
+        <div className={styles.csTabs}>
+          {games.map((g, i) => (
+            <button
+              key={i}
+              className={`${styles.csTabBtn} ${i === activeIdx ? styles.csTabActive : ""}`}
+              onClick={() => setActiveIdx(i)}
+            >
+              Game {i + 1} · {g.length}
+            </button>
+          ))}
+        </div>
+      )}
+      {activeGame?.playerStats ? (
+        <div className={styles.csPanel}>
+          <div className={styles.csTeamBlock}>
+            <div className={styles.csTeamHead}>
+              <span className={styles.csTeamName}>{opp1Name}</span>
+              {activeGame.winner === "1" && <span className={styles.csTeamWin}>Winner</span>}
+            </div>
+            <LolStatTable players={activeGame.playerStats.team1} />
+          </div>
+          <div className={styles.csTeamBlock}>
+            <div className={styles.csTeamHead}>
+              <span className={styles.csTeamName}>{opp2Name}</span>
+              {activeGame.winner === "2" && <span className={styles.csTeamWin}>Winner</span>}
+            </div>
+            <LolStatTable players={activeGame.playerStats.team2} />
+          </div>
+        </div>
+      ) : (
+        <div style={{ padding: 24, textAlign: "center", color: "var(--text-4)", fontSize: 13 }}>
+          No stats available for this game.
+        </div>
+      )}
+    </section>
+  );
+}
+
 function CsMatchDetails({ match, opp1Name, opp2Name }) {
   const games = match.match2games || [];
   const [activeIdx, setActiveIdx] = useState(0);
@@ -248,7 +354,11 @@ export default function MatchPage() {
           <CsMatchDetails match={match} opp1Name={opp1?.name} opp2Name={opp2?.name} />
         )}
 
-        {match.match2games?.length > 0 && (
+        {match.wiki === "leagueoflegends" && (
+          <LolMatchDetails match={match} opp1Name={opp1?.name} opp2Name={opp2?.name} />
+        )}
+
+        {match.wiki !== "leagueoflegends" && match.match2games?.length > 0 && (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Map Results</h2>
             <div className={styles.mapSummary}>
@@ -275,45 +385,6 @@ export default function MatchPage() {
             </div>
           </section>
         )}
-
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Match Info</h2>
-          <div className={styles.infoGrid}>
-            <div className={styles.infoCard}>
-              <div className={styles.infoList}>
-                {[
-                  ["Tournament", match.tournament],
-                  ["Round", match.match2bracketdata?.header || "—"],
-                  ["Format", `Best of ${match.bestof}`],
-                  ["Type", match.match2bracketdata?.type === "bracket" ? "Elimination" : "Group Stage"],
-                  ["Date", formatDate(match.date)],
-                  ["Status", isFinished ? "Finished" : isLive ? "● Live" : "Upcoming"],
-                  ["Game", match.wiki],
-                ].map(([k, v]) => (
-                  <div key={k} className={styles.infoRow}>
-                    <span className={styles.infoKey}>{k}</span>
-                    <span className={styles.infoVal}>{v}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className={styles.infoCard}>
-              <h3 className={styles.infoCardTitle}>Teams</h3>
-              {[opp1, opp2].map((opp, idx) => (
-                <div key={opp?.name}
-                  className={`${styles.oppRow} ${winnerIdx === idx ? styles.oppWinner : ""}`}
-                  onClick={() => navigate(`/team/${encodeURIComponent(opp?.name)}`)}>
-                  <div className={styles.oppAvatar}>{opp?.name?.[0]}</div>
-                  <span className={styles.oppName}>{opp?.name}</span>
-                  <span className={styles.oppType}>{opp?.type}</span>
-                  <span className={styles.oppScore}>{opp?.score ?? "—"}</span>
-                  {winnerIdx === idx && <span className={styles.oppWinBadge}>Winner</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
       </div>
     </main>
   );
