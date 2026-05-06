@@ -5,9 +5,9 @@ import {
   getStandings, getPlayers, getGuests,
   formatDate, formatPrize, getFlag, tierLabel,
 } from "../services/api";
+import { getTopics, formatRelative } from "../services/forum";
 import MatchCard from "../components/MatchCard";
 import TournamentCard from "../components/TournamentCard";
-import GroupStandings from "../components/GroupStandings";
 import styles from "./Home.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -129,28 +129,6 @@ function HeroBanner({ tournaments, allMatches }) {
 }
 
 
-// ── Nav Cards ─────────────────────────────────────────────────────────────────
-function NavCards() {
-  const { t } = useLanguage();
-  const NAV_CARDS = [
-    { labelKey: "home.navTournaments", descKey: "home.navTournamentsDesc", to: "/tournaments" },
-    { labelKey: "home.navMatches",     descKey: "home.navMatchesDesc",     to: "/matches" },
-    { labelKey: "home.navTeams",       descKey: "home.navTeamsDesc",       to: "/teams" },
-    { labelKey: "home.navPlayers",     descKey: "home.navPlayersDesc",     to: "/players" },
-    { labelKey: "home.navTransfers",   descKey: "home.navTransfersDesc",   to: "/transfers" },
-  ];
-  return (
-    <div className={styles.navCards}>
-      {NAV_CARDS.map(c => (
-        <Link key={c.to} to={c.to} className={styles.navCard}>
-          <span className={styles.navCardLabel}>{t(c.labelKey)}</span>
-          <span className={styles.navCardDesc}>{t(c.descKey)}</span>
-          <span className={styles.navCardArrow}>→</span>
-        </Link>
-      ))}
-    </div>
-  );
-}
 
 // ── Interview Card ─────────────────────────────────────────────────────────────
 function InterviewCard({ item }) {
@@ -209,6 +187,21 @@ function GuestCard({ guest }) {
       </div>
       <span className={styles.guestDate}>{formatDate(guest.date)}</span>
     </div>
+  );
+}
+
+// ── Forum Topic Row ────────────────────────────────────────────────────────────
+function ForumTopicRow({ topic }) {
+  return (
+    <Link to={`/forum/${topic.id}`} className={styles.forumRow}>
+      <span className={styles.forumCat}>{topic.category}</span>
+      <span className={styles.forumTitle}>{topic.title}</span>
+      <span className={styles.forumMeta}>
+        <span>{topic.commentCount} yorum</span>
+        <span>·</span>
+        <span>{formatRelative(topic.createdAt)}</span>
+      </span>
+    </Link>
   );
 }
 
@@ -280,6 +273,7 @@ export default function Home({ wiki, region }) {
   const upcomingMatches     = matches.filter(m => m.finished !== 1).slice(0, 3);
   const recentInterviews    = interviews.slice(0, 3);
   const recentTransfers = allTransfers.slice(0, 6);
+  const recentTopics    = getTopics().slice(0, 5);
 
   if (!tournaments.length && !matches.length) {
     return (
@@ -296,10 +290,6 @@ export default function Home({ wiki, region }) {
       <HeroBanner tournaments={carouselTournaments} allMatches={matches} />
 
       <div className="wrap">
-        <NavCards />
-
-        <div className={styles.divider} />
-
         {recentMatches.length > 0 && (
           <section className={styles.section}>
             <SectionHead title={t("home.recentMatches")} to="/matches" label={t("home.seeAll")} />
@@ -362,6 +352,17 @@ export default function Home({ wiki, region }) {
             </section>
           )}
         </div>
+
+        <div className={styles.divider} />
+
+        {recentTopics.length > 0 && (
+          <section className={styles.section}>
+            <SectionHead title={t("home.forumHot")} to="/forum" label={t("home.seeAll")} />
+            <div className={styles.forumList}>
+              {recentTopics.map(tp => <ForumTopicRow key={tp.id} topic={tp} />)}
+            </div>
+          </section>
+        )}
 
         <div className={styles.divider} />
 

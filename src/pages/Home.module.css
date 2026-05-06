@@ -861,6 +861,60 @@
   .interviewGrid { grid-template-columns: 1fr; }
 }
 
+/* ═══════════════════════════════════════════════════════
+   FORUM
+═══════════════════════════════════════════════════════ */
+.forumList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.forumRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--text-1);
+  transition: background 0.15s;
+}
+
+.forumRow:last-child { border-bottom: none; }
+.forumRow:hover { background: var(--surface-2); }
+
+.forumCat {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.forumTitle {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.forumMeta {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 @media (max-width: 640px) {
   .hero { padding: 36px 0 32px; }
   .heroScore { min-width: unset; width: 100%; }

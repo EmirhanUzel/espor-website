@@ -17,7 +17,9 @@
       "Bash(xargs -r kill)",
       "Bash(pkill -f \"vite\")",
       "Bash(node -e ' *)",
-      "Bash(PowerShell *)"
+      "Bash(PowerShell *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Bayar\\\\Desktop\\\\espor-website\" -Force)",
+      "Bash(Select-Object Name)"
     ]
   }
 }
