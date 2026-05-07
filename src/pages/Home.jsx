@@ -197,7 +197,7 @@ function ForumTopicRow({ topic }) {
       <span className={styles.forumCat}>{topic.category}</span>
       <span className={styles.forumTitle}>{topic.title}</span>
       <span className={styles.forumMeta}>
-        <span>{topic.commentCount} {t("home.comments")}</span>
+        <span>{topic.commentCount} {("home.comments")}</span>
         <span>·</span>
         <span>{formatRelative(topic.createdAt)}</span>
       </span>
