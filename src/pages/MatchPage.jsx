@@ -3,6 +3,12 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { getMatch, formatDate, tierLabel } from "../services/api";
 import styles from "./MatchPage.module.css";
 
+function cleanHeader(h) {
+  if (!h || h.startsWith("!")) return "";
+  const label = h.includes(",") ? h.split(",")[0].trim() : h;
+  return label.replace(/<[^>]+>/g, "").trim();
+}
+
 function TierBadge({ tier, tiertype }) {
   return (
     <span className={`${styles.tier} ${tier === "1" ? styles.tierS : tier === "2" ? styles.tierA : styles.tierB}`}>
@@ -283,7 +289,7 @@ export default function MatchPage() {
               {match.tournament}
             </Link>
             <span className={styles.breadSep}>›</span>
-            <span>{match.match2bracketdata?.header || "Match"}</span>
+            <span>{cleanHeader(match.match2bracketdata?.header) || "Match"}</span>
           </div>
 
           <div className={styles.heroTop}>
@@ -294,7 +300,7 @@ export default function MatchPage() {
               </span>
             )}
             {match.match2bracketdata?.header && (
-              <span className={styles.bracketHeader}>{match.match2bracketdata.header}</span>
+              <span className={styles.bracketHeader}>{cleanHeader(match.match2bracketdata.header)}</span>
             )}
             <span className={styles.bestofBadge}>BO{match.bestof}</span>
             {isLive && <span className={styles.liveBadge}>● LIVE</span>}

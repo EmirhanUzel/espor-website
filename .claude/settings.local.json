@@ -19,7 +19,24 @@
       "Bash(node -e ' *)",
       "Bash(PowerShell *)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Bayar\\\\Desktop\\\\espor-website\" -Force)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(curl -s \"http://localhost:5173/liquipedia-api/tournament?wiki=counterstrike&conditions=%5B%5Bliquipediatiertype%3A%3Amajor%5D%5D%20AND%20%5B%5Benddate%3A%3A%3E2025-12-31%5D%5D&limit=6&order=startdate+asc\")",
+      "Bash(curl -s -X GET \"https://api.liquipedia.net/api/v3/tournament\" -H \"Authorization: Apikey 9DX8PgaLAjhngU8tpzeA1bc2uzH9eRev\" -H \"User-Agent: EsporMax/1.0 \\(emiruzel01@gmail.com\\)\" --data-urlencode \"wiki=counterstrike\")",
+      "Bash(curl *)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(r['name'], r['startdate'], r['enddate'], r['pagename']\\) for r in d['result']]\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(r['name'], '|', r['startdate'], '->', r['enddate'], '|', r['pagename']\\) for r in d['result']]\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); r=d['result'][0]; print\\(json.dumps\\({k:v for k,v in r.items\\(\\) if k in ['name','startdate','enddate','bannerurl','bannerdarkurl','iconurl','locations','prizepool','participantsnumber','liquipediatier','publishertier','format','status']}, indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(r.get\\('name'\\), r.get\\('startdate'\\), r.get\\('enddate'\\)\\) for r in d.get\\('result',[]\\)]\")",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 *)",
+      "Bash(pkill -f vite)",
+      "Bash(pkill -f \"node.*vite\")",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 18688 /F)",
+      "PowerShell(Stop-Process *)",
+      "PowerShell(Get-Process *)",
+      "Bash(awk '{print \"[[name::\" $0 \"]]\"}')",
+      "Bash(node *)"
     ]
   }
 }

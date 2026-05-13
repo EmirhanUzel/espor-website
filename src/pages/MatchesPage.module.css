@@ -1,90 +1,69 @@
-/* ── Hero ── */
+/* ── CS2 Tab bar ── */
+.tabBar {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  width: fit-content;
+  margin: 28px 0 20px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  padding: 8px 20px;
+  border-radius: calc(var(--radius-md) - 2px);
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab:hover { color: var(--text-1); }
+
+.tabActive {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text) !important;
+}
+
+.tabCount {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.7;
+  background: rgba(255,255,255,0.15);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.tabActive .tabCount { background: rgba(255,255,255,0.25); opacity: 1; }
+
+/* ── Hero (TournamentsPage ile aynı stil) ── */
 .hero {
   background: var(--hero-bg);
   color: #fff;
-  padding: 36px 0 0;
-}
-
-.heroBreadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 20px;
-  font-size: 12px;
-  color: rgba(255,255,255,0.4);
-}
-
-.breadLink {
-  color: rgba(255,255,255,0.4);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-.breadLink:hover { color: rgba(255,255,255,0.8); }
-.breadSep { color: rgba(255,255,255,0.2); }
-
-.heroRow {
-  display: flex;
-  align-items: flex-end;
-  gap: 24px;
-  flex-wrap: wrap;
-  margin-bottom: 28px;
+  padding: 44px 0 36px;
 }
 
 .heroTitle {
-  font-size: clamp(30px, 4vw, 48px);
+  font-size: clamp(28px, 4vw, 44px);
   font-weight: 900;
-  color: #fff;
+  letter-spacing: -0.03em;
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
-  line-height: 1;
-  margin-bottom: 10px;
+  color: #fff;
+  margin: 0 0 6px;
 }
 
-.heroMeta {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.heroDate {
+.heroSubtitle {
   font-size: 13px;
   color: rgba(255,255,255,0.5);
-  font-weight: 500;
-}
-
-.heroLive {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 800;
-  color: #f87171;
-  letter-spacing: 0.04em;
-}
-
-.heroLiveDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #f87171;
-  animation: livePulse 2s ease-in-out infinite;
-}
-
-@keyframes livePulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.4; transform: scale(0.85); }
-}
-
-.heroRel {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-1);
-  background: #fff;
-  padding: 2px 9px;
-  border-radius: var(--radius-sm);
+  margin: 0 0 24px;
 }
 
 /* ── Date bar ── */
@@ -305,11 +284,31 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Team cell: logo + name side by side */
+.teamCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  justify-content: flex-end;
+}
+.teamCellRight {
+  justify-content: flex-start;
+}
+
+.teamLogo {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .upcomingTeam {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--text-1);
   font-family: var(--font-display);
@@ -318,10 +317,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-/* team1 sağa, team2 sola yaslanır → orta sütun her zaman aynı konumda */
-.upcomingMatchup .upcomingTeam:first-child { text-align: right; }
-.upcomingMatchup .upcomingTeam:last-child  { text-align: left; }
 
 .upcomingVs {
   font-size: 10px;

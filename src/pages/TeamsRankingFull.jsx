@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { getTeams, getPrizeResults, getMatches, formatPrize } from "../services/api";
 import { calcESM, getForm, OFFICIAL_LABEL, OFFICIAL_SHORT } from "./TeamsRanking";
+import { getCS2TeamLogos } from "../services/liquipediaApi";
 import styles from "./TeamsRankingFull.module.css";
 
 function RankBadge({ rank }) {
@@ -12,7 +13,7 @@ function TeamCell({ team }) {
   return (
     <Link to={`/team/${encodeURIComponent(team.name)}`} className={styles.teamCell}>
       {team.textlesslogourl
-        ? <img src={team.textlesslogourl} alt={team.name} className={styles.teamLogo} />
+        ? <img src={team.textlesslogourl} alt={team.name} className={styles.teamLogo} referrerPolicy="no-referrer" onError={e => { e.target.style.display="none"; }} />
         : <div className={styles.teamLogoFb}>{team.name[0]}</div>}
       <div className={styles.teamInfo}>
         <span className={styles.teamName}>{team.name}</span>
@@ -45,9 +46,20 @@ export default function TeamsRankingFull({ type }) {
   const prizes  = getPrizeResults(wiki);
   const matches = getMatches(wiki);
 
+  const [logoMap, setLogoMap] = useState({});
+  useEffect(() => {
+    if (wiki !== "counterstrike") { setLogoMap({}); return; }
+    getCS2TeamLogos(teams.map(t => t.name)).then(setLogoMap).catch(() => {});
+  }, [wiki, teams]);
+
   const enriched = useMemo(() =>
-    teams.map(t => ({ ...t, esm: calcESM(t, prizes, matches), form: getForm(t, matches) })),
-    [teams, prizes, matches]
+    teams.map(t => ({
+      ...t,
+      textlesslogourl: logoMap[t.name] || t.textlesslogourl || "",
+      esm: calcESM(t, prizes, matches),
+      form: getForm(t, matches),
+    })),
+    [teams, prizes, matches, logoMap]
   );
 
   const isOfficial = type === "official";

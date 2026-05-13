@@ -18,19 +18,23 @@
 .heroBg {
   position: absolute;
   inset: 0;
-  background-size: cover;
-  background-position: center top;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.heroBgImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
   filter: blur(18px) brightness(0.25) saturate(1.4);
   transform: scale(1.08);
-  z-index: 0;
-  transition: background-image 0.3s ease;
+  display: block;
 }
 
 /* bannerurl yoksa gradient fallback */
 .heroBgFallback {
-  background: linear-gradient(135deg, #0d0d18 0%, #1a1a2e 40%, #16213e 70%, #0d0d18 100%) !important;
-  filter: none !important;
-  transform: none !important;
+  background: linear-gradient(135deg, #0d0d18 0%, #1a1a2e 40%, #16213e 70%, #0d0d18 100%);
 }
 
 /* Üstten ve alttan gradient geçiş */
@@ -873,7 +877,8 @@
 }
 
 .forumRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
@@ -894,7 +899,9 @@
   background: var(--accent);
   color: #fff;
   white-space: nowrap;
-  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
 }
 
 .forumTitle {

@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getTeams, getPrizeResults, getMatches, formatPrize } from "../services/api";
 import { PLAYERS } from "../services/api";
+import { getCS2TeamLogos } from "../services/liquipediaApi";
 import styles from "./TeamsRanking.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -70,7 +71,7 @@ function TeamCell({ team }) {
   return (
     <Link to={`/team/${encodeURIComponent(team.name)}`} className={styles.teamCell}>
       {team.textlesslogourl
-        ? <img src={team.textlesslogourl} alt={team.name} className={styles.teamLogo} />
+        ? <img src={team.textlesslogourl} alt={team.name} className={styles.teamLogo} referrerPolicy="no-referrer" onError={e => { e.target.style.display="none"; }} />
         : <div className={styles.teamLogoFb}>{team.name[0]}</div>}
       <div className={styles.teamInfo}>
         <span className={styles.teamName}>{team.name}</span>
@@ -185,7 +186,7 @@ function FormSection({ teams }) {
             <div className={styles.formCardRank}>#{i + 1}</div>
             <div className={styles.formCardTeam}>
               {team.textlesslogourl
-                ? <img src={team.textlesslogourl} alt={team.name} className={styles.formCardLogo} />
+                ? <img src={team.textlesslogourl} alt={team.name} className={styles.formCardLogo} referrerPolicy="no-referrer" onError={e => { e.target.style.display="none"; }} />
                 : <div className={styles.formCardLogoFb}>{team.name[0]}</div>}
               <div>
                 <div className={styles.formCardName}>{team.name}</div>
@@ -211,9 +212,22 @@ export default function TeamsRanking({ wiki }) {
   const prizes  = getPrizeResults(wiki);
   const matches = getMatches(wiki);
 
+  const [logoMap, setLogoMap] = useState({});
+
+  useEffect(() => {
+    if (wiki !== "counterstrike") { setLogoMap({}); return; }
+    const names = teams.map(t => t.name);
+    getCS2TeamLogos(names).then(setLogoMap).catch(() => {});
+  }, [wiki, teams]);
+
   const enriched = useMemo(() =>
-    teams.map(team => ({ ...team, esm: calcESM(team, prizes, matches), form: getForm(team, matches) })),
-    [teams, prizes, matches]
+    teams.map(team => ({
+      ...team,
+      textlesslogourl: logoMap[team.name] || team.textlesslogourl || "",
+      esm: calcESM(team, prizes, matches),
+      form: getForm(team, matches),
+    })),
+    [teams, prizes, matches, logoMap]
   );
 
   const officialLabel = OFFICIAL_LABEL[wiki] || "Official Points";

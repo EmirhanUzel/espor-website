@@ -22,9 +22,26 @@ function isLoLMatch(match) {
   return match.wiki === "leagueoflegends";
 }
 
+// Returns "HH:MM UTC" from "YYYY-MM-DD HH:MM:SS", null if midnight/unavailable
+function matchTime(dateStr) {
+  if (!dateStr || dateStr.startsWith("0000")) return null;
+  const t = dateStr.slice(11, 16);
+  return t && t !== "00:00" ? `${t} UTC` : null;
+}
+
+// Liquipedia internal bracket codes start with "!" — fall back to tournament name
+function displayHeader(match) {
+  const h = match.match2bracketdata?.header;
+  if (!h || h.startsWith("!")) return match.tournament;
+  const label = h.includes(",") ? h.split(",")[0].trim() : h;
+  return label.replace(/<[^>]+>/g, "").trim() || match.tournament;
+}
+
 export default function MatchCard({ match }) {
   const navigate  = useNavigate();
-  const [opp1, opp2] = match.match2opponents;
+  const opp1      = match.match2opponents?.[0];
+  const opp2      = match.match2opponents?.[1];
+  if (!opp1 || !opp2 || (!opp1.name && !opp2.name)) return null;
   const winnerIdx    = parseInt(match.winner, 10) - 1;
   const isLoL        = isLoLMatch(match);
 
@@ -35,7 +52,7 @@ export default function MatchCard({ match }) {
       <div className={styles.head}>
         <div className={styles.headLeft}>
           <TierBadge tier={match.liquipediatier} tiertype={match.liquipediatiertype} />
-          <span className={styles.header}>{match.match2bracketdata?.header || match.tournament}</span>
+          <span className={styles.header}>{displayHeader(match)}</span>
           <span className={styles.bestof}>BO{match.bestof}</span>
         </div>
         <div className={styles.headRight}>
@@ -53,9 +70,9 @@ export default function MatchCard({ match }) {
       <div className={styles.matchup}>
         <span className={`${styles.teamName} ${winnerIdx === 0 ? styles.winnerName : ""}`}>{opp1?.name}</span>
         <div className={styles.scoreBlock}>
-          <span className={`${styles.score} ${winnerIdx === 0 ? styles.winnerScore : ""}`}>{opp1?.score ?? "—"}</span>
+          <span className={`${styles.score} ${winnerIdx === 0 ? styles.winnerScore : ""}`}>{opp1?.score < 0 ? 0 : (opp1?.score ?? "—")}</span>
           <span className={styles.scoreDash}>-</span>
-          <span className={`${styles.score} ${winnerIdx === 1 ? styles.winnerScore : ""}`}>{opp2?.score ?? "—"}</span>
+          <span className={`${styles.score} ${winnerIdx === 1 ? styles.winnerScore : ""}`}>{opp2?.score < 0 ? 0 : (opp2?.score ?? "—")}</span>
         </div>
         <span className={`${styles.teamName} ${styles.teamNameRight} ${winnerIdx === 1 ? styles.winnerName : ""}`}>{opp2?.name}</span>
       </div>
@@ -63,7 +80,7 @@ export default function MatchCard({ match }) {
       {/* Oyunlar — dikey satır listesi */}
       {match.match2games?.length > 0 && (
         <div className={styles.games}>
-          {match.match2games.map((g, i) => {
+          {match.match2games.filter(g => g.winner === "1" || g.winner === "2").map((g, i) => {
             const w1 = g.winner === "1";
             const w2 = g.winner === "2";
 
@@ -96,7 +113,10 @@ export default function MatchCard({ match }) {
       {/* Alt bar */}
       <div className={styles.foot}>
         <span className={styles.tournament}>{match.tournament}</span>
-        <span className={styles.date}>{formatDate(match.date)}</span>
+        <span className={styles.date}>
+          {formatDate(match.date)}
+          {match.finished !== 1 && matchTime(match.date) && ` · ${matchTime(match.date)}`}
+        </span>
       </div>
     </div>
   );

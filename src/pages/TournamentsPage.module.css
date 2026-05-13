@@ -240,6 +240,62 @@
   transform: translateX(2px);
 }
 
+/* ── CS2 Tab bar ── */
+.tabBar {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  width: fit-content;
+  margin: 28px 0 24px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 7px 18px;
+  border-radius: calc(var(--radius-md) - 2px);
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab:hover { color: var(--text-1); }
+
+.tabActive {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text) !important;
+}
+
+/* ── CS2 Card grid ── */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding-bottom: 48px;
+}
+
+.loadingState {
+  padding: 60px 0;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 15px;
+}
+
+@media (max-width: 1024px) {
+  .cardGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .cardGrid { grid-template-columns: 1fr; }
+}
+
 /* Empty */
 .empty {
   padding: 60px 0;
@@ -259,6 +315,10 @@
   overflow: hidden;
   margin-top: 32px;
   margin-bottom: 40px;
+}
+
+.statsBar3 {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .statItem {

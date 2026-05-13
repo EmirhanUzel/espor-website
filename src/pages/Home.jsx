@@ -5,6 +5,7 @@ import {
   getPlayers, getGuests,
   formatDate, formatPrize, getFlag, tierLabel,
 } from "../services/api";
+import { getCS2FeaturedTournaments, getCS2TournamentMatches, getCS2OngoingMatches, getCS2RecentTournaments, getCS2Transfers } from "../services/liquipediaApi";
 import { getTopics, formatRelative } from "../services/forum";
 import MatchCard from "../components/MatchCard";
 import TournamentCard from "../components/TournamentCard";
@@ -24,8 +25,11 @@ function SectionHead({ title, to, label }) {
 // ── 1. Hero Banner ─────────────────────────────────────────────────────────────
 function HeroBanner({ tournaments, allMatches }) {
   const { t } = useLanguage();
-  const [idx, setIdx]     = useState(0);
-  const [fading, setFading] = useState(false);
+  const [idx, setIdx]           = useState(0);
+  const [fading, setFading]     = useState(false);
+  const [bannerOk, setBannerOk] = useState(true);
+
+  useEffect(() => { setBannerOk(true); }, [idx]);
 
   useEffect(() => {
     if (tournaments.length <= 1) return;
@@ -49,23 +53,36 @@ function HeroBanner({ tournaments, allMatches }) {
 
   const tournament = tournaments[idx];
   const tournamentMatches = allMatches.filter(m => m.tournament === tournament.name);
-  const grandFinal        = tournamentMatches.find(m => m.match2bracketdata?.header === "Grand Final");
-  const [opp1, opp2]      = grandFinal?.match2opponents || [];
+
+  // Support both mock data ("Grand Final" header) and Liquipedia API bracket notation
+  const finished = tournamentMatches.filter(m => m.finished === 1);
+  const grandFinal = finished.find(m => m.match2bracketdata?.header === "Grand Final")
+    || finished.sort((a, b) => b.date.localeCompare(a.date))[0]
+    || null;
+  const [opp1, opp2] = grandFinal?.match2opponents || [];
 
   return (
     <div className={styles.hero}>
-      <div
-        key={tournament.id}
-        className={`${styles.heroBg} ${tournament.bannerurl ? "" : styles.heroBgFallback}`}
-        style={tournament.bannerurl ? { backgroundImage: `url(${tournament.bannerurl})` } : {}}
-      />
+      <div key={tournament.id} className={`${styles.heroBg} ${!tournament.bannerurl || !bannerOk ? styles.heroBgFallback : ""}`}>
+        {tournament.bannerurl && bannerOk && (
+          <img
+            src={tournament.bannerurl}
+            alt=""
+            className={styles.heroBgImg}
+            referrerPolicy="no-referrer"
+            onError={() => setBannerOk(false)}
+          />
+        )}
+      </div>
       <div className={styles.heroOverlay} />
 
       <div className="wrap">
         <div className={`${styles.heroContent} ${fading ? styles.heroFading : ""}`}>
           <div className={styles.heroLeft}>
             <span className={styles.heroPill}>
-              {tierLabel(tournament.liquipediatier)}-Tier · {tournament.locations?.region}
+              {tournament.liquipediatiertype
+                ? tournament.liquipediatiertype
+                : `${tierLabel(tournament.liquipediatier)}-Tier`} · {tournament.locations?.region}
             </span>
             <h1 className={styles.heroTitle}>{tournament.name}</h1>
             <div className={styles.heroMeta}>
@@ -90,22 +107,23 @@ function HeroBanner({ tournaments, allMatches }) {
 
           {grandFinal && opp1 && opp2 && (
             <div className={styles.heroScore}>
-              <span className={styles.heroScoreLabel}>{t("home.grandFinal")}</span>
               <div className={styles.heroScoreRow}>
                 <span className={`${styles.heroTeamName} ${grandFinal.winner === "1" ? styles.heroWinner : ""}`}>{opp1.name}</span>
                 <div className={styles.heroScoreCenter}>
-                  <span className={`${styles.heroScoreNum} ${grandFinal.winner === "1" ? styles.heroWinnerScore : ""}`}>{opp1.score}</span>
+                  <span className={`${styles.heroScoreNum} ${grandFinal.winner === "1" ? styles.heroWinnerScore : ""}`}>{opp1.score < 0 ? 0 : opp1.score}</span>
                   <span className={styles.heroVs}>-</span>
-                  <span className={`${styles.heroScoreNum} ${grandFinal.winner === "2" ? styles.heroWinnerScore : ""}`}>{opp2.score}</span>
+                  <span className={`${styles.heroScoreNum} ${grandFinal.winner === "2" ? styles.heroWinnerScore : ""}`}>{opp2.score < 0 ? 0 : opp2.score}</span>
                 </div>
                 <span className={`${styles.heroTeamName} ${styles.heroTeamRight} ${grandFinal.winner === "2" ? styles.heroWinner : ""}`}>{opp2.name}</span>
               </div>
               <div className={styles.heroMaps}>
-                {grandFinal.match2games?.map((g, i) => (
-                  <span key={i} className={`${styles.heroMap} ${g.winner === "1" ? styles.heroMapW1 : styles.heroMapW2}`}>
-                    {g.map} {g.scores[0]}–{g.scores[1]}
-                  </span>
-                ))}
+                {grandFinal.match2games
+                  ?.filter(g => g.winner === "1" || g.winner === "2")
+                  .map((g, i) => (
+                    <span key={i} className={`${styles.heroMap} ${g.winner === "1" ? styles.heroMapW1 : styles.heroMapW2}`}>
+                      {g.map} {g.scores[0]}–{g.scores[1]}
+                    </span>
+                  ))}
               </div>
             </div>
           )}
@@ -256,8 +274,60 @@ function PlayerCarousel({ players }) {
 // ── Main Export ────────────────────────────────────────────────────────────────
 export default function Home({ wiki, region }) {
   const { t } = useLanguage();
-  const tournaments  = getTournaments(wiki);
-  const matches      = getMatches(wiki);
+
+  // Live CS2 data from Liquipedia API
+  const [cs2Tournaments, setCS2Tournaments]         = useState([]);
+  const [cs2RecentMatches, setCS2RecentMatches]     = useState([]);
+  const [cs2UpcomingMatches, setCS2UpcomingMatches] = useState([]);
+  const [cs2PastTournaments, setCS2PastTournaments] = useState([]);
+  const [cs2Transfers, setCS2Transfers]             = useState([]);
+  const [cs2Loading, setCS2Loading]                 = useState(false);
+  const [cs2Error, setCS2Error]                     = useState(null);
+
+  useEffect(() => {
+    if (wiki !== "counterstrike") return;
+    let cancelled = false;
+    setCS2Loading(true);
+    setCS2Error(null);
+
+    Promise.all([
+      getCS2FeaturedTournaments(),
+      getCS2RecentTournaments(),
+      getCS2Transfers(),
+    ])
+      .then(async ([tourneys, pastTourneys, transfers]) => {
+        if (cancelled) return;
+        setCS2Tournaments(tourneys);
+        setCS2PastTournaments(pastTourneys);
+        setCS2Transfers(transfers);
+
+        const first = tourneys[0];
+        const ongoingNames = tourneys.filter(t => t._ongoing).map(t => t.name);
+
+        const [heroMs, upcomingMs] = await Promise.all([
+          first?.name ? getCS2TournamentMatches(first.name) : Promise.resolve([]),
+          ongoingNames.length ? getCS2OngoingMatches(ongoingNames) : Promise.resolve([]),
+        ]);
+        if (!cancelled) {
+          setCS2RecentMatches(heroMs);
+          setCS2UpcomingMatches(upcomingMs);
+        }
+      })
+      .catch((err) => { if (!cancelled) setCS2Error(err.message); })
+      .finally(() => { if (!cancelled) setCS2Loading(false); });
+
+    return () => { cancelled = true; };
+  }, [wiki]);
+
+  const mockTournaments = getTournaments(wiki);
+  const mockMatches     = getMatches(wiki);
+
+  const isCS2 = wiki === "counterstrike";
+
+  const tournaments = isCS2 && cs2Tournaments.length ? cs2Tournaments : mockTournaments;
+  // matches used only for hero Grand Final lookup
+  const matches     = isCS2 && cs2RecentMatches.length ? cs2RecentMatches : mockMatches;
+
   const interviews   = getInterviews(wiki);
   const allTransfers = getTransfers();
   const players      = getPlayers(wiki);
@@ -267,18 +337,49 @@ export default function Home({ wiki, region }) {
     ? tournaments.filter(tr => tr.locations?.region === region)
     : tournaments;
 
+  // Hero carousel keeps API sort (ongoing first by prize pool, then major)
   const carouselTournaments = filteredTournaments.length ? filteredTournaments : tournaments;
-  const recentMatches       = matches.filter(m => m.finished === 1).slice(0, 3);
-  const upcomingMatches     = matches.filter(m => m.finished !== 1).slice(0, 3);
-  const recentInterviews    = interviews.slice(0, 3);
-  const recentTransfers = allTransfers.slice(0, 6);
-  const recentTopics    = getTopics().slice(0, 5);
+
+  // Tournaments section: sort strictly by startdate ascending
+  const displayTournaments = [...filteredTournaments].sort((a, b) =>
+    (a.startdate || "").localeCompare(b.startdate || "")
+  );
+
+  const recentMatches   = matches.filter(m => m.finished === 1).slice(0, 3);
+  // CS2: use dedicated upcoming matches from ongoing tournaments; others: filter from mock
+  const upcomingMatches = isCS2
+    ? cs2UpcomingMatches.slice(0, 3)
+    : mockMatches
+        .filter(m => m.finished !== 1 && m.match2opponents?.[0]?.name && m.match2opponents?.[1]?.name)
+        .slice(0, 3);
+
+  const recentInterviews = interviews.slice(0, 3);
+  // CS2: use live transfer data; others: use mock
+  const recentTransfers  = isCS2 && cs2Transfers.length ? cs2Transfers.slice(0, 5) : allTransfers.slice(0, 6);
+  const recentTopics     = getTopics().slice(0, 5);
 
   const today = new Date().toISOString().slice(0, 10);
-  const pastTournaments = tournaments
-    .filter(tr => tr.enddate && tr.enddate <= today)
-    .sort((a, b) => b.enddate.localeCompare(a.enddate))
-    .slice(0, 5);
+  // CS2: use live past tournaments from API; others: derive from mock data
+  const pastTournaments = wiki === "counterstrike" && cs2PastTournaments.length
+    ? cs2PastTournaments
+    : tournaments
+        .filter(tr => tr.enddate && tr.enddate <= today)
+        .sort((a, b) => b.enddate.localeCompare(a.enddate))
+        .slice(0, 5);
+
+  if (wiki === "counterstrike" && cs2Loading && !cs2Tournaments.length) {
+    return (
+      <main>
+        <div className="wrap" style={{ paddingTop: 80, textAlign: "center" }}>
+          <p style={{ color: "var(--text-3)", fontSize: 18 }}>CS2 turnuva verisi yükleniyor…</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (wiki === "counterstrike" && cs2Error) {
+    console.warn("Liquipedia API error, falling back to mock data:", cs2Error);
+  }
 
   if (!tournaments.length && !matches.length) {
     return (
@@ -319,7 +420,7 @@ export default function Home({ wiki, region }) {
           <section className={styles.section}>
             <SectionHead title={t("home.tournaments")} to="/tournaments" label={t("home.seeAll")} />
             <div className={styles.tournamentList}>
-              {filteredTournaments.map(tr => <TournamentCard key={tr.id} tournament={tr} />)}
+              {displayTournaments.map(tr => <TournamentCard key={tr.id} tournament={tr} />)}
             </div>
           </section>
           <section className={styles.section}>
@@ -332,33 +433,36 @@ export default function Home({ wiki, region }) {
 
         <div className={styles.divider} />
 
-        {recentInterviews.length > 0 && (
-          <section className={styles.section}>
-            <SectionHead title={t("home.newsInterviews")} to="/news" />
-            <div className={styles.interviewGrid}>
-              {recentInterviews.map(i => <InterviewCard key={i.pagename + i.date} item={i} />)}
-            </div>
-          </section>
-        )}
-
-        <div className={styles.divider} />
-
         <div className={styles.twoCol}>
-          <section className={styles.section}>
-            <SectionHead title={t("home.recentTransfers")} to="/transfers" />
-            <div className={styles.transferList}>
-              {recentTransfers.map((tr, i) => <TransferRow key={i} transfer={tr} />)}
-            </div>
-          </section>
-          {guests.length > 0 && (
+          {recentInterviews.length > 0 && (
+            <section className={styles.section}>
+              <SectionHead title={t("home.newsInterviews")} to="/news" />
+              <div className={styles.interviewGrid}>
+                {recentInterviews.map(i => <InterviewCard key={i.pagename + i.date} item={i} />)}
+              </div>
+            </section>
+          )}
+          {recentTransfers.length > 0 && (
+            <section className={styles.section}>
+              <SectionHead title={t("home.recentTransfers")} to="/transfers" />
+              <div className={styles.transferList}>
+                {recentTransfers.map((tr, i) => <TransferRow key={i} transfer={tr} />)}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {guests.length > 0 && (
+          <>
+            <div className={styles.divider} />
             <section className={styles.section}>
               <SectionHead title={t("home.eventGuests")} />
               <div className={styles.guestList}>
                 {guests.map(g => <GuestCard key={g.id} guest={g} />)}
               </div>
             </section>
-          )}
-        </div>
+          </>
+        )}
 
         <div className={styles.divider} />
 

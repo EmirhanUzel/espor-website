@@ -1,7 +1,28 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  return {
+    plugins: [react()],
+    server: {
+      port: 5175,
+      proxy: {
+        // API proxy — injects auth key server-side so it never reaches the client bundle
+        '/liquipedia-api': {
+          target: 'https://api.liquipedia.net/api/v3',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/liquipedia-api/, ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.setHeader('Authorization', `Apikey ${env.VITE_LIQUIPEDIA_API_KEY}`)
+              proxyReq.setHeader('User-Agent', 'EsporMax/1.0 (emiruzel01@gmail.com)')
+            })
+          },
+        },
+        // Images are loaded directly by the browser with referrerpolicy="no-referrer"
+        // No image proxy needed — avoids sharing the API rate-limit IP
+      },
+    },
+  }
 })

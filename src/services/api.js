@@ -1561,15 +1561,29 @@ export const TOURNAMENTS = [
     wiki: "valorant",
   },
   {
-    id: "EPL_Season21",
-    name: "ESL Pro League Season 21",
-    bannerurl: "", iconurl: "",
-    seriespage: "ESL_Pro_League", patch: "",
-    startdate: "2025-09-01", enddate: "2025-10-05",
-    locations: { venue: "ESL Arena Valletta", venuelink: "", city: "Malta", country: "mt", region: "Europe" },
-    prizepool: 850000, participantsnumber: 24,
-    liquipediatier: "2", liquipediatiertype: "",
-    format: "Groups + Single Elimination",
+    id: "PGL_2026_Astana",
+    name: "PGL Astana 2026",
+    bannerurl: "https://liquipedia.net/commons/images/thumb/8/81/PGL_Astana_2026_lightmode.png/400px-PGL_Astana_2026_lightmode.png",
+    iconurl: "https://liquipedia.net/commons/images/thumb/1/18/PGL_Astana_2026_icon_lightmode.png/400px-PGL_Astana_2026_icon_lightmode.png",
+    seriespage: "", patch: "",
+    startdate: "2026-05-09", enddate: "2026-05-17",
+    locations: { venue: "Barys Arena", city: "Astana", country: "kz", region: "CIS" },
+    prizepool: 800000, participantsnumber: 16,
+    liquipediatier: "1", liquipediatiertype: "Tier 1",
+    format: "Single Elimination",
+    wiki: "counterstrike",
+  },
+  {
+    id: "Intel_Extreme_Masters_2026_Cologne",
+    name: "Intel Extreme Masters Cologne Major 2026",
+    bannerurl: "https://liquipedia.net/commons/images/thumb/f/f2/Intel_Extreme_Masters_2022_lightmode.png/400px-Intel_Extreme_Masters_2022_lightmode.png",
+    iconurl: "https://liquipedia.net/commons/images/thumb/4/4d/Intel_Extreme_Masters_2022_icon_allmode.png/400px-Intel_Extreme_Masters_2022_icon_allmode.png",
+    seriespage: "Intel_Extreme_Masters", patch: "",
+    startdate: "2026-06-02", enddate: "2026-06-21",
+    locations: { venue: "LANXESS arena", city: "Cologne", country: "de", region: "Europe" },
+    prizepool: 1250000, participantsnumber: 32,
+    liquipediatier: "1", liquipediatiertype: "Major Championship",
+    format: "Swiss + Single Elimination",
     wiki: "counterstrike",
   },
   {
@@ -1675,9 +1689,10 @@ export function getLiveMatches() {
 }
 export function formatTime(dateStr) {
   if (!dateStr || dateStr.startsWith("0000")) return "—";
-  const d = new Date(dateStr.replace(" ", "T"));
+  // Liquipedia dates are UTC — append Z so JS parses correctly, then convert to Turkey time
+  const d = new Date(dateStr.replace(" ", "T") + "Z");
   if (isNaN(d.getTime())) return "—";
-  return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
+  return d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Europe/Istanbul" });
 }
 
 const WIKI_SHORT = {
