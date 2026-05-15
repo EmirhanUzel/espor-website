@@ -23,6 +23,16 @@ export default defineConfig(({ mode }) => {
         // Images are loaded directly by the browser with referrerpolicy="no-referrer"
         // No image proxy needed — avoids sharing the API rate-limit IP
       },
+      '/pandascore': {
+        target: 'https://api.pandascore.co',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/pandascore/, ''),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Authorization', `Bearer ${env.VITE_PANDASCORE_API_KEY}`)
+          })
+        },
+      },
     },
   }
 })

@@ -2,8 +2,23 @@ import { useMemo, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { getTeams, getPrizeResults, getMatches, formatPrize } from "../services/api";
 import { calcESM, getForm, OFFICIAL_LABEL, OFFICIAL_SHORT } from "./TeamsRanking";
-import { getCS2TeamLogos } from "../services/liquipediaApi";
+import { getCS2TeamsForRanking } from "../services/liquipediaApi";
 import styles from "./TeamsRankingFull.module.css";
+
+function TeamLogoImg({ url, name, imgClass, fbClass }) {
+  const [failed, setFailed] = useState(false)
+  if (!url || failed) return <div className={fbClass}>{name[0]}</div>
+  return (
+    <img
+      key={url}
+      src={url}
+      alt={name}
+      className={imgClass}
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+    />
+  )
+}
 
 function RankBadge({ rank }) {
   const color = rank === 1 ? "#d97706" : rank === 2 ? "#64748b" : rank === 3 ? "#b45309" : "var(--text-3)";
@@ -12,9 +27,7 @@ function RankBadge({ rank }) {
 function TeamCell({ team }) {
   return (
     <Link to={`/team/${encodeURIComponent(team.name)}`} className={styles.teamCell}>
-      {team.textlesslogourl
-        ? <img src={team.textlesslogourl} alt={team.name} className={styles.teamLogo} referrerPolicy="no-referrer" onError={e => { e.target.style.display="none"; }} />
-        : <div className={styles.teamLogoFb}>{team.name[0]}</div>}
+      <TeamLogoImg url={team.textlesslogourl} name={team.name} imgClass={styles.teamLogo} fbClass={styles.teamLogoFb} />
       <div className={styles.teamInfo}>
         <span className={styles.teamName}>{team.name}</span>
         <span className={styles.teamRegion}>{team.region}</span>
@@ -42,24 +55,32 @@ export default function TeamsRankingFull({ type }) {
   const location = useLocation();
   const wiki = new URLSearchParams(location.search).get("wiki") || "valorant";
 
-  const teams   = getTeams(wiki);
   const prizes  = getPrizeResults(wiki);
   const matches = getMatches(wiki);
 
-  const [logoMap, setLogoMap] = useState({});
+  const [cs2Teams,   setCS2Teams]   = useState(null);
+  const [cs2Loading, setCS2Loading] = useState(false);
+
   useEffect(() => {
-    if (wiki !== "counterstrike") { setLogoMap({}); return; }
-    getCS2TeamLogos(teams.map(t => t.name)).then(setLogoMap).catch(() => {});
-  }, [wiki, teams]);
+    if (wiki !== "counterstrike") { setCS2Teams(null); return; }
+    setCS2Loading(true);
+    setCS2Teams(null);
+    getCS2TeamsForRanking()
+      .then(setCS2Teams)
+      .catch(() => setCS2Teams([]))
+      .finally(() => setCS2Loading(false));
+  }, [wiki]);
+
+  const mockTeams = getTeams(wiki);
+  const teams = wiki === "counterstrike" ? (cs2Teams ?? []) : mockTeams;
 
   const enriched = useMemo(() =>
     teams.map(t => ({
       ...t,
-      textlesslogourl: logoMap[t.name] || t.textlesslogourl || "",
-      esm: calcESM(t, prizes, matches),
-      form: getForm(t, matches),
+      esm:  wiki === "counterstrike" ? (t.esm  ?? 0)  : calcESM(t, prizes, matches),
+      form: wiki === "counterstrike" ? (t.form ?? []) : getForm(t, matches),
     })),
-    [teams, prizes, matches, logoMap]
+    [teams, prizes, matches, wiki]
   );
 
   const isOfficial = type === "official";
@@ -80,6 +101,20 @@ export default function TeamsRankingFull({ type }) {
 
   const title    = isOfficial ? "Official Standings" : "eSPORMAX Rankings";
   const subtitle = isOfficial ? officialLabel : "Earnings · Roster MV · Tournaments · Recent Form";
+
+  if (cs2Loading) {
+    return (
+      <main>
+        <div className={styles.hero}><div className="wrap">
+          <Link to="/teams" className={styles.back}>← Team Rankings</Link>
+          <h1 className={styles.heroTitle}>{title}</h1>
+        </div></div>
+        <div className="wrap" style={{ padding: "4rem 0", textAlign: "center", color: "var(--text-2)" }}>
+          Loading…
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main>

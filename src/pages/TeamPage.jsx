@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getTeam, getPlayer, getMatches, formatDate, formatPrize, getFlag, INTERVIEWS, TRANSFERS } from "../services/api";
 import { getTopics } from "../services/forum";
 import { useLanguage } from "../contexts/LanguageContext";
+import { getCS2TeamByName, getCS2TeamSquad, getCS2TeamTransfersAPI, getCS2TeamRecentMatches, getCS2PlayerImage, getCS2TeamLogos } from "../services/liquipediaApi";
 import styles from "./TeamPage.module.css";
 
 const SOCIAL_ICONS = {
@@ -43,27 +45,98 @@ function EarningsBar({ data }) {
 
 export default function TeamPage({ wiki }) {
   const { name } = useParams();
-  const navigate = useNavigate();
-  const { t } = useLanguage();
-  const team = getTeam(name);
-  const allMatches = getMatches(wiki);
+  const navigate  = useNavigate();
+  const { t }    = useLanguage();
+
+  const decodedName = decodeURIComponent(name);
+  const mockTeam    = getTeam(decodedName);
+  // CS2 API: wiki prop is "counterstrike" OR mock team is explicitly CS2.
+  // wiki prop wins — avoids LoL/VALORANT mock teams with same name (e.g. "Team Vitality" is in LoL mock data).
+  const isCS2 = wiki === "counterstrike" || mockTeam?.wiki === "counterstrike";
+
+  // ── CS2: API state ──────────────────────────────────────────────────────────
+  const [apiTeam,      setApiTeam]      = useState(null);
+  const [apiSquad,     setApiSquad]     = useState(null);
+  const [apiMatches,   setApiMatches]   = useState(null);
+  const [apiTransfers, setApiTransfers] = useState(null);
+  const [squadImages,  setSquadImages]  = useState({});
+  const [matchLogos,   setMatchLogos]   = useState({});
+  const [cs2Loading,   setCS2Loading]   = useState(isCS2);
+
+  useEffect(() => {
+    if (!isCS2) return;
+    setCS2Loading(true);
+    setApiTeam(null); setApiSquad(null); setApiMatches(null); setApiTransfers(null);
+
+    getCS2TeamByName(decodedName).then(team => {
+      if (!team) { setCS2Loading(false); return; }
+      setApiTeam(team);
+      setCS2Loading(false);
+      // Secondary fetches
+      getCS2TeamSquad(team.pagename).then(squad => {
+        setApiSquad(squad);
+        // Fetch player images in parallel (MediaWiki API, no rate-limit queue)
+        squad.forEach(p => {
+          getCS2PlayerImage(p.pagename || p.id).then(url => {
+            if (url) setSquadImages(prev => ({ ...prev, [p.id]: url }));
+          });
+        });
+      });
+      getCS2TeamRecentMatches(team.name, 10).then(matches => {
+        setApiMatches(matches);
+        // Fetch opponent logos
+        const oppNames = [...new Set(
+          matches.flatMap(m => m.match2opponents.map(o => o.name)).filter(n => n && n !== team.name)
+        )];
+        if (oppNames.length) {
+          getCS2TeamLogos(oppNames).then(logoMap => {
+            if (!cancelled) setMatchLogos(logoMap);
+          });
+        }
+      });
+      getCS2TeamTransfersAPI(team.name, 15).then(setApiTransfers);
+    }).catch(() => setCS2Loading(false));
+  }, [decodedName, isCS2]);
+
+  // ── Unified data ────────────────────────────────────────────────────────────
+  const team = isCS2 ? apiTeam : mockTeam;
+
+  // Loading
+  if (cs2Loading) {
+    return (
+      <div className="wrap" style={{ paddingTop: 80, textAlign: "center", color: "var(--text-2)" }}>
+        Loading…
+      </div>
+    );
+  }
 
   if (!team) {
     return (
       <div className="wrap" style={{ paddingTop: 80, textAlign: "center" }}>
-        <h2 style={{ color: "var(--text-3)" }}>Team not found: {decodeURIComponent(name)}</h2>
+        <h2 style={{ color: "var(--text-3)" }}>Team not found: {decodedName}</h2>
         <Link to="/" style={{ display: "inline-block", marginTop: 16, color: "var(--text-1)", fontWeight: 700 }}>← Home</Link>
       </div>
     );
   }
 
-  const teamMatches = allMatches.filter(m =>
-    m.match2opponents?.some(o => o.name.toLowerCase() === team.name.toLowerCase())
-  );
-  const earningsYears = Object.entries(team.earningsbyyear).sort(([a], [b]) => a.localeCompare(b));
+  // ── Mock-data derived values (non-CS2) ──────────────────────────────────────
+  const allMatches = isCS2 ? [] : getMatches(wiki);
+  const teamMatches = isCS2
+    ? (apiMatches || [])
+    : allMatches.filter(m => m.match2opponents?.some(o => o.name.toLowerCase() === team.name.toLowerCase()));
+
+  const earningsYears = Object.entries(team.earningsbyyear || {}).sort(([a], [b]) => a.localeCompare(b));
   const lastYear = earningsYears[earningsYears.length - 1];
 
-  const totalMarketValue = (team.squad || []).reduce((sum, member) => {
+  // Squad: CS2 from API, others from mock
+  const squad = isCS2
+    ? (apiSquad || []).map(p => ({ id: p.id, pagename: p.pagename, name: p.name, nationality: p.nationality, role: p.roles?.[0] || '', earnings: p.earnings }))
+    : (mockTeam?.squad || []).map(m => {
+        const p = getPlayer(m.id);
+        return { id: m.id, name: p?.name || '', nationality: p?.nationality || '', role: m.role, earnings: p?.earnings || 0 };
+      });
+
+  const totalMarketValue = isCS2 ? 0 : (mockTeam?.squad || []).reduce((sum, member) => {
     const p = getPlayer(member.id);
     return sum + (p?.marketvalue || 0);
   }, 0);
@@ -75,29 +148,25 @@ export default function TeamPage({ wiki }) {
     return `$${val}`;
   };
 
-  const squadIds = new Set((team.squad || []).map(m => m.id.toLowerCase()));
-  const teamNews = INTERVIEWS.filter(item =>
+  // Transfers
+  const rawTransfers = isCS2 ? (apiTransfers || []) : TRANSFERS.filter(tr =>
+    tr.fromteam?.toLowerCase() === team.name.toLowerCase() ||
+    tr.toteam?.toLowerCase()   === team.name.toLowerCase()
+  );
+
+  // News (mock only)
+  const squadIds = new Set(squad.map(m => (m.id || '').toLowerCase()));
+  const teamNews = isCS2 ? [] : INTERVIEWS.filter(item =>
     item.pagename.toLowerCase() === team.name.toLowerCase() ||
     squadIds.has(item.pagename.toLowerCase())
   );
-
-  const teamTransfers = TRANSFERS.filter(t =>
-    t.fromteam.toLowerCase() === team.name.toLowerCase() ||
-    t.toteam.toLowerCase() === team.name.toLowerCase()
-  );
-
-  // Placeholder — algorithm to be implemented later
-  const rumors = [
-    { id: 1, text: `${team.name} is reportedly in talks with a top-tier IGL ahead of the next season.`, source: "insider_anon", date: "2025-10-15", reliability: "low" },
-    { id: 2, text: `Roster shuffle expected at ${team.name} after disappointing playoff run.`, source: "esports_wire", date: "2025-10-10", reliability: "medium" },
-    { id: 3, text: `${team.name} linked with two international signings from EU region.`, source: "transfer_watch", date: "2025-10-05", reliability: "low" },
-  ];
 
   const WIKI_TO_CATEGORY = { valorant: "VALORANT", counterstrike: "CS2", leagueoflegends: "LoL" };
   const forumCategory = WIKI_TO_CATEGORY[team.wiki] || "General";
   const forumTopics = getTopics({ category: forumCategory }).slice(0, 4);
 
-  const socialEntries = Object.entries(team.links || {});
+  const ALLOWED_SOCIALS = new Set(["instagram", "x", "twitter", "youtube", "twitch"]);
+  const socialEntries = Object.entries(team.links || {}).filter(([k]) => ALLOWED_SOCIALS.has(k.toLowerCase()));
 
   return (
     <main>
@@ -158,42 +227,40 @@ export default function TeamPage({ wiki }) {
       <div className="wrap">
         <div className={styles.grid}>
 
-          {team.squad?.length > 0 && (
+          {squad.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <h2 className={styles.cardTitle}>Current Roster</h2>
               <div className={styles.rosterGrid}>
-                {team.squad.map((member) => {
-                  const player = getPlayer(member.id);
-                  const mv = player?.marketvalue;
+                {squad.map((member) => {
+                  const mockPlayer = !isCS2 ? getPlayer(member.id) : null;
+                  const mv = mockPlayer?.marketvalue;
                   const mvFmt = mv
                     ? mv >= 1_000_000 ? `$${(mv / 1_000_000).toFixed(1)}M`
                     : mv >= 1_000 ? `$${Math.round(mv / 1_000)}K`
                     : `$${mv}`
                     : null;
-
-                  const allStats = player?.recentstats?.stats || [];
-                  const cardStats = player?.wiki === "counterstrike"
+                  const allStats = mockPlayer?.recentstats?.stats || [];
+                  const cardStats = mockPlayer?.wiki === "counterstrike"
                     ? allStats.filter(s => ["K/D", "KAST", "HS %"].includes(s.label))
-                    : player?.wiki === "leagueoflegends"
+                    : mockPlayer?.wiki === "leagueoflegends"
                     ? allStats.filter(s => ["KDA", "Win Rate", "CS/min"].includes(s.label))
                     : allStats.filter(s => ["ACS", "K/D", "KAST"].includes(s.label));
-
+                  const flag    = member.nationality ? getFlag(member.nationality) : (mockPlayer ? getFlag(mockPlayer.nationality) : "🌍");
+                  const initial = (member.id || "?")[0].toUpperCase();
+                  const imgUrl  = isCS2 ? (squadImages[member.id] || '') : (mockPlayer?.imageurl || '');
                   return (
                     <div key={member.id} className={styles.playerCard} onClick={() => navigate(`/player/${member.id}`)}>
                       <div className={styles.playerCardTop}>
-                        <span className={styles.playerCardFlag}>{player ? getFlag(player.nationality) : "🌍"}</span>
-                        {player?.imageurl
-                          ? <img src={player.imageurl} alt={member.id} className={styles.playerCardImg}
+                        <span className={styles.playerCardFlag}>{flag}</span>
+                        {imgUrl
+                          ? <img src={imgUrl} alt={member.id} className={styles.playerCardImg} referrerPolicy="no-referrer"
                               onError={e => { e.currentTarget.style.display = "none"; e.currentTarget.nextSibling.style.display = "flex"; }} />
                           : null}
-                        {player?.imageurl
-                          ? <div className={styles.playerCardInitial} style={{ display: "none" }}>{member.id[0].toUpperCase()}</div>
-                          : <div className={styles.playerCardInitial}>{member.id[0].toUpperCase()}</div>
-                        }
+                        <div className={styles.playerCardInitial} style={imgUrl ? { display: "none" } : {}}>{initial}</div>
                       </div>
                       <div className={styles.playerCardBody}>
                         <span className={styles.playerCardNick}>{member.id}</span>
-                        {player?.name && <span className={styles.playerCardName}>{player.name}</span>}
+                        {member.name && <span className={styles.playerCardName}>{member.name}</span>}
                       </div>
                       {cardStats.length > 0 && (
                         <div className={styles.playerCardStats}>
@@ -216,23 +283,6 @@ export default function TeamPage({ wiki }) {
             </section>
           )}
 
-          <section className={`${styles.card} ${styles.cardWide}`}>
-            <h2 className={styles.cardTitle}>Annual Earnings</h2>
-            <EarningsBar data={team.earningsbyyear} />
-            <div className={styles.earningsTable}>
-              {earningsYears.map(([year, val]) => (
-                <div key={year} className={styles.earningsRow}>
-                  <span className={styles.earningsRowYear}>{year}</span>
-                  <div className={styles.earningsRowBar}>
-                    <div className={styles.earningsRowFill}
-                      style={{ width: `${(val / Math.max(...earningsYears.map(([, v]) => v))) * 100}%` }} />
-                  </div>
-                  <span className={styles.earningsRowAmt}>{formatPrize(val)}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
           {teamMatches.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <h2 className={styles.cardTitle}>Matches</h2>
@@ -240,20 +290,38 @@ export default function TeamPage({ wiki }) {
                 {teamMatches.map(match => {
                   const [opp1, opp2] = match.match2opponents;
                   const isOpp1 = opp1?.name.toLowerCase() === team.name.toLowerCase();
-                  const myScore = isOpp1 ? opp1?.score : opp2?.score;
+                  const myScore    = isOpp1 ? opp1?.score : opp2?.score;
                   const theirScore = isOpp1 ? opp2?.score : opp1?.score;
-                  const opponent = isOpp1 ? opp2?.name : opp1?.name;
+                  const opponent   = isOpp1 ? opp2?.name  : opp1?.name;
                   const won = (isOpp1 && match.winner === "1") || (!isOpp1 && match.winner === "2");
                   return (
                     <div key={match.id} className={styles.matchRow} onClick={() => navigate(`/match/${match.id}`)}>
                       <span className={won ? styles.matchW : styles.matchL}>{won ? "W" : "L"}</span>
                       <span className={styles.matchOpp}>{opponent}</span>
                       <span className={styles.matchScore}>{myScore} – {theirScore}</span>
-                      <span className={styles.matchHeader}>{match.match2bracketdata?.header}</span>
                       <span className={styles.matchDate}>{formatDate(match.date)}</span>
                     </div>
                   );
                 })}
+              </div>
+            </section>
+          )}
+
+          {earningsYears.length > 0 && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <h2 className={styles.cardTitle}>Annual Earnings</h2>
+              <EarningsBar data={team.earningsbyyear} />
+              <div className={styles.earningsTable}>
+                {earningsYears.map(([year, val]) => (
+                  <div key={year} className={styles.earningsRow}>
+                    <span className={styles.earningsRowYear}>{year}</span>
+                    <div className={styles.earningsRowBar}>
+                      <div className={styles.earningsRowFill}
+                        style={{ width: `${(val / Math.max(...earningsYears.map(([, v]) => v))) * 100}%` }} />
+                    </div>
+                    <span className={styles.earningsRowAmt}>{formatPrize(val)}</span>
+                  </div>
+                ))}
               </div>
             </section>
           )}
@@ -301,45 +369,54 @@ export default function TeamPage({ wiki }) {
             )}
           </div>
 
-          {/* ── Rumors ── */}
-          <section className={`${styles.card} ${styles.cardWide}`}>
-            <h2 className={styles.cardTitle}>{t("team.rumors")}</h2>
-            <div className={styles.rumorList}>
-              {rumors.map(r => (
-                <div key={r.id} className={styles.rumorRow}>
-                  <span className={`${styles.rumorBadge} ${r.reliability === "medium" ? styles.rumorMedium : styles.rumorLow}`}>
-                    {r.reliability === "medium" ? t("team.rumorMedium") : t("team.rumorLow")}
-                  </span>
-                  <span className={styles.rumorText}>{r.text}</span>
-                  <div className={styles.rumorMeta}>
-                    <span className={styles.rumorSource}>@{r.source}</span>
-                    <span className={styles.rumorDate}>{formatDate(r.date)}</span>
+          {/* ── Rumors (only for non-CS2) ── */}
+          {!isCS2 && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <h2 className={styles.cardTitle}>{t("team.rumors")}</h2>
+              <div className={styles.rumorList}>
+                {[
+                  { id: 1, text: `${team.name} is reportedly in talks with a top-tier IGL.`, source: "insider_anon", date: "2025-10-15", reliability: "low" },
+                  { id: 2, text: `Roster shuffle expected at ${team.name} after disappointing playoff run.`, source: "esports_wire", date: "2025-10-10", reliability: "medium" },
+                ].map(r => (
+                  <div key={r.id} className={styles.rumorRow}>
+                    <span className={`${styles.rumorBadge} ${r.reliability === "medium" ? styles.rumorMedium : styles.rumorLow}`}>
+                      {r.reliability === "medium" ? t("team.rumorMedium") : t("team.rumorLow")}
+                    </span>
+                    <span className={styles.rumorText}>{r.text}</span>
+                    <div className={styles.rumorMeta}>
+                      <span className={styles.rumorSource}>@{r.source}</span>
+                      <span className={styles.rumorDate}>{formatDate(r.date)}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* ── Transfers ── */}
-          {teamTransfers.length > 0 && (
+          {rawTransfers.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <h2 className={styles.cardTitle}>Transfers</h2>
               <div className={styles.transferList}>
-                {teamTransfers.map((t, i) => {
-                  const isIn = t.toteam.toLowerCase() === team.name.toLowerCase();
+                {rawTransfers.map((tr, i) => {
+                  const playerName = tr.player || tr.displayname || tr.extradata?.displayname || '';
+                  const fromTeam   = tr.fromteam || '';
+                  const toTeam     = tr.toteam   || '';
+                  const isIn = toTeam.toLowerCase() === team.name.toLowerCase();
                   return (
                     <div key={i} className={styles.transferRow}>
                       <span className={`${styles.transferDir} ${isIn ? styles.transferIn : styles.transferOut}`}>
                         {isIn ? "IN" : "OUT"}
                       </span>
-                      <Link to={`/player/${t.player}`} className={styles.transferPlayer} onClick={e => e.stopPropagation()}>{t.player}</Link>
+                      <Link to={`/player/${encodeURIComponent(playerName)}`} className={styles.transferPlayer} onClick={e => e.stopPropagation()}>
+                        {playerName}
+                      </Link>
                       <div className={styles.transferTeams}>
-                        <Link to={`/team/${encodeURIComponent(t.fromteam)}`} className={styles.transferFrom} onClick={e => e.stopPropagation()}>{t.fromteam}</Link>
-                        <span className={styles.transferArrow}>→</span>
-                        <Link to={`/team/${encodeURIComponent(t.toteam)}`} className={styles.transferTo} onClick={e => e.stopPropagation()}>{t.toteam}</Link>
+                        {fromTeam && <Link to={`/team/${encodeURIComponent(fromTeam)}`} className={styles.transferFrom} onClick={e => e.stopPropagation()}>{fromTeam}</Link>}
+                        {fromTeam && toTeam && <span className={styles.transferArrow}>→</span>}
+                        {toTeam  && <Link to={`/team/${encodeURIComponent(toTeam)}`}   className={styles.transferTo}   onClick={e => e.stopPropagation()}>{toTeam}</Link>}
                       </div>
-                      <span className={styles.transferRole}>{t.role2}</span>
-                      <span className={styles.transferDate}>{formatDate(t.date)}</span>
+                      <span className={styles.transferDate}>{formatDate(tr.date)}</span>
                     </div>
                   );
                 })}

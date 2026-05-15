@@ -36,7 +36,15 @@
       "PowerShell(Stop-Process *)",
       "PowerShell(Get-Process *)",
       "Bash(awk '{print \"[[name::\" $0 \"]]\"}')",
-      "Bash(node *)"
+      "Bash(node *)",
+      "WebSearch",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Emirhan\\\\Desktop\\\\espormax-app\" -Recurse -Directory -Depth 2)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Emirhan\\\\Desktop\\\\espormax-app\" -Recurse -Filter \"*.jsx\" -ErrorAction SilentlyContinue)",
+      "WebFetch(domain:www.pandascore.co)"
     ]
   }
 }

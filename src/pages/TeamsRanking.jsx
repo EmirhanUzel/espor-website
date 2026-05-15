@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getTeams, getPrizeResults, getMatches, formatPrize } from "../services/api";
+import { getTeams, getPrizeResults, getMatches } from "../services/api";
 import { PLAYERS } from "../services/api";
-import { getCS2TeamLogos } from "../services/liquipediaApi";
+import { getCS2TeamsForRanking } from "../services/liquipediaApi";
 import styles from "./TeamsRanking.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -21,7 +21,7 @@ export function calcESM(team, allPrizes, allMatches) {
   );
   const recent = allMatches
     .filter(m => m.match2opponents?.some(o => o.name === team.name))
-    .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+    .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
   const wins = recent.filter(m => {
     const idx = m.match2opponents.findIndex(o => o.name === team.name);
     return idx !== -1 && m.winner === String(idx + 1);
@@ -30,10 +30,10 @@ export function calcESM(team, allPrizes, allMatches) {
   return Math.min(Math.round(earningsScore + rosterScore + tournScore + formScore), 100);
 }
 
-export function getForm(team, allMatches) {
+export function getForm(team, allMatches, limit = 5) {
   return allMatches
     .filter(m => m.match2opponents?.some(o => o.name === team.name))
-    .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
+    .sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit)
     .map(m => {
       const idx = m.match2opponents.findIndex(o => o.name === team.name);
       return idx !== -1 && m.winner === String(idx + 1) ? "W" : "L";
@@ -50,6 +50,21 @@ export const OFFICIAL_SHORT = {
 };
 
 // ── Shared atoms ──────────────────────────────────────────────────────────────
+function TeamLogoImg({ url, name, imgClass, fbClass }) {
+  const [failed, setFailed] = useState(false)
+  if (!url || failed) return <div className={fbClass}>{name[0]}</div>
+  return (
+    <img
+      key={url}
+      src={url}
+      alt={name}
+      className={imgClass}
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
 function Trend({ change }) {
   if (change > 0) return <span className={`${styles.trend} ${styles.trendUp}`}>▲ {change}</span>;
   if (change < 0) return <span className={`${styles.trend} ${styles.trendDown}`}>▼ {Math.abs(change)}</span>;
@@ -70,9 +85,7 @@ function FormDots({ form }) {
 function TeamCell({ team }) {
   return (
     <Link to={`/team/${encodeURIComponent(team.name)}`} className={styles.teamCell}>
-      {team.textlesslogourl
-        ? <img src={team.textlesslogourl} alt={team.name} className={styles.teamLogo} referrerPolicy="no-referrer" onError={e => { e.target.style.display="none"; }} />
-        : <div className={styles.teamLogoFb}>{team.name[0]}</div>}
+      <TeamLogoImg url={team.textlesslogourl} name={team.name} imgClass={styles.teamLogo} fbClass={styles.teamLogoFb} />
       <div className={styles.teamInfo}>
         <span className={styles.teamName}>{team.name}</span>
         <span className={styles.teamRegion}>{team.region}</span>
@@ -162,9 +175,10 @@ function FormSection({ teams }) {
   const { t } = useLanguage();
   const withForm = teams
     .map(team => {
-      const wins = team.form.filter(r => r === "W").length;
-      const total = team.form.length;
-      return { ...team, wins, total, winRate: total > 0 ? wins / total : -1 };
+      const f     = team.formLong?.length ? team.formLong : team.form; // last 10 for form section
+      const wins  = f.filter(r => r === "W").length;
+      const total = f.length;
+      return { ...team, formDisplay: f, wins, total, winRate: total > 0 ? wins / total : -1 };
     })
     .filter(team => team.total > 0)
     .sort((a, b) => b.winRate - a.winRate || b.wins - a.wins)
@@ -185,15 +199,13 @@ function FormSection({ teams }) {
           <Link key={team.name} to={`/team/${encodeURIComponent(team.name)}`} className={styles.formCard}>
             <div className={styles.formCardRank}>#{i + 1}</div>
             <div className={styles.formCardTeam}>
-              {team.textlesslogourl
-                ? <img src={team.textlesslogourl} alt={team.name} className={styles.formCardLogo} referrerPolicy="no-referrer" onError={e => { e.target.style.display="none"; }} />
-                : <div className={styles.formCardLogoFb}>{team.name[0]}</div>}
+              <TeamLogoImg url={team.textlesslogourl} name={team.name} imgClass={styles.formCardLogo} fbClass={styles.formCardLogoFb} />
               <div>
                 <div className={styles.formCardName}>{team.name}</div>
                 <div className={styles.formCardRegion}>{team.region}</div>
               </div>
             </div>
-            <FormDots form={team.form} />
+            <FormDots form={team.formDisplay} />
             <div className={styles.formCardRate}>
               <span className={styles.formCardRateNum}>{team.wins}W – {team.total - team.wins}L</span>
               <span className={styles.formCardRatePct}>{Math.round(team.winRate * 100)}%</span>
@@ -208,30 +220,54 @@ function FormSection({ teams }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function TeamsRanking({ wiki }) {
   const { t } = useLanguage();
-  const teams   = getTeams(wiki);
   const prizes  = getPrizeResults(wiki);
   const matches = getMatches(wiki);
 
-  const [logoMap, setLogoMap] = useState({});
+  // CS2: all team data from Liquipedia API (logos, earnings, VRS from snapshot)
+  const [cs2Teams,   setCS2Teams]   = useState(null);
+  const [cs2Loading, setCS2Loading] = useState(false);
 
   useEffect(() => {
-    if (wiki !== "counterstrike") { setLogoMap({}); return; }
-    const names = teams.map(t => t.name);
-    getCS2TeamLogos(names).then(setLogoMap).catch(() => {});
-  }, [wiki, teams]);
+    if (wiki !== "counterstrike") { setCS2Teams(null); return; }
+    setCS2Loading(true);
+    setCS2Teams(null);
+    getCS2TeamsForRanking()
+      .then(setCS2Teams)
+      .catch(() => setCS2Teams([]))
+      .finally(() => setCS2Loading(false));
+  }, [wiki]);
+
+  // For non-CS2 wikis use mock data
+  const mockTeams = getTeams(wiki);
+  const teams = wiki === "counterstrike" ? (cs2Teams ?? []) : mockTeams;
 
   const enriched = useMemo(() =>
     teams.map(team => ({
       ...team,
-      textlesslogourl: logoMap[team.name] || team.textlesslogourl || "",
-      esm: calcESM(team, prizes, matches),
-      form: getForm(team, matches),
+      // CS2: esm/form/formLong from API. Other wikis: calculated from mock data.
+      esm:      wiki === "counterstrike" ? (team.esm      ?? 0)  : calcESM(team, prizes, matches),
+      form:     wiki === "counterstrike" ? (team.form     ?? []) : getForm(team, matches, 5),
+      formLong: wiki === "counterstrike" ? (team.formLong ?? []) : getForm(team, matches, 10),
     })),
-    [teams, prizes, matches, logoMap]
+    [teams, prizes, matches, wiki]
   );
 
   const officialLabel = OFFICIAL_LABEL[wiki] || "Official Points";
   const officialShort = OFFICIAL_SHORT[wiki]  || "Pts";
+
+  if (cs2Loading) {
+    return (
+      <main>
+        <div className={styles.hero}><div className="wrap">
+          <p className={styles.heroEyebrow}>eSPORMAX</p>
+          <h1 className={styles.heroTitle}>{t("teams.title")}</h1>
+        </div></div>
+        <div className="wrap" style={{ padding: "4rem 0", textAlign: "center", color: "var(--text-2)" }}>
+          {t("common.loading") || "Loading…"}
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main>

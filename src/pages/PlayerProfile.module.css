@@ -51,6 +51,14 @@
 .avatarLetter {
   font-size: 36px; font-weight: 700; color: #fff;
   font-family: var(--font-display);
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+}
+
+.avatarImg {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .heroInfo { flex: 1; }
@@ -323,7 +331,73 @@
 .matchArrow { font-size: 14px; color: var(--text-4); transition: color 0.15s; }
 .matchRow:hover .matchArrow { color: var(--text-1); }
 
-/* Achievements */
+/* Role badges */
+.roleBadges { display: inline-flex; gap: 6px; margin-left: 10px; vertical-align: middle; }
+.roleBadge {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+  padding: 2px 8px; border-radius: 4px;
+  background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8);
+  text-transform: uppercase;
+}
+
+/* Trophy carousel nav */
+.trophyNav { display: flex; align-items: center; gap: 8px; }
+.trophyNavBtn {
+  width: 28px; height: 28px; border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--text-1);
+  font-size: 16px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.trophyNavBtn:hover:not(:disabled) { background: var(--surface-3); }
+.trophyNavBtn:disabled { opacity: 0.35; cursor: default; }
+.trophyNavLabel { font-size: 12px; color: var(--text-3); min-width: 36px; text-align: center; }
+
+/* Trophy grid — 10 per row */
+.trophyGrid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 8px;
+}
+
+.trophyCard {
+  flex: 0 0 76px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: 10px 6px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  text-align: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: default;
+}
+.trophyCard:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+.trophyIconWrap {
+  position: relative; width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+}
+.trophyIcon { width: 100%; height: 100%; object-fit: contain; }
+.trophyFallback { font-size: 22px; line-height: 1; }
+
+.trophyPlacement {
+  position: absolute; bottom: -4px; right: -6px;
+  font-size: 9px; font-weight: 800;
+  padding: 1px 4px; border-radius: 3px;
+  background: var(--bg);
+}
+.trophyPlacement.prizeGold   { color: #f59e0b; border: 1px solid #f59e0b55; }
+.trophyPlacement.prizeSilver { color: #9ca3af; border: 1px solid #9ca3af55; }
+.trophyPlacement.prizeBronze { color: #cd7c4a; border: 1px solid #cd7c4a55; }
+.trophyPlacement.prizeOther  { color: var(--text-4); border: 1px solid var(--border); }
+
+.trophyInfo { display: flex; flex-direction: column; gap: 1px; width: 100%; }
+.trophyName { font-size: 9px; font-weight: 700; color: var(--text-1); line-height: 1.3; }
+.trophyDate { font-size: 9px; color: var(--text-4); }
+.trophyPrize { font-size: 9px; font-weight: 700; color: #10b981; margin-top: 1px; }
+
+/* Achievements (legacy list style) */
 .prizeList { display: flex; flex-direction: column; }
 
 .prizeRow {

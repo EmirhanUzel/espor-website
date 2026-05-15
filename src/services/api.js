@@ -1439,10 +1439,8 @@ export const TEAMS = [
   // CS2
   {
     name: "NAVI", region: "Europe",
-    logourl: "https://liquipedia.net/commons/images/thumb/a/ac/Natus_Vincere_2021_lightmode.png/363px-Natus_Vincere_2021_lightmode.png",
-    logodarkurl: "https://liquipedia.net/commons/images/thumb/4/4e/Natus_Vincere_2021_darkmode.png/363px-Natus_Vincere_2021_darkmode.png",
-    textlesslogourl: "https://liquipedia.net/commons/images/thumb/7/79/Natus_Vincere_icon.png/280px-Natus_Vincere_icon.png",
-    textlesslogodarkurl: "https://liquipedia.net/commons/images/thumb/7/79/Natus_Vincere_icon.png/280px-Natus_Vincere_icon.png",
+    logourl: "", logodarkurl: "",
+    textlesslogourl: "", textlesslogodarkurl: "",
     status: "active", createdate: "2009-12-17", disbanddate: "0000-01-01", rankpoints: 1850, rankchange: 0,
     earnings: 5820000,
     earningsbyyear: { "2019": 800000, "2020": 750000, "2021": 1200000, "2022": 1100000, "2023": 890000, "2024": 680000, "2025": 400000 },
@@ -1452,10 +1450,8 @@ export const TEAMS = [
   },
   {
     name: "G2 Esports", region: "Europe",
-    logourl: "https://liquipedia.net/commons/images/thumb/5/52/G2_Esports_2022_allmode.png/363px-G2_Esports_2022_allmode.png",
-    logodarkurl: "https://liquipedia.net/commons/images/thumb/5/52/G2_Esports_2022_allmode.png/363px-G2_Esports_2022_allmode.png",
-    textlesslogourl: "https://liquipedia.net/commons/images/thumb/0/04/G2_Esports_icon.png/280px-G2_Esports_icon.png",
-    textlesslogodarkurl: "https://liquipedia.net/commons/images/thumb/0/04/G2_Esports_icon.png/280px-G2_Esports_icon.png",
+    logourl: "", logodarkurl: "",
+    textlesslogourl: "", textlesslogodarkurl: "",
     status: "active", createdate: "2014-08-04", disbanddate: "0000-01-01", rankpoints: 1420, rankchange: 1,
     earnings: 3200000,
     earningsbyyear: { "2020": 320000, "2021": 580000, "2022": 740000, "2023": 810000, "2024": 450000, "2025": 300000 },

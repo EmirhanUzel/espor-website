@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/liquipedia-api/:path*", "destination": "/api/lq/:path*" }
+  ],
+  "functions": {
+    "api/lq/[...path].js": { "maxDuration": 15 }
+  }
+}
