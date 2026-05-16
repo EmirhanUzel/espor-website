@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getPlayer, getTeam, formatDate, formatPrize, getFlag, getMatches, getPrizeResults, getInterviews, TOURNAMENTS } from "../services/api";
 import {
-  getCS2PlayerProfile, getCS2PlayerCareer, getCS2PlayerAllPlacements, getCS2TeamRecentMatches, getCS2TeamLogos, getCS2PlayerImage, getCS2PlayerMatchStats,
-  getLoLPlayerProfile, getLoLPlayerCareer, getLoLPlayerAllPlacements, getLoLTeamRecentMatches, getLoLTeamLogos, getLoLPlayerImage,
+  getCS2PlayerProfile, getCS2PlayerCareer, getCS2PlayerAllPlacements, getCS2TeamRecentMatches, getCS2TeamUpcomingMatches, getCS2TeamLogos, getCS2PlayerImage, getCS2PlayerMatchStats,
+  getLoLPlayerProfile, getLoLPlayerCareer, getLoLPlayerAllPlacements, getLoLTeamRecentMatches, getLoLTeamUpcomingMatches, getLoLTeamLogos, getLoLPlayerImage,
 } from "../services/liquipediaApi";
 import styles from "./PlayerProfile.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -137,10 +137,8 @@ function RecentStats({ stats }) {
 
 function CareerTimeline({ career }) {
   if (!career?.length) return null;
-  // If few entries, center; if many, align left so user can scroll
-  const centered = career.length <= 5;
   return (
-    <div style={{ overflowX: "auto", paddingBottom: 8, display: "flex", justifyContent: centered ? "center" : "flex-start" }}>
+    <div style={{ overflowX: "auto", paddingBottom: 8, display: "flex", justifyContent: "center" }}>
       <div style={{ display: "inline-flex", gap: 0, minWidth: "max-content", position: "relative", paddingLeft: 4, paddingRight: 4 }}>
         <div style={{
           position: "absolute", top: 18, left: 24, right: 24, height: 2,
@@ -215,16 +213,18 @@ function useCS2Player(id) {
   const [player,       setPlayer]       = useState(null);
   const [career,       setCareer]       = useState(null);
   const [matches,      setMatches]      = useState(null);
+  const [upcoming,     setUpcoming]     = useState(null);
   const [placements,   setPlacements]   = useState(null);
   const [teamLogoUrl,  setTeamLogoUrl]  = useState("");
   const [playerImgUrl, setPlayerImgUrl] = useState("");
   const [matchStats,   setMatchStats]   = useState(null);
+  const [matchLogos,   setMatchLogos]   = useState({});
   const [loading,      setLoading]      = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setPlayer(null); setCareer(null); setMatches(null); setPlacements(null); setTeamLogoUrl(""); setPlayerImgUrl(""); setMatchStats(null);
+    setPlayer(null); setCareer(null); setMatches(null); setUpcoming(null); setPlacements(null); setTeamLogoUrl(""); setPlayerImgUrl(""); setMatchStats(null); setMatchLogos({});
 
     getCS2PlayerProfile(id).then(p => {
       if (cancelled) return;
@@ -232,18 +232,35 @@ function useCS2Player(id) {
       setLoading(false);
       if (!p) return;
 
-      // Player photo via MediaWiki parse API (no API key, no rate-limit queue)
       getCS2PlayerImage(p.pagename).then(url => { if (!cancelled) setPlayerImgUrl(url); });
 
       if (p.team) {
-        getCS2TeamRecentMatches(p.team, 5).then(m => { if (!cancelled) setMatches(m); });
+        getCS2TeamRecentMatches(p.team, 20).then(m => {
+          if (cancelled) return;
+          setMatches(m);
+          const oppNames = [...new Set(
+            m.flatMap(match => match.match2opponents.map(o => o.name)).filter(n => n && n !== p.team)
+          )];
+          if (oppNames.length) {
+            getCS2TeamLogos(oppNames).then(logoMap => { if (!cancelled) setMatchLogos(prev => ({ ...prev, ...logoMap })); });
+          }
+        });
+        getCS2TeamUpcomingMatches(p.team, 5).then(u => {
+          if (cancelled) return;
+          setUpcoming(u);
+          const oppNames = [...new Set(
+            u.flatMap(m => m.match2opponents.map(o => o.name)).filter(n => n && n !== p.team)
+          )];
+          if (oppNames.length) {
+            getCS2TeamLogos(oppNames).then(logoMap => { if (!cancelled) setMatchLogos(prev => ({ ...prev, ...logoMap })); });
+          }
+        });
         getCS2TeamLogos([p.team]).then(logoMap => {
           if (!cancelled) setTeamLogoUrl(logoMap[p.team] || "");
         });
         getCS2PlayerMatchStats(p.pagename, p.team).then(s => { if (!cancelled) setMatchStats(s); });
       }
 
-      // Career first, then fetch placements across ALL career teams
       getCS2PlayerCareer(p.pagename).then(c => {
         if (cancelled) return;
         setCareer(c);
@@ -255,7 +272,7 @@ function useCS2Player(id) {
     return () => { cancelled = true; };
   }, [id]);
 
-  return { player, career, matches, placements, teamLogoUrl, playerImgUrl, matchStats, loading };
+  return { player, career, matches, upcoming, placements, teamLogoUrl, playerImgUrl, matchStats, matchLogos, loading };
 }
 
 // ── LoL API player profile ────────────────────────────────────────────────────
@@ -263,16 +280,18 @@ function useLoLPlayer(id) {
   const [player,       setPlayer]       = useState(null);
   const [career,       setCareer]       = useState(null);
   const [matches,      setMatches]      = useState(null);
+  const [upcoming,     setUpcoming]     = useState(null);
   const [placements,   setPlacements]   = useState(null);
   const [teamLogoUrl,  setTeamLogoUrl]  = useState("");
   const [playerImgUrl, setPlayerImgUrl] = useState("");
+  const [matchLogos,   setMatchLogos]   = useState({});
   const [loading,      setLoading]      = useState(true);
 
   useEffect(() => {
     if (!id) { setLoading(false); return; }
     let cancelled = false;
     setLoading(true);
-    setPlayer(null); setCareer(null); setMatches(null); setPlacements(null); setTeamLogoUrl(""); setPlayerImgUrl("");
+    setPlayer(null); setCareer(null); setMatches(null); setUpcoming(null); setPlacements(null); setTeamLogoUrl(""); setPlayerImgUrl(""); setMatchLogos({});
 
     getLoLPlayerProfile(id).then(p => {
       if (cancelled) return;
@@ -283,7 +302,26 @@ function useLoLPlayer(id) {
       getLoLPlayerImage(p.pagename).then(url => { if (!cancelled) setPlayerImgUrl(url); });
 
       if (p.team) {
-        getLoLTeamRecentMatches(p.team, 5).then(m => { if (!cancelled) setMatches(m); });
+        getLoLTeamRecentMatches(p.team, 20).then(m => {
+          if (cancelled) return;
+          setMatches(m);
+          const oppNames = [...new Set(
+            m.flatMap(match => match.match2opponents.map(o => o.name)).filter(n => n && n !== p.team)
+          )];
+          if (oppNames.length) {
+            getLoLTeamLogos(oppNames).then(logoMap => { if (!cancelled) setMatchLogos(prev => ({ ...prev, ...logoMap })); });
+          }
+        });
+        getLoLTeamUpcomingMatches(p.team, 5).then(u => {
+          if (cancelled) return;
+          setUpcoming(u);
+          const oppNames = [...new Set(
+            u.flatMap(m => m.match2opponents.map(o => o.name)).filter(n => n && n !== p.team)
+          )];
+          if (oppNames.length) {
+            getLoLTeamLogos(oppNames).then(logoMap => { if (!cancelled) setMatchLogos(prev => ({ ...prev, ...logoMap })); });
+          }
+        });
         getLoLTeamLogos([p.team]).then(logoMap => {
           if (!cancelled) setTeamLogoUrl(logoMap[p.team] || "");
         });
@@ -300,7 +338,7 @@ function useLoLPlayer(id) {
     return () => { cancelled = true; };
   }, [id]);
 
-  return { player, career, matches, placements, teamLogoUrl, playerImgUrl, matchStats: null, loading };
+  return { player, career, matches, upcoming, placements, teamLogoUrl, playerImgUrl, matchStats: null, matchLogos, loading };
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
@@ -324,9 +362,14 @@ export default function PlayerProfile() {
   const career       = (isCS2 || isLoL) ? active.career        : mockPlayer?.career;
   const teamLogoUrl  = (isCS2 || isLoL) ? active.teamLogoUrl   : null;
   const playerImgUrl = (isCS2 || isLoL) ? active.playerImgUrl  : (mockPlayer?.imageurl || "");
+  const matchLogos      = (isCS2 || isLoL) ? (active.matchLogos || {}) : {};
+  const upcomingMatches = (isCS2 || isLoL) ? (active.upcoming  || []) : [];
 
   // Must be before any conditional return — Rules of Hooks
-  const [trophyPage, setTrophyPage] = useState(0);
+  const [trophyPage,      setTrophyPage]      = useState(0);
+  const [showAllMatches,  setShowAllMatches]  = useState(false);
+  const [matchPage,       setMatchPage]       = useState(0);
+  const MATCHES_PER_PAGE = 10;
 
   // Loading state (CS2 and LoL)
   if ((isCS2 || isLoL) && active.loading) {
@@ -604,35 +647,96 @@ export default function PlayerProfile() {
             </section>
           )}
 
-          {recentMatches.length > 0 && (
-            <section className={`${styles.card} ${styles.cardWide}`}>
-              <h2 className={styles.cardTitle} style={{ marginBottom: 16 }}>{t("player.recentMatches")}</h2>
-              <div className={styles.matchList}>
-                {recentMatches.map(match => {
-                  const pIdx = match.match2opponents.findIndex(o => o.name === teamName);
-                  const oIdx = pIdx === 0 ? 1 : 0;
-                  const isWin = match.winner === String(pIdx + 1);
-                  const opp = match.match2opponents[oIdx];
-                  const myScore  = match.match2opponents[pIdx]?.score ?? 0;
-                  const oppScore = opp?.score ?? 0;
-                  return (
-                    <Link key={match.id} to={`/match/${match.id}`} className={styles.matchRow}>
-                      <span className={`${styles.matchResult} ${isWin ? styles.matchWin : styles.matchLoss}`}>
-                        {isWin ? "W" : "L"}
-                      </span>
-                      <div className={styles.matchOppInfo}>
-                        <span className={styles.matchOpp}>vs {opp?.name}</span>
-                        <span className={styles.matchTournament}>{match.match2bracketdata?.header} · {match.tournament}</span>
+          {(upcomingMatches.length > 0 || recentMatches.length > 0) && (() => {
+            const renderMatchRow = (match, isModal) => {
+              const pIdx     = match.match2opponents.findIndex(o => o.name === teamName);
+              const oIdx     = pIdx === 0 ? 1 : 0;
+              const isWin    = match.winner === String(pIdx + 1);
+              const opp      = match.match2opponents[oIdx];
+              const myScore  = match.match2opponents[pIdx]?.score ?? 0;
+              const oppScore = opp?.score ?? 0;
+              const logoUrl  = matchLogos[opp?.name] || null;
+              return (
+                <Link key={match.id} to={`/match/${match.id}`} className={styles.matchRow}
+                  onClick={() => isModal && setShowAllMatches(false)}>
+                  <span className={isWin ? styles.matchW : styles.matchL}>{isWin ? "W" : "L"}</span>
+                  <Link to={`/team/${encodeURIComponent(opp?.name ?? '')}`} className={styles.matchOppWrap} onClick={e => e.stopPropagation()}>
+                    {logoUrl
+                      ? <img src={logoUrl} alt={opp?.name} className={styles.matchOppLogo} referrerPolicy="no-referrer" />
+                      : <div className={styles.matchOppLogoFb}>{opp?.name?.[0] ?? '?'}</div>
+                    }
+                    <span className={styles.matchOpp}>{opp?.name}</span>
+                  </Link>
+                  <span className={styles.matchScore}>{myScore} – {oppScore}</span>
+                  <div className={styles.matchRight}>
+                    {match.tournament && <span className={styles.matchTournament}>{match.tournament}</span>}
+                    <span className={styles.matchDate}>{formatDate(match.date)}</span>
+                  </div>
+                </Link>
+              );
+            };
+            const totalPages = Math.ceil(recentMatches.length / MATCHES_PER_PAGE);
+            return (
+              <section className={`${styles.card} ${styles.cardWide}`}>
+                <div className={styles.matchCardHeader}>
+                  <h2 className={styles.matchCardTitle}>{t("player.recentMatches")}</h2>
+                  {recentMatches.length > 5 && (
+                    <button className={styles.seeMoreBtn} onClick={() => { setMatchPage(0); setShowAllMatches(true); }}>
+                      See all {recentMatches.length} →
+                    </button>
+                  )}
+                </div>
+
+                <div className={styles.matchList}>
+                  {upcomingMatches.slice(0, 1).map(match => {
+                    const opp = match.match2opponents.find(o => o.name.toLowerCase() !== teamName.toLowerCase());
+                    const logoUrl = matchLogos[opp?.name] || null;
+                    return (
+                      <div key={match.id} className={styles.upcomingRow}>
+                        <span className={styles.upcomingBadge}>NEXT</span>
+                        <Link to={`/team/${encodeURIComponent(opp?.name ?? '')}`} className={styles.matchOppWrap} onClick={e => e.stopPropagation()}>
+                          {logoUrl
+                            ? <img src={logoUrl} alt={opp?.name} className={styles.matchOppLogo} referrerPolicy="no-referrer" />
+                            : <div className={styles.matchOppLogoFb}>{opp?.name?.[0] ?? '?'}</div>
+                          }
+                          <span className={styles.matchOpp}>{opp?.name}</span>
+                        </Link>
+                        <div className={styles.matchRight}>
+                          {match.tournament && <span className={styles.matchTournament}>{match.tournament}</span>}
+                          <span className={styles.matchDate}>{formatDate(match.date)}</span>
+                        </div>
                       </div>
-                      <span className={styles.matchScore}>{myScore}–{oppScore}</span>
-                      <span className={styles.matchDate}>{formatDate(match.date)}</span>
-                      <span className={styles.matchArrow}>→</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-          )}
+                    );
+                  })}
+                  {(upcomingMatches.length > 0 && recentMatches.length > 0) && (
+                    <div className={styles.matchDivider} />
+                  )}
+                  {recentMatches.slice(0, 5).map(m => renderMatchRow(m, false))}
+                </div>
+
+                {showAllMatches && (
+                  <div className={styles.modalOverlay} onClick={() => setShowAllMatches(false)}>
+                    <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                      <div className={styles.modalHeader}>
+                        <span className={styles.modalTitle}>Matches — {teamName}</span>
+                        <button className={styles.modalClose} onClick={() => setShowAllMatches(false)}>✕</button>
+                      </div>
+                      <div className={styles.modalBody}>
+                        {recentMatches.slice(matchPage * MATCHES_PER_PAGE, (matchPage + 1) * MATCHES_PER_PAGE).map(m => renderMatchRow(m, true))}
+                      </div>
+                      {totalPages > 1 && (
+                        <div className={styles.modalPager}>
+                          <button className={styles.pagerBtn} disabled={matchPage === 0} onClick={() => setMatchPage(p => p - 1)}>← Prev</button>
+                          <span className={styles.pagerInfo}>{matchPage + 1} / {totalPages}</span>
+                          <button className={styles.pagerBtn} disabled={matchPage === totalPages - 1} onClick={() => setMatchPage(p => p + 1)}>Next →</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </section>
+            );
+          })()}
 
           {playerInterviews.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>

@@ -716,8 +716,12 @@ export async function getCS2PlayerCareer(pagename) {
     limit:      '40',
     order:      'date asc',
   })
+  const SKIP = new Set(['retired', 'free agent', 'inactive', 'substitute', 'coach', 'analyst', 'streamer'])
   return (data.result || [])
-    .filter(t => t.toteam && !['Retired', 'Free Agent', 'Inactive'].includes(t.toteam))
+    .filter(t => {
+      const name = (t.toteam || '').trim().toLowerCase()
+      return name && !SKIP.has(name)
+    })
     .map(t => ({
       year: (t.date || '').slice(0, 4),
       date: t.date || '',
@@ -726,7 +730,7 @@ export async function getCS2PlayerCareer(pagename) {
     }))
 }
 
-// Fetches all 1st-place Tier-1 placements across multiple teams (player's full career).
+// Fetches all 1st-place placements across multiple teams (player's full career).
 // teamNames: array of all team names the player has played for.
 export async function getCS2PlayerAllPlacements(teamNames) {
   const names = [...new Set(teamNames.filter(Boolean))]
@@ -735,8 +739,8 @@ export async function getCS2PlayerAllPlacements(teamNames) {
   const cond  = names.map(t => `[[opponentname::${t}]]`).join(' OR ')
   const data  = await lqFetch('placement', {
     wiki:       'counterstrike',
-    conditions: `(${cond}) AND [[liquipediatier::1]] AND [[placement::1]] AND [[date::<${today}]]`,
-    limit:      '60',
+    conditions: `(${cond}) AND ([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[placement::1]] AND [[opponenttype::team]] AND [[date::<${today}]]`,
+    limit:      '100',
     order:      'date desc',
   })
   return data.result || []
@@ -744,17 +748,30 @@ export async function getCS2PlayerAllPlacements(teamNames) {
 
 // Fetches recent finished matches for a CS2 team.
 // Uses tournament names from recent placements to avoid a direct team-filter query.
-export async function getCS2TeamRecentMatches(teamName, limit = 10) {
+export async function getCS2TeamRecentMatches(teamName, limit = 30) {
   if (!teamName) return []
-  const twoMonthsAgo = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10)
-  const teamLow      = teamName.toLowerCase()
+  const teamLow    = teamName.toLowerCase()
+  const oneYearAgo = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10)
 
-  // Fetch all recent Tier-1 finished matches and filter client-side.
-  // Direct approach: avoids tournament-name bridge which misses ongoing events.
+  // Step 1: find tournaments this team participated in (small, team-specific query)
+  const placements = await lqFetch('placement', {
+    wiki:       'counterstrike',
+    conditions: `[[opponentname::${teamName}]] AND [[date::>${oneYearAgo}]]`,
+    limit:      '25',
+    order:      'date desc',
+  })
+  const tournaments = [...new Set(
+    (placements.result || []).map(p => p.tournament).filter(Boolean)
+  )].slice(0, 10)
+
+  if (!tournaments.length) return []
+
+  // Step 2: fetch finished matches only from those specific tournaments
+  const tournCond = tournaments.map(t => `[[tournament::${t}]]`).join(' OR ')
   const data = await lqFetch('match', {
     wiki:       'counterstrike',
-    conditions: `([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[finished::1]] AND [[date::>${twoMonthsAgo}]]`,
-    limit:      '200',
+    conditions: `(${tournCond}) AND [[finished::1]]`,
+    limit:      String(limit * 2),
     order:      'date desc',
   })
 
@@ -762,6 +779,27 @@ export async function getCS2TeamRecentMatches(teamName, limit = 10) {
     .map(mapMatch)
     .filter(m => m.match2opponents.some(o => (o.name || '').toLowerCase() === teamLow))
     .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, limit)
+}
+
+export async function getCS2TeamUpcomingMatches(teamName, limit = 5) {
+  if (!teamName) return []
+  const teamLow       = teamName.toLowerCase()
+  const today         = new Date().toISOString().slice(0, 10)
+  const twoWeeksAhead = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10)
+
+  // Upcoming matches are few globally (Tier1+2 has ~5-10/day), limit 50 is safe
+  const data = await lqFetch('match', {
+    wiki:       'counterstrike',
+    conditions: `([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[finished::0]] AND [[date::>${today}]] AND [[date::<${twoWeeksAhead}]]`,
+    limit:      '50',
+    order:      'date asc',
+  })
+
+  return (data.result || [])
+    .map(mapMatch)
+    .filter(m => m.match2opponents.some(o => (o.name || '').toLowerCase() === teamLow))
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, limit)
 }
 
@@ -1424,15 +1462,28 @@ export async function getLoLTeamTransfersAPI(teamName, limit = 15) {
   return data.result || []
 }
 
-export async function getLoLTeamRecentMatches(teamName, limit = 10) {
+export async function getLoLTeamRecentMatches(teamName, limit = 30) {
   if (!teamName) return []
-  const twoMonthsAgo = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10)
-  const teamLow      = teamName.toLowerCase()
+  const teamLow    = teamName.toLowerCase()
+  const oneYearAgo = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10)
 
+  const placements = await lqFetch('placement', {
+    wiki:       'leagueoflegends',
+    conditions: `[[opponentname::${teamName}]] AND [[date::>${oneYearAgo}]]`,
+    limit:      '25',
+    order:      'date desc',
+  })
+  const tournaments = [...new Set(
+    (placements.result || []).map(p => p.tournament).filter(Boolean)
+  )].slice(0, 10)
+
+  if (!tournaments.length) return []
+
+  const tournCond = tournaments.map(t => `[[tournament::${t}]]`).join(' OR ')
   const data = await lqFetch('match', {
     wiki:       'leagueoflegends',
-    conditions: `([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[finished::1]] AND [[date::>${twoMonthsAgo}]]`,
-    limit:      '200',
+    conditions: `(${tournCond}) AND [[finished::1]]`,
+    limit:      String(limit * 2),
     order:      'date desc',
   })
 
@@ -1440,6 +1491,26 @@ export async function getLoLTeamRecentMatches(teamName, limit = 10) {
     .map(mapLoLMatch)
     .filter(m => m.match2opponents.some(o => (o.name || '').toLowerCase() === teamLow))
     .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, limit)
+}
+
+export async function getLoLTeamUpcomingMatches(teamName, limit = 5) {
+  if (!teamName) return []
+  const teamLow       = teamName.toLowerCase()
+  const today         = new Date().toISOString().slice(0, 10)
+  const twoWeeksAhead = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10)
+
+  const data = await lqFetch('match', {
+    wiki:       'leagueoflegends',
+    conditions: `([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[finished::0]] AND [[date::>${today}]] AND [[date::<${twoWeeksAhead}]]`,
+    limit:      '50',
+    order:      'date asc',
+  })
+
+  return (data.result || [])
+    .map(mapLoLMatch)
+    .filter(m => m.match2opponents.some(o => (o.name || '').toLowerCase() === teamLow))
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, limit)
 }
 
@@ -1520,8 +1591,12 @@ export async function getLoLPlayerCareer(pagename) {
     limit:      '40',
     order:      'date asc',
   })
+  const SKIP = new Set(['retired', 'free agent', 'inactive', 'substitute', 'coach', 'analyst', 'streamer'])
   return (data.result || [])
-    .filter(t => t.toteam && !['Retired', 'Free Agent', 'Inactive'].includes(t.toteam))
+    .filter(t => {
+      const name = (t.toteam || '').trim().toLowerCase()
+      return name && !SKIP.has(name)
+    })
     .map(t => ({
       year: (t.date || '').slice(0, 4),
       date: t.date || '',
@@ -1537,8 +1612,8 @@ export async function getLoLPlayerAllPlacements(teamNames) {
   const cond  = names.map(t => `[[opponentname::${t}]]`).join(' OR ')
   const data  = await lqFetch('placement', {
     wiki:       'leagueoflegends',
-    conditions: `(${cond}) AND [[liquipediatier::1]] AND [[placement::1]] AND [[date::<${today}]]`,
-    limit:      '60',
+    conditions: `(${cond}) AND ([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[placement::1]] AND [[opponenttype::team]] AND [[date::<${today}]]`,
+    limit:      '100',
     order:      'date desc',
   })
   return data.result || []

@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getTeam, getPlayer, getMatches, formatDate, formatPrize, getFlag, INTERVIEWS, TRANSFERS } from "../services/api";
-import { getTopics } from "../services/forum";
 import { useLanguage } from "../contexts/LanguageContext";
 import {
-  getCS2TeamByName, getCS2TeamSquad, getCS2TeamTransfersAPI, getCS2TeamRecentMatches, getCS2PlayerImage, getCS2TeamLogos,
-  getLoLTeamByName, getLoLTeamSquad, getLoLTeamTransfersAPI, getLoLTeamRecentMatches, getLoLPlayerImage, getLoLTeamLogos,
+  getCS2TeamByName, getCS2TeamSquad, getCS2TeamTransfersAPI, getCS2TeamRecentMatches, getCS2TeamUpcomingMatches, getCS2PlayerImage, getCS2TeamLogos,
+  getLoLTeamByName, getLoLTeamSquad, getLoLTeamTransfersAPI, getLoLTeamRecentMatches, getLoLTeamUpcomingMatches, getLoLPlayerImage, getLoLTeamLogos,
 } from "../services/liquipediaApi";
 import styles from "./TeamPage.module.css";
 
@@ -59,27 +58,32 @@ export default function TeamPage({ wiki }) {
   const isApiWiki = isCS2 || isLoL;
 
   // ── API state (shared between CS2 and LoL) ─────────────────────────────────
-  const [apiTeam,      setApiTeam]      = useState(null);
-  const [apiSquad,     setApiSquad]     = useState(null);
-  const [apiMatches,   setApiMatches]   = useState(null);
-  const [apiTransfers, setApiTransfers] = useState(null);
-  const [squadImages,  setSquadImages]  = useState({});
-  const [matchLogos,   setMatchLogos]   = useState({});
-  const [apiLoading,   setApiLoading]   = useState(isApiWiki);
+  const [apiTeam,        setApiTeam]        = useState(null);
+  const [apiSquad,       setApiSquad]       = useState(null);
+  const [apiMatches,     setApiMatches]     = useState(null);
+  const [apiUpcoming,    setApiUpcoming]    = useState(null);
+  const [apiTransfers,   setApiTransfers]   = useState(null);
+  const [squadImages,    setSquadImages]    = useState({});
+  const [matchLogos,     setMatchLogos]     = useState({});
+  const [apiLoading,     setApiLoading]     = useState(isApiWiki);
+  const [showAllMatches, setShowAllMatches] = useState(false);
+  const [matchPage,      setMatchPage]      = useState(0);
+  const MATCHES_PER_PAGE = 10;
 
   useEffect(() => {
     if (!isApiWiki) return;
     let cancelled = false;
     setApiLoading(true);
-    setApiTeam(null); setApiSquad(null); setApiMatches(null); setApiTransfers(null);
+    setApiTeam(null); setApiSquad(null); setApiMatches(null); setApiUpcoming(null); setApiTransfers(null);
     setSquadImages({}); setMatchLogos({});
 
-    const getTeamFn       = isCS2 ? getCS2TeamByName       : getLoLTeamByName;
-    const getSquadFn      = isCS2 ? getCS2TeamSquad        : getLoLTeamSquad;
-    const getMatchesFn    = isCS2 ? getCS2TeamRecentMatches : getLoLTeamRecentMatches;
-    const getTransfersFn  = isCS2 ? getCS2TeamTransfersAPI  : getLoLTeamTransfersAPI;
-    const getPlayerImgFn  = isCS2 ? getCS2PlayerImage       : getLoLPlayerImage;
-    const getLogosFn      = isCS2 ? getCS2TeamLogos         : getLoLTeamLogos;
+    const getTeamFn       = isCS2 ? getCS2TeamByName            : getLoLTeamByName;
+    const getSquadFn      = isCS2 ? getCS2TeamSquad             : getLoLTeamSquad;
+    const getMatchesFn    = isCS2 ? getCS2TeamRecentMatches     : getLoLTeamRecentMatches;
+    const getUpcomingFn   = isCS2 ? getCS2TeamUpcomingMatches   : getLoLTeamUpcomingMatches;
+    const getTransfersFn  = isCS2 ? getCS2TeamTransfersAPI      : getLoLTeamTransfersAPI;
+    const getPlayerImgFn  = isCS2 ? getCS2PlayerImage           : getLoLPlayerImage;
+    const getLogosFn      = isCS2 ? getCS2TeamLogos             : getLoLTeamLogos;
 
     getTeamFn(decodedName).then(team => {
       if (cancelled || !team) { setApiLoading(false); return; }
@@ -96,7 +100,7 @@ export default function TeamPage({ wiki }) {
         });
       });
 
-      getMatchesFn(team.name, 10).then(matches => {
+      getMatchesFn(team.name, 30).then(matches => {
         if (cancelled) return;
         setApiMatches(matches);
         const oppNames = [...new Set(
@@ -105,6 +109,19 @@ export default function TeamPage({ wiki }) {
         if (oppNames.length) {
           getLogosFn(oppNames).then(logoMap => {
             if (!cancelled) setMatchLogos(logoMap);
+          });
+        }
+      });
+
+      getUpcomingFn(team.name, 5).then(upcoming => {
+        if (cancelled) return;
+        setApiUpcoming(upcoming);
+        const upOppNames = [...new Set(
+          upcoming.flatMap(m => m.match2opponents.map(o => o.name)).filter(n => n && n !== team.name)
+        )];
+        if (upOppNames.length) {
+          getLogosFn(upOppNames).then(logoMap => {
+            if (!cancelled) setMatchLogos(prev => ({ ...prev, ...logoMap }));
           });
         }
       });
@@ -140,6 +157,7 @@ export default function TeamPage({ wiki }) {
   const teamMatches = isApiWiki
     ? (apiMatches || [])
     : allMatches.filter(m => m.match2opponents?.some(o => o.name.toLowerCase() === team.name.toLowerCase()));
+  const teamUpcoming = isApiWiki ? (apiUpcoming || []) : [];
 
   const earningsYears = Object.entries(team.earningsbyyear || {}).sort(([a], [b]) => a.localeCompare(b));
   const lastYear = earningsYears[earningsYears.length - 1];
@@ -177,9 +195,6 @@ export default function TeamPage({ wiki }) {
     squadIds.has(item.pagename.toLowerCase())
   );
 
-  const WIKI_TO_CATEGORY = { valorant: "VALORANT", counterstrike: "CS2", leagueoflegends: "LoL" };
-  const forumCategory = WIKI_TO_CATEGORY[team.wiki] || "General";
-  const forumTopics = getTopics({ category: forumCategory }).slice(0, 4);
 
   const ALLOWED_SOCIALS = new Set(["instagram", "x", "twitter", "youtube", "twitch"]);
   const socialEntries = Object.entries(team.links || {}).filter(([k]) => ALLOWED_SOCIALS.has(k.toLowerCase()));
@@ -299,29 +314,108 @@ export default function TeamPage({ wiki }) {
             </section>
           )}
 
-          {teamMatches.length > 0 && (
-            <section className={`${styles.card} ${styles.cardWide}`}>
-              <h2 className={styles.cardTitle}>Matches</h2>
-              <div className={styles.matchList}>
-                {teamMatches.map(match => {
-                  const [opp1, opp2] = match.match2opponents;
-                  const isOpp1 = opp1?.name.toLowerCase() === team.name.toLowerCase();
-                  const myScore    = isOpp1 ? opp1?.score : opp2?.score;
-                  const theirScore = isOpp1 ? opp2?.score : opp1?.score;
-                  const opponent   = isOpp1 ? opp2?.name  : opp1?.name;
-                  const won = (isOpp1 && match.winner === "1") || (!isOpp1 && match.winner === "2");
+          {(teamUpcoming.length > 0 || teamMatches.length > 0) && (() => {
+            const renderMatchRow = (match, onClickFn) => {
+              const [opp1, opp2] = match.match2opponents;
+              const isOpp1    = opp1?.name.toLowerCase() === team.name.toLowerCase();
+              const myScore    = isOpp1 ? opp1?.score : opp2?.score;
+              const theirScore = isOpp1 ? opp2?.score : opp1?.score;
+              const opponent   = isOpp1 ? opp2?.name  : opp1?.name;
+              const won        = (isOpp1 && match.winner === "1") || (!isOpp1 && match.winner === "2");
+              const logoUrl    = matchLogos[opponent] || null;
+              return (
+                <div key={match.id} className={styles.matchRow} onClick={() => onClickFn(match.id)}>
+                  <span className={won ? styles.matchW : styles.matchL}>{won ? "W" : "L"}</span>
+                  <Link to={`/team/${encodeURIComponent(opponent)}`} className={styles.matchOppWrap} onClick={e => e.stopPropagation()}>
+                    {logoUrl
+                      ? <img src={logoUrl} alt={opponent} className={styles.matchOppLogo} referrerPolicy="no-referrer" />
+                      : <div className={styles.matchOppLogoFb}>{opponent?.[0] ?? '?'}</div>
+                    }
+                    <span className={styles.matchOpp}>{opponent}</span>
+                  </Link>
+                  <span className={styles.matchScore}>{myScore} – {theirScore}</span>
+                  <div className={styles.matchRight}>
+                    {match.tournament && <span className={styles.matchTournament}>{match.tournament}</span>}
+                    <span className={styles.matchDate}>{formatDate(match.date)}</span>
+                  </div>
+                </div>
+              );
+            };
+            return (
+              <section className={`${styles.card} ${styles.cardWide}`}>
+                <div className={styles.matchCardHeader}>
+                  <h2 className={styles.matchCardTitle}>Matches</h2>
+                  {teamMatches.length > 5 && (
+                    <button className={styles.seeMoreBtn} onClick={() => { setMatchPage(0); setShowAllMatches(true); }}>
+                      See all {teamMatches.length} →
+                    </button>
+                  )}
+                </div>
+
+                <div className={styles.matchList}>
+                  {teamUpcoming.slice(0, 1).map(match => {
+                    const opp = match.match2opponents.find(o => o.name.toLowerCase() !== team.name.toLowerCase());
+                    const logoUrl = matchLogos[opp?.name] || null;
+                    return (
+                      <div key={match.id} className={styles.upcomingRow}>
+                        <span className={styles.upcomingBadge}>NEXT</span>
+                        <Link to={`/team/${encodeURIComponent(opp?.name ?? '')}`} className={styles.matchOppWrap} onClick={e => e.stopPropagation()}>
+                          {logoUrl
+                            ? <img src={logoUrl} alt={opp?.name} className={styles.matchOppLogo} referrerPolicy="no-referrer" />
+                            : <div className={styles.matchOppLogoFb}>{opp?.name?.[0] ?? '?'}</div>
+                          }
+                          <span className={styles.matchOpp}>{opp?.name}</span>
+                        </Link>
+                        <div className={styles.matchRight}>
+                          {match.tournament && <span className={styles.matchTournament}>{match.tournament}</span>}
+                          <span className={styles.matchDate}>{formatDate(match.date)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {(teamUpcoming.length > 0 && teamMatches.length > 0) && (
+                    <div className={styles.matchDivider} />
+                  )}
+                  {teamMatches.slice(0, 5).map(m => renderMatchRow(m, id => navigate(`/match/${id}`)))}
+                </div>
+
+                {showAllMatches && (() => {
+                  const totalPages = Math.ceil(teamMatches.length / MATCHES_PER_PAGE);
+                  const pageMatches = teamMatches.slice(matchPage * MATCHES_PER_PAGE, (matchPage + 1) * MATCHES_PER_PAGE);
                   return (
-                    <div key={match.id} className={styles.matchRow} onClick={() => navigate(`/match/${match.id}`)}>
-                      <span className={won ? styles.matchW : styles.matchL}>{won ? "W" : "L"}</span>
-                      <span className={styles.matchOpp}>{opponent}</span>
-                      <span className={styles.matchScore}>{myScore} – {theirScore}</span>
-                      <span className={styles.matchDate}>{formatDate(match.date)}</span>
+                    <div className={styles.modalOverlay} onClick={() => setShowAllMatches(false)}>
+                      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                          <span className={styles.modalTitle}>Matches — {team.name}</span>
+                          <button className={styles.modalClose} onClick={() => setShowAllMatches(false)}>✕</button>
+                        </div>
+                        <div className={styles.modalBody}>
+                          {pageMatches.map(m => renderMatchRow(m, id => { setShowAllMatches(false); navigate(`/match/${id}`); }))}
+                        </div>
+                        {totalPages > 1 && (
+                          <div className={styles.modalPager}>
+                            <button
+                              className={styles.pagerBtn}
+                              disabled={matchPage === 0}
+                              onClick={() => setMatchPage(p => p - 1)}
+                            >← Prev</button>
+                            <span className={styles.pagerInfo}>
+                              {matchPage + 1} / {totalPages}
+                            </span>
+                            <button
+                              className={styles.pagerBtn}
+                              disabled={matchPage === totalPages - 1}
+                              onClick={() => setMatchPage(p => p + 1)}
+                            >Next →</button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
-                })}
-              </div>
-            </section>
-          )}
+                })()}
+              </section>
+            );
+          })()}
 
           {earningsYears.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
@@ -342,48 +436,27 @@ export default function TeamPage({ wiki }) {
             </section>
           )}
 
-          {/* ── News + Forum ── */}
-          <div className={`${styles.newsForumRow} ${styles.cardSpanWide}`}>
-            {(teamNews.length > 0) && (
-              <section className={styles.card}>
-                <h2 className={styles.cardTitle}>News & Interviews</h2>
-                <div className={styles.newsList}>
-                  {teamNews.map((item, i) => (
-                    <a key={i} href={item.link} target="_blank" rel="noreferrer" className={styles.newsItem}>
-                      <div className={styles.newsItemTop}>
-                        <span className={`${styles.newsBadge} ${item.type === "Interview" ? styles.newsBadgeInterview : styles.newsBadgeArticle}`}>
-                          {item.type}
-                        </span>
-                        <span className={styles.newsPublisher}>{item.publisher}</span>
-                        <span className={styles.newsDate}>{formatDate(item.date)}</span>
-                      </div>
-                      <p className={styles.newsTitle}>"{item.title}"</p>
-                      <span className={styles.newsSubject}>{item.pagename}</span>
-                    </a>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {forumTopics.length > 0 && (
-              <section className={styles.card}>
-                <h2 className={styles.cardTitle}>Forum — {forumCategory}</h2>
-                <div className={styles.forumList}>
-                  {forumTopics.map(topic => (
-                    <Link key={topic.id} to={`/forum/${topic.id}`} className={styles.forumItem}>
-                      <div className={styles.forumItemBody}>
-                        <span className={styles.forumCategory}>{topic.category}</span>
-                        <span className={styles.forumTitle}>{topic.title}</span>
-                      </div>
-                      <div className={styles.forumMeta}>
-                        <span className={styles.forumComments}>💬 {topic.commentCount}</span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
+          {/* ── News ── */}
+          {teamNews.length > 0 && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <h2 className={styles.cardTitle}>News & Interviews</h2>
+              <div className={styles.newsList}>
+                {teamNews.map((item, i) => (
+                  <a key={i} href={item.link} target="_blank" rel="noreferrer" className={styles.newsItem}>
+                    <div className={styles.newsItemTop}>
+                      <span className={`${styles.newsBadge} ${item.type === "Interview" ? styles.newsBadgeInterview : styles.newsBadgeArticle}`}>
+                        {item.type}
+                      </span>
+                      <span className={styles.newsPublisher}>{item.publisher}</span>
+                      <span className={styles.newsDate}>{formatDate(item.date)}</span>
+                    </div>
+                    <p className={styles.newsTitle}>"{item.title}"</p>
+                    <span className={styles.newsSubject}>{item.pagename}</span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* ── Rumors (only for non-API wikis) ── */}
           {!isApiWiki && (
@@ -414,7 +487,7 @@ export default function TeamPage({ wiki }) {
             <section className={`${styles.card} ${styles.cardWide}`}>
               <h2 className={styles.cardTitle}>Transfers</h2>
               <div className={styles.transferList}>
-                {rawTransfers.map((tr, i) => {
+                {rawTransfers.slice(0, 5).map((tr, i) => {
                   const playerName = tr.player || tr.displayname || tr.extradata?.displayname || '';
                   const fromTeam   = tr.fromteam || '';
                   const toTeam     = tr.toteam   || '';
