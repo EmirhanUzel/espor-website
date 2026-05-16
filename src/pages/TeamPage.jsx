@@ -4,12 +4,52 @@ import { getTeam, getPlayer, getMatches, formatDate, formatPrize, getFlag, INTER
 import { useLanguage } from "../contexts/LanguageContext";
 import {
   getCS2TeamByName, getCS2TeamSquad, getCS2TeamTransfersAPI, getCS2TeamRecentMatches, getCS2TeamUpcomingMatches, getCS2PlayerImage, getCS2TeamLogos,
-  getCS2TeamsForRanking, getCS2PlayerProfile, getCS2PlayerAllPlacements, getCS2PlayerCareer,
+  getCS2TeamsForRanking, getCS2PlayerProfile, getCS2PlayerAllPlacements, getCS2PlayerCareer, getCS2TeamMapMatches,
+  // getCS2PlayerAllPlacements kullanılıyor: squad player valuation için
   getLoLTeamByName, getLoLTeamSquad, getLoLTeamTransfersAPI, getLoLTeamRecentMatches, getLoLTeamUpcomingMatches, getLoLPlayerImage, getLoLTeamLogos,
 } from "../services/liquipediaApi";
 import styles from "./TeamPage.module.css";
 import { calcPlayerValue } from "../services/playerValuation";
 import { getFaceitPlayerStats } from "../services/faceitApi";
+
+function TeamLogoChip({ name, logos, linkable }) {
+  const [failed, setFailed] = useState(false);
+  const url = logos?.[name];
+  const inner = (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+      {url && !failed
+        ? <img src={url} alt={name} referrerPolicy="no-referrer" onError={() => setFailed(true)}
+            style={{ width: 16, height: 16, objectFit: "contain", flexShrink: 0 }} />
+        : <span style={{ width: 16, height: 16, background: "var(--border)", borderRadius: 3,
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            fontSize: 9, fontWeight: 700, color: "var(--text-3)", flexShrink: 0 }}>
+            {name?.[0] ?? "?"}
+          </span>
+      }
+      <span>{name}</span>
+    </span>
+  );
+  if (!linkable) return inner;
+  return (
+    <Link to={`/team/${encodeURIComponent(name)}`} className={styles.transferFrom} onClick={e => e.stopPropagation()}>
+      {inner}
+    </Link>
+  );
+}
+
+const GH = 'https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/thumbs';
+const MAP_BANNERS = {
+  'Ancient':   `${GH}/de_ancient_1_png.png`,
+  'Anubis':    `${GH}/de_anubis_1_png.png`,
+  'Dust II':   `${GH}/de_dust2_1_png.png`,
+  'Inferno':   `${GH}/de_inferno_1_png.png`,
+  'Mirage':    `${GH}/de_mirage_1_png.png`,
+  'Nuke':      `${GH}/de_nuke_1_png.png`,
+  'Overpass':  `${GH}/de_overpass_1_png.png`,
+  'Vertigo':   `${GH}/de_vertigo_1_png.png`,
+  'Train':     `${GH}/de_train_1_png.png`,
+  'Cache':     `${GH}/de_cache_1_png.png`,
+};
 
 const SOCIAL_ICONS = {
   twitter:   <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.733-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
@@ -68,6 +108,8 @@ export default function TeamPage({ wiki }) {
   const [apiTransfers,   setApiTransfers]   = useState(null);
   const [squadImages,    setSquadImages]    = useState({});
   const [squadValuation, setSquadValuation] = useState({});
+  const [mapMatches,     setMapMatches]     = useState(null);
+  const [transferLogos,  setTransferLogos]  = useState({});
   const [matchLogos,     setMatchLogos]     = useState({});
   const [apiLoading,     setApiLoading]     = useState(isApiWiki);
   const [rankInfo,       setRankInfo]       = useState(null);
@@ -80,7 +122,7 @@ export default function TeamPage({ wiki }) {
     let cancelled = false;
     setApiLoading(true);
     setApiTeam(null); setApiSquad(null); setApiMatches(null); setApiUpcoming(null); setApiTransfers(null);
-    setSquadImages({}); setSquadValuation({}); setMatchLogos({}); setRankInfo(null);
+    setSquadImages({}); setSquadValuation({}); setMapMatches(null); setTransferLogos({}); setMatchLogos({}); setRankInfo(null);
 
     const getTeamFn       = isCS2 ? getCS2TeamByName            : getLoLTeamByName;
     const getSquadFn      = isCS2 ? getCS2TeamSquad             : getLoLTeamSquad;
@@ -171,7 +213,18 @@ export default function TeamPage({ wiki }) {
         }
       });
 
-      getTransfersFn(team.name, 15).then(t => { if (!cancelled) setApiTransfers(t); });
+      getTransfersFn(team.name, 15).then(transfers => {
+        if (!cancelled) setApiTransfers(transfers);
+        if (isCS2 && transfers?.length) {
+          const teamNames = [...new Set(
+            transfers.flatMap(t => [t.fromteam, t.toteam].filter(Boolean))
+          )];
+          getLogosFn(teamNames).then(logos => { if (!cancelled) setTransferLogos(logos); });
+        }
+      });
+      if (isCS2) {
+        getCS2TeamMapMatches(team.name, 30).then(m => { if (!cancelled) setMapMatches(m); }).catch(() => {});
+      }
 
     }).catch(() => { if (!cancelled) setApiLoading(false); });
 
@@ -503,6 +556,75 @@ export default function TeamPage({ wiki }) {
             );
           })()}
 
+          {isCS2 && mapMatches?.length > 0 && (() => {
+            const mapStats = {};
+            mapMatches.forEach(match => {
+              const opps = match.match2opponents || [];
+              const tIdx = opps.findIndex(o => o.name.toLowerCase() === team.name.toLowerCase());
+              if (tIdx === -1) return;
+              (match.match2games || []).forEach(g => {
+                const map = g.map;
+                if (!map || map === 'TBD' || map === '') return;
+                if (!mapStats[map]) mapStats[map] = { w: 0, l: 0, ctW: 0, ctTotal: 0, tW: 0, tTotal: 0 };
+                const won = g.winner === String(tIdx + 1);
+                if (won) mapStats[map].w++; else mapStats[map].l++;
+                // CT/T side
+                const ex     = g.extradata || {};
+                const halfs  = ex[`t${tIdx + 1}halfs`] || {};
+                const sides  = ex[`t${tIdx + 1}sides`] || {};
+                Object.entries(sides).forEach(([half, side]) => {
+                  const rounds = parseInt(halfs[half]) || 0;
+                  const maxRounds = 12;
+                  if (side === 'ct') { mapStats[map].ctW += rounds; mapStats[map].ctTotal += maxRounds; }
+                  else               { mapStats[map].tW  += rounds; mapStats[map].tTotal  += maxRounds; }
+                });
+              });
+            });
+
+            const rows = Object.entries(mapStats)
+              .filter(([, s]) => s.w + s.l >= 2)
+              .sort(([, a], [, b]) => (b.w + b.l) - (a.w + a.l));
+
+            if (!rows.length) return null;
+            return (
+              <section className={`${styles.card} ${styles.cardWide}`}>
+                <h2 className={styles.cardTitle}>Map Win Rates <span style={{ fontWeight: 400, fontSize: 11, color: 'var(--text-4)', textTransform: 'none', letterSpacing: 0 }}>· Son {mapMatches.length} Maç</span></h2>
+                <div className={styles.mapGrid}>
+                  {rows.map(([map, s]) => {
+                    const total = s.w + s.l;
+                    const wr    = Math.round(s.w / total * 100);
+                    const color = wr >= 60 ? '#4ade80' : wr >= 45 ? '#fbbf24' : '#f87171';
+                    const ctWr  = s.ctTotal > 0 ? Math.round(s.ctW / s.ctTotal * 100) : null;
+                    const tWr   = s.tTotal  > 0 ? Math.round(s.tW  / s.tTotal  * 100) : null;
+                    return (
+                      <div key={map} className={styles.mapRow}>
+                        {MAP_BANNERS[map] && (
+                          <div className={styles.mapBanner} style={{ backgroundImage: `url(${MAP_BANNERS[map]})` }} />
+                        )}
+                        <div className={styles.mapContent}>
+                          <div className={styles.mapRowTop}>
+                            <span className={styles.mapName}>{map}</span>
+                            <span className={styles.mapRecord}>{s.w}W – {s.l}L</span>
+                          </div>
+                          <div className={styles.mapBarOuter}>
+                            <div className={styles.mapBarInner} style={{ width: `${wr}%`, background: color }} />
+                          </div>
+                          <div className={styles.mapRowTop}>
+                            <span className={styles.mapWr} style={{ color }}>{wr}%</span>
+                            <div className={styles.mapSides}>
+                              {ctWr != null && <span className={styles.mapSideCT}>CT {ctWr}%</span>}
+                              {tWr  != null && <span className={styles.mapSideT}>T {tWr}%</span>}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })()}
+
           {earningsYears.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <h2 className={styles.cardTitle}>Annual Earnings</h2>
@@ -577,19 +699,43 @@ export default function TeamPage({ wiki }) {
                   const playerName = tr.player || tr.displayname || tr.extradata?.displayname || '';
                   const fromTeam   = tr.fromteam || '';
                   const toTeam     = tr.toteam   || '';
-                  const isIn = toTeam.toLowerCase() === team.name.toLowerCase();
+                  const role1      = (tr.role1 || '').toLowerCase();
+                  const role2      = (tr.role2 || '').toLowerCase();
+                  const teamLow    = team.name.toLowerCase();
+
+                  // Aynı takımda statü değişikliği (bench, inactive, loan)
+                  const isSameTeam = fromTeam.toLowerCase() === toTeam.toLowerCase();
+                  const isInactive = role1 === 'inactive' || role2 === 'inactive';
+                  const isLoan     = role1 === 'loan'     || role2 === 'loan';
+                  const isBenched  = isSameTeam && (isInactive || !toTeam);
+
+                  const dirLabel = isBenched
+                    ? (isLoan ? "LOAN" : "BENCH")
+                    : toTeam.toLowerCase() === teamLow ? "IN" : "OUT";
+                  const dirCls = isBenched
+                    ? styles.transferBench
+                    : toTeam.toLowerCase() === teamLow ? styles.transferIn : styles.transferOut;
+
                   return (
                     <div key={i} className={styles.transferRow}>
-                      <span className={`${styles.transferDir} ${isIn ? styles.transferIn : styles.transferOut}`}>
-                        {isIn ? "IN" : "OUT"}
-                      </span>
+                      <span className={`${styles.transferDir} ${dirCls}`}>{dirLabel}</span>
                       <Link to={`/player/${encodeURIComponent(playerName)}`} className={styles.transferPlayer} onClick={e => e.stopPropagation()}>
                         {playerName}
                       </Link>
                       <div className={styles.transferTeams}>
-                        {fromTeam && <Link to={`/team/${encodeURIComponent(fromTeam)}`} className={styles.transferFrom} onClick={e => e.stopPropagation()}>{fromTeam}</Link>}
-                        {fromTeam && toTeam && <span className={styles.transferArrow}>→</span>}
-                        {toTeam  && <Link to={`/team/${encodeURIComponent(toTeam)}`}   className={styles.transferTo}   onClick={e => e.stopPropagation()}>{toTeam}</Link>}
+                        {isBenched ? (
+                          <>
+                            <TeamLogoChip name={fromTeam} logos={transferLogos} linkable />
+                            <span className={styles.transferArrow}>→</span>
+                            <span className={styles.transferBenchLabel}>{isLoan ? "Loan" : "Benched"}</span>
+                          </>
+                        ) : (
+                          <>
+                            {fromTeam && <TeamLogoChip name={fromTeam} logos={transferLogos} linkable />}
+                            {fromTeam && toTeam && <span className={styles.transferArrow}>→</span>}
+                            {toTeam   && <TeamLogoChip name={toTeam}   logos={transferLogos} linkable />}
+                          </>
+                        )}
                       </div>
                       <span className={styles.transferDate}>{formatDate(tr.date)}</span>
                     </div>

@@ -788,6 +788,23 @@ export async function getCS2TeamRecentMatches(teamName, limit = 30) {
     .slice(0, limit)
 }
 
+// Fetches last N finished matches for map win rate stats — direct opponent filter.
+export async function getCS2TeamMapMatches(teamName, limit = 30) {
+  if (!teamName) return []
+  const teamLow    = teamName.toLowerCase()
+  const oneYearAgo = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10)
+  const data = await lqFetch('match', {
+    wiki:       'counterstrike',
+    conditions: `[[opponent::${teamName}]] AND [[finished::1]] AND ([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[date::>${oneYearAgo}]]`,
+    limit:      String(limit),
+    order:      'date desc',
+  })
+  return (data.result || [])
+    .map(mapMatch)
+    .filter(m => m.match2opponents?.some(o => (o.name || '').toLowerCase() === teamLow))
+    .slice(0, limit)
+}
+
 export async function getCS2TeamUpcomingMatches(teamName, limit = 5) {
   if (!teamName) return []
   const teamLow       = teamName.toLowerCase()
