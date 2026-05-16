@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getMatchesByDate, formatTime } from "../services/api";
-import { getCS2MatchesByDate } from "../services/liquipediaApi";
+import { getCS2MatchesByDate, getLoLMatchesByDate } from "../services/liquipediaApi";
 import styles from "./MatchesPage.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -146,8 +146,8 @@ function MatchRow({ match, forceUpcoming }) {
   );
 }
 
-// ── CS2 tab content ───────────────────────────────────────────────────────────
-function CS2MatchesView({ selectedDate, todayStr }) {
+// ── API-backed matches view (CS2 and LoL share same UI, different fetch fn) ───
+function ApiMatchesView({ selectedDate, todayStr, fetchByDate, label }) {
   const { t } = useLanguage();
   const isPast   = selectedDate < todayStr;
   const isToday  = selectedDate === todayStr;
@@ -178,11 +178,11 @@ function CS2MatchesView({ selectedDate, todayStr }) {
     setLoading(true);
     setApiError(false);
     setAllMatches([]);
-    getCS2MatchesByDate(selectedDate)
+    fetchByDate(selectedDate)
       .then(data => { if (!cancelled) { setAllMatches(data); setLoading(false); } })
       .catch(() => { if (!cancelled) { setApiError(true); setLoading(false); } });
     return () => { cancelled = true; };
-  }, [selectedDate]);
+  }, [selectedDate, fetchByDate]);
 
   const now    = nowUtcStr();
   const cutoff = utcHoursAgo(4);
@@ -234,7 +234,8 @@ function CS2MatchesView({ selectedDate, todayStr }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function MatchesPage({ wiki = "valorant" }) {
   const { t, lang } = useLanguage();
-  const isCS2    = wiki === "counterstrike";
+  const isCS2 = wiki === "counterstrike";
+  const isLoL = wiki === "leagueoflegends";
   const todayStr = useMemo(() => toDateStr(new Date()), []);
   const [selectedDate, setSelectedDate] = useState(todayStr);
 
@@ -267,11 +268,9 @@ export default function MatchesPage({ wiki = "valorant" }) {
         <div className="wrap">
           <h1 className={styles.heroTitle}>{t("matches.title")}</h1>
           <p className={styles.heroSubtitle}>
-            {isCS2
-              ? "CS2 — Tier 1 & 2 Maçlar"
-              : relativeLabel
-                ? `${relativeLabel} · ${dateLabel}`
-                : dateLabel}
+            {isCS2 ? "CS2 — Tier 1 & 2 Maçlar"
+              : isLoL ? "League of Legends — Tier 1 & 2 Maçlar"
+              : relativeLabel ? `${relativeLabel} · ${dateLabel}` : dateLabel}
           </p>
           <DateBar selected={selectedDate} todayStr={todayStr} onChange={setSelectedDate} />
         </div>
@@ -279,7 +278,9 @@ export default function MatchesPage({ wiki = "valorant" }) {
 
       <div className="wrap">
         {isCS2 ? (
-          <CS2MatchesView selectedDate={selectedDate} todayStr={todayStr} />
+          <ApiMatchesView selectedDate={selectedDate} todayStr={todayStr} fetchByDate={getCS2MatchesByDate} />
+        ) : isLoL ? (
+          <ApiMatchesView selectedDate={selectedDate} todayStr={todayStr} fetchByDate={getLoLMatchesByDate} />
         ) : (
           <div style={{ paddingTop: 36, paddingBottom: 56 }}>
             {liveMatches.length > 0 && (

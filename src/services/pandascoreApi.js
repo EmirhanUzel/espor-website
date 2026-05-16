@@ -43,7 +43,7 @@ export async function findPandaScorePlayer(name) {
   } catch { return null }
 }
 
-// Fetches a player's aggregated stats from PandaScore.
+// Fetches a CS2 player's aggregated stats from PandaScore.
 // Returns normalised stat object or null.
 export async function getPlayerStatsFromPandaScore(playerName) {
   try {
@@ -67,6 +67,43 @@ export async function getPlayerStatsFromPandaScore(playerName) {
       // HLTV Rating and KAST not available in PandaScore free tier
       rating:    null,
       kast:      null,
+    }
+  } catch { return null }
+}
+
+// ── League of Legends ─────────────────────────────────────────────────────────
+
+export async function findLoLPlayer(name) {
+  try {
+    const results = await psFetch('/lol/players', { 'search[name]': name, per_page: 5 })
+    if (!results?.length) return null
+    const exact = results.find(p =>
+      p.slug?.toLowerCase() === name.toLowerCase() ||
+      p.name?.toLowerCase() === name.toLowerCase()
+    )
+    return exact || results[0]
+  } catch { return null }
+}
+
+export async function getLoLPlayerStatsFromPandaScore(playerName) {
+  try {
+    const player = await findLoLPlayer(playerName)
+    if (!player) return null
+
+    const s = await psFetch(`/lol/players/${player.id}/stats`)
+    if (!s) return null
+
+    return {
+      playerId: player.id,
+      slug:     player.slug,
+      games:    s.games_count                           ?? null,
+      kda:      s.kill_death_assist_ratio               ?? null,
+      kills:    s.average_kills_per_game                ?? null,
+      deaths:   s.average_deaths_per_game               ?? null,
+      assists:  s.average_assists_per_game              ?? null,
+      cs:       s.average_cs_per_game                   ?? null,
+      gold:     s.average_gold_per_game                 ?? null,
+      damage:   s.average_damage_dealt_to_champions     ?? null,
     }
   } catch { return null }
 }

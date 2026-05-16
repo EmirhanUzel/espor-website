@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getPlayer, getTeam, formatDate, formatPrize, getFlag, getMatches, getPrizeResults, getInterviews, TOURNAMENTS } from "../services/api";
-import { getCS2PlayerProfile, getCS2PlayerCareer, getCS2PlayerAllPlacements, getCS2TeamRecentMatches, getCS2TeamLogos, getCS2PlayerImage, getCS2PlayerMatchStats } from "../services/liquipediaApi";
+import {
+  getCS2PlayerProfile, getCS2PlayerCareer, getCS2PlayerAllPlacements, getCS2TeamRecentMatches, getCS2TeamLogos, getCS2PlayerImage, getCS2PlayerMatchStats,
+  getLoLPlayerProfile, getLoLPlayerCareer, getLoLPlayerAllPlacements, getLoLTeamRecentMatches, getLoLTeamLogos, getLoLPlayerImage,
+} from "../services/liquipediaApi";
 import styles from "./PlayerProfile.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -255,29 +258,78 @@ function useCS2Player(id) {
   return { player, career, matches, placements, teamLogoUrl, playerImgUrl, matchStats, loading };
 }
 
+// ── LoL API player profile ────────────────────────────────────────────────────
+function useLoLPlayer(id) {
+  const [player,       setPlayer]       = useState(null);
+  const [career,       setCareer]       = useState(null);
+  const [matches,      setMatches]      = useState(null);
+  const [placements,   setPlacements]   = useState(null);
+  const [teamLogoUrl,  setTeamLogoUrl]  = useState("");
+  const [playerImgUrl, setPlayerImgUrl] = useState("");
+  const [loading,      setLoading]      = useState(true);
+
+  useEffect(() => {
+    if (!id) { setLoading(false); return; }
+    let cancelled = false;
+    setLoading(true);
+    setPlayer(null); setCareer(null); setMatches(null); setPlacements(null); setTeamLogoUrl(""); setPlayerImgUrl("");
+
+    getLoLPlayerProfile(id).then(p => {
+      if (cancelled) return;
+      setPlayer(p);
+      setLoading(false);
+      if (!p) return;
+
+      getLoLPlayerImage(p.pagename).then(url => { if (!cancelled) setPlayerImgUrl(url); });
+
+      if (p.team) {
+        getLoLTeamRecentMatches(p.team, 5).then(m => { if (!cancelled) setMatches(m); });
+        getLoLTeamLogos([p.team]).then(logoMap => {
+          if (!cancelled) setTeamLogoUrl(logoMap[p.team] || "");
+        });
+      }
+
+      getLoLPlayerCareer(p.pagename).then(c => {
+        if (cancelled) return;
+        setCareer(c);
+        const allTeams = [...new Set([p.team, ...c.map(e => e.team)].filter(Boolean))];
+        getLoLPlayerAllPlacements(allTeams).then(pl => { if (!cancelled) setPlacements(pl); });
+      });
+    }).catch(() => { if (!cancelled) { setPlayer(null); setLoading(false); } });
+
+    return () => { cancelled = true; };
+  }, [id]);
+
+  return { player, career, matches, placements, teamLogoUrl, playerImgUrl, matchStats: null, loading };
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function PlayerProfile() {
   const { t } = useLanguage();
   const { id } = useParams();
 
-  // Check mock data to determine wiki
+  // Determine wiki from mock data. Unknown players (not in mock) default to CS2.
   const mockPlayer = getPlayer(id);
-  const isCS2 = mockPlayer?.wiki === "counterstrike" || !mockPlayer;
+  const isLoL = mockPlayer?.wiki === "leagueoflegends";
+  const isCS2 = !isLoL && (mockPlayer?.wiki === "counterstrike" || !mockPlayer);
 
-  // CS2: all data from API
+  // Hooks must always be called — pass null to disable the inactive one
   const cs2 = useCS2Player(isCS2 ? id : null);
+  const lol = useLoLPlayer(isLoL ? id : null);
 
-  // Non-CS2: mock data
-  const player       = isCS2 ? cs2.player       : mockPlayer;
-  const career       = isCS2 ? cs2.career        : mockPlayer?.career;
-  const teamLogoUrl  = isCS2 ? cs2.teamLogoUrl   : null;
-  const playerImgUrl = isCS2 ? cs2.playerImgUrl  : (mockPlayer?.imageurl || "");
+  const active = isLoL ? lol : cs2;
+
+  // Resolved data: API for CS2/LoL, mock for VALORANT etc.
+  const player       = (isCS2 || isLoL) ? active.player       : mockPlayer;
+  const career       = (isCS2 || isLoL) ? active.career        : mockPlayer?.career;
+  const teamLogoUrl  = (isCS2 || isLoL) ? active.teamLogoUrl   : null;
+  const playerImgUrl = (isCS2 || isLoL) ? active.playerImgUrl  : (mockPlayer?.imageurl || "");
 
   // Must be before any conditional return — Rules of Hooks
   const [trophyPage, setTrophyPage] = useState(0);
 
-  // Loading state (only for CS2 hero fetch)
-  if (isCS2 && cs2.loading) {
+  // Loading state (CS2 and LoL)
+  if ((isCS2 || isLoL) && active.loading) {
     return (
       <div className="wrap" style={{ paddingTop: 80, textAlign: "center", color: "var(--text-2)" }}>
         {t("common.loading") || "Loading…"}
@@ -294,24 +346,26 @@ export default function PlayerProfile() {
     );
   }
 
-  // For non-CS2: use existing mock-data logic
-  const mockTeam = !isCS2 ? getTeam(player.teampagename) : null;
+  const isApiWiki = isCS2 || isLoL;
+
+  // For non-API wikis: use mock data
+  const mockTeam = !isApiWiki ? getTeam(player.teampagename) : null;
 
   const age = calcAge(player.birthdate);
   const earningsYears = Object.entries(player.earningsbyyear || {}).sort(([a], [b]) => a.localeCompare(b));
   const latestYear = earningsYears[earningsYears.length - 1];
 
-  // Matches & achievements: CS2 from API, others from mock
-  const recentMatches = isCS2
-    ? (cs2.matches || [])
+  // Matches & achievements: API for CS2/LoL, mock for others
+  const recentMatches = isApiWiki
+    ? (active.matches || [])
     : getMatches(player.wiki)
         .filter(m => m.match2opponents.some(o => o.name === player.teampagename))
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .slice(0, 5);
 
-  // CS2: already filtered to placement=1 by API; mock: filter client-side
-  const teamPrizes = isCS2
-    ? (cs2.placements || []).map(p => ({
+  // API: already filtered to placement=1; mock: filter client-side
+  const teamPrizes = isApiWiki
+    ? (active.placements || []).map(p => ({
         placement:    p.placement    || "1",
         qualifier:    p.tournament   || "",
         date:         p.date || p.startdate || "",
@@ -324,7 +378,7 @@ export default function PlayerProfile() {
         .filter(p => p.opponentname === player.teampagename && p.placement === "1")
         .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const playerInterviews = isCS2
+  const playerInterviews = isApiWiki
     ? []
     : getInterviews(player.wiki)
         .filter(i => i.pagename === player.id)
@@ -332,7 +386,7 @@ export default function PlayerProfile() {
 
   // Team display for hero
   const teamName    = player.teampagename || player.team || "";
-  const teamDisplay = isCS2
+  const teamDisplay = isApiWiki
     ? { name: teamName, textlesslogourl: teamLogoUrl }
     : mockTeam;
 
@@ -442,7 +496,7 @@ export default function PlayerProfile() {
                 </div>
                 <div className={styles.trophyGrid}>
                   {visible.map((p, i) => {
-                    const icon = isCS2
+                    const icon = isApiWiki
                       ? p.iconurl
                       : TOURNAMENTS.find(tr =>
                           tr.name.toLowerCase().includes(p.qualifier?.split(" (#")[0]?.toLowerCase() || "___")
@@ -507,8 +561,8 @@ export default function PlayerProfile() {
             </section>
           )}
 
-          {/* Mock players: full recentstats; CS2 API players: match-based form */}
-          {!isCS2 && player.recentstats && (
+          {/* Mock players: full recentstats; API players: match-based form */}
+          {!isApiWiki && player.recentstats && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <div className={styles.cardTitleRow}>
                 <h2 className={styles.cardTitle}>{t("player.recentForm")}</h2>
@@ -524,7 +578,7 @@ export default function PlayerProfile() {
               <RecentStats stats={player.recentstats} />
             </section>
           )}
-          {isCS2 && (
+          {isApiWiki && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <div className={styles.cardTitleRow}>
                 <h2 className={styles.cardTitle}>{t("player.recentForm")}</h2>
@@ -532,12 +586,19 @@ export default function PlayerProfile() {
               </div>
               <RecentStats stats={{
                 period: "Son 1 Ay", games: null, gamesLabel: "",
-                stats: [
-                  { label: "Rating", value: "—" },
-                  { label: "K/D",    value: "—" },
-                  { label: "KAST",   value: "—" },
-                  { label: "HS %",   value: "—" },
-                ],
+                stats: isLoL
+                  ? [
+                      { label: "KDA",     value: "—" },
+                      { label: "Kills",   value: "—" },
+                      { label: "Deaths",  value: "—" },
+                      { label: "CS/Game", value: "—" },
+                    ]
+                  : [
+                      { label: "Rating", value: "—" },
+                      { label: "K/D",    value: "—" },
+                      { label: "KAST",   value: "—" },
+                      { label: "HS %",   value: "—" },
+                    ],
                 highlight: null,
               }} />
             </section>

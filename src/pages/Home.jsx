@@ -5,7 +5,10 @@ import {
   getPlayers, getGuests,
   formatDate, formatPrize, getFlag, tierLabel,
 } from "../services/api";
-import { getCS2FeaturedTournaments, getCS2TournamentMatches, getCS2OngoingMatches, getCS2RecentTournaments, getCS2Transfers } from "../services/liquipediaApi";
+import {
+  getCS2FeaturedTournaments, getCS2TournamentMatches, getCS2OngoingMatches, getCS2RecentTournaments, getCS2Transfers,
+  getLoLFeaturedTournaments, getLoLTournamentMatches, getLoLOngoingMatches, getLoLRecentTournaments, getLoLTransfers,
+} from "../services/liquipediaApi";
 import { getTopics, formatRelative } from "../services/forum";
 import MatchCard from "../components/MatchCard";
 import TournamentCard from "../components/TournamentCard";
@@ -319,14 +322,63 @@ export default function Home({ wiki, region }) {
     return () => { cancelled = true; };
   }, [wiki]);
 
+  // Live LoL data from Liquipedia API
+  const [lolTournaments, setLoLTournaments]         = useState([]);
+  const [lolRecentMatches, setLoLRecentMatches]     = useState([]);
+  const [lolUpcomingMatches, setLoLUpcomingMatches] = useState([]);
+  const [lolPastTournaments, setLoLPastTournaments] = useState([]);
+  const [lolTransfers, setLoLTransfers]             = useState([]);
+  const [lolLoading, setLoLLoading]                 = useState(false);
+  const [lolError, setLoLError]                     = useState(null);
+
+  useEffect(() => {
+    if (wiki !== "leagueoflegends") return;
+    let cancelled = false;
+    setLoLLoading(true);
+    setLoLError(null);
+
+    Promise.all([
+      getLoLFeaturedTournaments(),
+      getLoLRecentTournaments(),
+      getLoLTransfers(),
+    ])
+      .then(async ([tourneys, pastTourneys, transfers]) => {
+        if (cancelled) return;
+        setLoLTournaments(tourneys);
+        setLoLPastTournaments(pastTourneys);
+        setLoLTransfers(transfers);
+
+        const first = tourneys[0];
+        const ongoingNames = tourneys.filter(t => t._ongoing).map(t => t.name);
+
+        const [heroMs, upcomingMs] = await Promise.all([
+          first?.name ? getLoLTournamentMatches(first.name) : Promise.resolve([]),
+          ongoingNames.length ? getLoLOngoingMatches(ongoingNames) : Promise.resolve([]),
+        ]);
+        if (!cancelled) {
+          setLoLRecentMatches(heroMs);
+          setLoLUpcomingMatches(upcomingMs);
+        }
+      })
+      .catch((err) => { if (!cancelled) setLoLError(err.message); })
+      .finally(() => { if (!cancelled) setLoLLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [wiki]);
+
   const mockTournaments = getTournaments(wiki);
   const mockMatches     = getMatches(wiki);
 
   const isCS2 = wiki === "counterstrike";
+  const isLoL = wiki === "leagueoflegends";
 
-  const tournaments = isCS2 && cs2Tournaments.length ? cs2Tournaments : mockTournaments;
+  const tournaments = (isCS2 && cs2Tournaments.length) ? cs2Tournaments
+    : (isLoL && lolTournaments.length) ? lolTournaments
+    : mockTournaments;
   // matches used only for hero Grand Final lookup
-  const matches     = isCS2 && cs2RecentMatches.length ? cs2RecentMatches : mockMatches;
+  const matches = (isCS2 && cs2RecentMatches.length) ? cs2RecentMatches
+    : (isLoL && lolRecentMatches.length) ? lolRecentMatches
+    : mockMatches;
 
   const interviews   = getInterviews(wiki);
   const allTransfers = getTransfers();
@@ -346,28 +398,30 @@ export default function Home({ wiki, region }) {
   );
 
   const recentMatches   = matches.filter(m => m.finished === 1).slice(0, 3);
-  // CS2: use dedicated upcoming matches from ongoing tournaments; others: filter from mock
-  const upcomingMatches = isCS2
-    ? cs2UpcomingMatches.slice(0, 3)
+  // CS2/LoL: use dedicated upcoming matches from ongoing tournaments; others: filter from mock
+  const upcomingMatches = isCS2 ? cs2UpcomingMatches.slice(0, 3)
+    : isLoL ? lolUpcomingMatches.slice(0, 3)
     : mockMatches
         .filter(m => m.finished !== 1 && m.match2opponents?.[0]?.name && m.match2opponents?.[1]?.name)
         .slice(0, 3);
 
   const recentInterviews = interviews.slice(0, 3);
-  // CS2: use live transfer data; others: use mock
-  const recentTransfers  = isCS2 && cs2Transfers.length ? cs2Transfers.slice(0, 5) : allTransfers.slice(0, 6);
+  // CS2/LoL: use live transfer data; others: use mock
+  const recentTransfers  = (isCS2 && cs2Transfers.length) ? cs2Transfers.slice(0, 5)
+    : (isLoL && lolTransfers.length) ? lolTransfers.slice(0, 5)
+    : allTransfers.slice(0, 6);
   const recentTopics     = getTopics().slice(0, 5);
 
   const today = new Date().toISOString().slice(0, 10);
-  // CS2: use live past tournaments from API; others: derive from mock data
-  const pastTournaments = wiki === "counterstrike" && cs2PastTournaments.length
-    ? cs2PastTournaments
+  // CS2/LoL: use live past tournaments from API; others: derive from mock data
+  const pastTournaments = (isCS2 && cs2PastTournaments.length) ? cs2PastTournaments
+    : (isLoL && lolPastTournaments.length) ? lolPastTournaments
     : tournaments
         .filter(tr => tr.enddate && tr.enddate <= today)
         .sort((a, b) => b.enddate.localeCompare(a.enddate))
         .slice(0, 5);
 
-  if (wiki === "counterstrike" && cs2Loading && !cs2Tournaments.length) {
+  if (isCS2 && cs2Loading && !cs2Tournaments.length) {
     return (
       <main>
         <div className="wrap" style={{ paddingTop: 80, textAlign: "center" }}>
@@ -377,8 +431,21 @@ export default function Home({ wiki, region }) {
     );
   }
 
-  if (wiki === "counterstrike" && cs2Error) {
-    console.warn("Liquipedia API error, falling back to mock data:", cs2Error);
+  if (isLoL && lolLoading && !lolTournaments.length) {
+    return (
+      <main>
+        <div className="wrap" style={{ paddingTop: 80, textAlign: "center" }}>
+          <p style={{ color: "var(--text-3)", fontSize: 18 }}>LoL turnuva verisi yükleniyor…</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (isCS2 && cs2Error) {
+    console.warn("Liquipedia API error (CS2), falling back to mock data:", cs2Error);
+  }
+  if (isLoL && lolError) {
+    console.warn("Liquipedia API error (LoL), falling back to mock data:", lolError);
   }
 
   if (!tournaments.length && !matches.length) {

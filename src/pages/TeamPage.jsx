@@ -3,7 +3,10 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { getTeam, getPlayer, getMatches, formatDate, formatPrize, getFlag, INTERVIEWS, TRANSFERS } from "../services/api";
 import { getTopics } from "../services/forum";
 import { useLanguage } from "../contexts/LanguageContext";
-import { getCS2TeamByName, getCS2TeamSquad, getCS2TeamTransfersAPI, getCS2TeamRecentMatches, getCS2PlayerImage, getCS2TeamLogos } from "../services/liquipediaApi";
+import {
+  getCS2TeamByName, getCS2TeamSquad, getCS2TeamTransfersAPI, getCS2TeamRecentMatches, getCS2PlayerImage, getCS2TeamLogos,
+  getLoLTeamByName, getLoLTeamSquad, getLoLTeamTransfersAPI, getLoLTeamRecentMatches, getLoLPlayerImage, getLoLTeamLogos,
+} from "../services/liquipediaApi";
 import styles from "./TeamPage.module.css";
 
 const SOCIAL_ICONS = {
@@ -50,59 +53,72 @@ export default function TeamPage({ wiki }) {
 
   const decodedName = decodeURIComponent(name);
   const mockTeam    = getTeam(decodedName);
-  // CS2 API: wiki prop is "counterstrike" OR mock team is explicitly CS2.
-  // wiki prop wins — avoids LoL/VALORANT mock teams with same name (e.g. "Team Vitality" is in LoL mock data).
-  const isCS2 = wiki === "counterstrike" || mockTeam?.wiki === "counterstrike";
+  // wiki prop wins over mock team wiki — avoids cross-game name collisions.
+  const isCS2 = wiki === "counterstrike" || (!wiki && mockTeam?.wiki === "counterstrike");
+  const isLoL = wiki === "leagueoflegends" || (!wiki && mockTeam?.wiki === "leagueoflegends");
+  const isApiWiki = isCS2 || isLoL;
 
-  // ── CS2: API state ──────────────────────────────────────────────────────────
+  // ── API state (shared between CS2 and LoL) ─────────────────────────────────
   const [apiTeam,      setApiTeam]      = useState(null);
   const [apiSquad,     setApiSquad]     = useState(null);
   const [apiMatches,   setApiMatches]   = useState(null);
   const [apiTransfers, setApiTransfers] = useState(null);
   const [squadImages,  setSquadImages]  = useState({});
   const [matchLogos,   setMatchLogos]   = useState({});
-  const [cs2Loading,   setCS2Loading]   = useState(isCS2);
+  const [apiLoading,   setApiLoading]   = useState(isApiWiki);
 
   useEffect(() => {
-    if (!isCS2) return;
-    setCS2Loading(true);
+    if (!isApiWiki) return;
+    let cancelled = false;
+    setApiLoading(true);
     setApiTeam(null); setApiSquad(null); setApiMatches(null); setApiTransfers(null);
+    setSquadImages({}); setMatchLogos({});
 
-    getCS2TeamByName(decodedName).then(team => {
-      if (!team) { setCS2Loading(false); return; }
+    const getTeamFn       = isCS2 ? getCS2TeamByName       : getLoLTeamByName;
+    const getSquadFn      = isCS2 ? getCS2TeamSquad        : getLoLTeamSquad;
+    const getMatchesFn    = isCS2 ? getCS2TeamRecentMatches : getLoLTeamRecentMatches;
+    const getTransfersFn  = isCS2 ? getCS2TeamTransfersAPI  : getLoLTeamTransfersAPI;
+    const getPlayerImgFn  = isCS2 ? getCS2PlayerImage       : getLoLPlayerImage;
+    const getLogosFn      = isCS2 ? getCS2TeamLogos         : getLoLTeamLogos;
+
+    getTeamFn(decodedName).then(team => {
+      if (cancelled || !team) { setApiLoading(false); return; }
       setApiTeam(team);
-      setCS2Loading(false);
-      // Secondary fetches
-      getCS2TeamSquad(team.pagename).then(squad => {
+      setApiLoading(false);
+
+      getSquadFn(team.pagename).then(squad => {
+        if (cancelled) return;
         setApiSquad(squad);
-        // Fetch player images in parallel (MediaWiki API, no rate-limit queue)
         squad.forEach(p => {
-          getCS2PlayerImage(p.pagename || p.id).then(url => {
-            if (url) setSquadImages(prev => ({ ...prev, [p.id]: url }));
+          getPlayerImgFn(p.pagename || p.id).then(url => {
+            if (!cancelled && url) setSquadImages(prev => ({ ...prev, [p.id]: url }));
           });
         });
       });
-      getCS2TeamRecentMatches(team.name, 10).then(matches => {
+
+      getMatchesFn(team.name, 10).then(matches => {
+        if (cancelled) return;
         setApiMatches(matches);
-        // Fetch opponent logos
         const oppNames = [...new Set(
           matches.flatMap(m => m.match2opponents.map(o => o.name)).filter(n => n && n !== team.name)
         )];
         if (oppNames.length) {
-          getCS2TeamLogos(oppNames).then(logoMap => {
+          getLogosFn(oppNames).then(logoMap => {
             if (!cancelled) setMatchLogos(logoMap);
           });
         }
       });
-      getCS2TeamTransfersAPI(team.name, 15).then(setApiTransfers);
-    }).catch(() => setCS2Loading(false));
-  }, [decodedName, isCS2]);
+
+      getTransfersFn(team.name, 15).then(t => { if (!cancelled) setApiTransfers(t); });
+    }).catch(() => { if (!cancelled) setApiLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [decodedName, isCS2, isLoL, isApiWiki]);
 
   // ── Unified data ────────────────────────────────────────────────────────────
-  const team = isCS2 ? apiTeam : mockTeam;
+  const team = isApiWiki ? apiTeam : mockTeam;
 
-  // Loading
-  if (cs2Loading) {
+  if (apiLoading) {
     return (
       <div className="wrap" style={{ paddingTop: 80, textAlign: "center", color: "var(--text-2)" }}>
         Loading…
@@ -119,24 +135,24 @@ export default function TeamPage({ wiki }) {
     );
   }
 
-  // ── Mock-data derived values (non-CS2) ──────────────────────────────────────
-  const allMatches = isCS2 ? [] : getMatches(wiki);
-  const teamMatches = isCS2
+  // ── Mock-data derived values (non-API wikis) ───────────────────────────────
+  const allMatches = isApiWiki ? [] : getMatches(wiki);
+  const teamMatches = isApiWiki
     ? (apiMatches || [])
     : allMatches.filter(m => m.match2opponents?.some(o => o.name.toLowerCase() === team.name.toLowerCase()));
 
   const earningsYears = Object.entries(team.earningsbyyear || {}).sort(([a], [b]) => a.localeCompare(b));
   const lastYear = earningsYears[earningsYears.length - 1];
 
-  // Squad: CS2 from API, others from mock
-  const squad = isCS2
-    ? (apiSquad || []).map(p => ({ id: p.id, pagename: p.pagename, name: p.name, nationality: p.nationality, role: p.roles?.[0] || '', earnings: p.earnings }))
+  // Squad: API for CS2/LoL, mock for others
+  const squad = isApiWiki
+    ? (apiSquad || []).map(p => ({ id: p.id, pagename: p.pagename, name: p.name, nationality: p.nationality, role: p.role || p.roles?.[0] || '', earnings: p.earnings }))
     : (mockTeam?.squad || []).map(m => {
         const p = getPlayer(m.id);
         return { id: m.id, name: p?.name || '', nationality: p?.nationality || '', role: m.role, earnings: p?.earnings || 0 };
       });
 
-  const totalMarketValue = isCS2 ? 0 : (mockTeam?.squad || []).reduce((sum, member) => {
+  const totalMarketValue = isApiWiki ? 0 : (mockTeam?.squad || []).reduce((sum, member) => {
     const p = getPlayer(member.id);
     return sum + (p?.marketvalue || 0);
   }, 0);
@@ -149,14 +165,14 @@ export default function TeamPage({ wiki }) {
   };
 
   // Transfers
-  const rawTransfers = isCS2 ? (apiTransfers || []) : TRANSFERS.filter(tr =>
+  const rawTransfers = isApiWiki ? (apiTransfers || []) : TRANSFERS.filter(tr =>
     tr.fromteam?.toLowerCase() === team.name.toLowerCase() ||
     tr.toteam?.toLowerCase()   === team.name.toLowerCase()
   );
 
   // News (mock only)
   const squadIds = new Set(squad.map(m => (m.id || '').toLowerCase()));
-  const teamNews = isCS2 ? [] : INTERVIEWS.filter(item =>
+  const teamNews = isApiWiki ? [] : INTERVIEWS.filter(item =>
     item.pagename.toLowerCase() === team.name.toLowerCase() ||
     squadIds.has(item.pagename.toLowerCase())
   );
@@ -232,7 +248,7 @@ export default function TeamPage({ wiki }) {
               <h2 className={styles.cardTitle}>Current Roster</h2>
               <div className={styles.rosterGrid}>
                 {squad.map((member) => {
-                  const mockPlayer = !isCS2 ? getPlayer(member.id) : null;
+                  const mockPlayer = !isApiWiki ? getPlayer(member.id) : null;
                   const mv = mockPlayer?.marketvalue;
                   const mvFmt = mv
                     ? mv >= 1_000_000 ? `$${(mv / 1_000_000).toFixed(1)}M`
@@ -247,7 +263,7 @@ export default function TeamPage({ wiki }) {
                     : allStats.filter(s => ["ACS", "K/D", "KAST"].includes(s.label));
                   const flag    = member.nationality ? getFlag(member.nationality) : (mockPlayer ? getFlag(mockPlayer.nationality) : "🌍");
                   const initial = (member.id || "?")[0].toUpperCase();
-                  const imgUrl  = isCS2 ? (squadImages[member.id] || '') : (mockPlayer?.imageurl || '');
+                  const imgUrl  = isApiWiki ? (squadImages[member.id] || '') : (mockPlayer?.imageurl || '');
                   return (
                     <div key={member.id} className={styles.playerCard} onClick={() => navigate(`/player/${member.id}`)}>
                       <div className={styles.playerCardTop}>
@@ -369,8 +385,8 @@ export default function TeamPage({ wiki }) {
             )}
           </div>
 
-          {/* ── Rumors (only for non-CS2) ── */}
-          {!isCS2 && (
+          {/* ── Rumors (only for non-API wikis) ── */}
+          {!isApiWiki && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <h2 className={styles.cardTitle}>{t("team.rumors")}</h2>
               <div className={styles.rumorList}>

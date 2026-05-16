@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getTeams, getPrizeResults, getMatches } from "../services/api";
 import { PLAYERS } from "../services/api";
-import { getCS2TeamsForRanking } from "../services/liquipediaApi";
+import { getCS2TeamsForRanking, getLoLTeamsForRanking } from "../services/liquipediaApi";
 import styles from "./TeamsRanking.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -223,7 +223,7 @@ export default function TeamsRanking({ wiki }) {
   const prizes  = getPrizeResults(wiki);
   const matches = getMatches(wiki);
 
-  // CS2: all team data from Liquipedia API (logos, earnings, VRS from snapshot)
+  // CS2: all team data from Liquipedia API (logos, earnings, VRS)
   const [cs2Teams,   setCS2Teams]   = useState(null);
   const [cs2Loading, setCS2Loading] = useState(false);
 
@@ -237,25 +237,43 @@ export default function TeamsRanking({ wiki }) {
       .finally(() => setCS2Loading(false));
   }, [wiki]);
 
-  // For non-CS2 wikis use mock data
+  // LoL: all team data from Liquipedia API (logos, earnings, circuit points)
+  const [lolTeams,   setLoLTeams]   = useState(null);
+  const [lolLoading, setLoLLoading] = useState(false);
+
+  useEffect(() => {
+    if (wiki !== "leagueoflegends") { setLoLTeams(null); return; }
+    setLoLLoading(true);
+    setLoLTeams(null);
+    getLoLTeamsForRanking()
+      .then(setLoLTeams)
+      .catch(() => setLoLTeams([]))
+      .finally(() => setLoLLoading(false));
+  }, [wiki]);
+
+  // For non-API wikis use mock data
   const mockTeams = getTeams(wiki);
-  const teams = wiki === "counterstrike" ? (cs2Teams ?? []) : mockTeams;
+  const teams = wiki === "counterstrike" ? (cs2Teams ?? [])
+    : wiki === "leagueoflegends" ? (lolTeams ?? [])
+    : mockTeams;
+
+  const isApiWiki = wiki === "counterstrike" || wiki === "leagueoflegends";
 
   const enriched = useMemo(() =>
     teams.map(team => ({
       ...team,
-      // CS2: esm/form/formLong from API. Other wikis: calculated from mock data.
-      esm:      wiki === "counterstrike" ? (team.esm      ?? 0)  : calcESM(team, prizes, matches),
-      form:     wiki === "counterstrike" ? (team.form     ?? []) : getForm(team, matches, 5),
-      formLong: wiki === "counterstrike" ? (team.formLong ?? []) : getForm(team, matches, 10),
+      // CS2/LoL: esm/form/formLong from API. Other wikis: calculated from mock data.
+      esm:      isApiWiki ? (team.esm      ?? 0)  : calcESM(team, prizes, matches),
+      form:     isApiWiki ? (team.form     ?? []) : getForm(team, matches, 5),
+      formLong: isApiWiki ? (team.formLong ?? []) : getForm(team, matches, 10),
     })),
-    [teams, prizes, matches, wiki]
+    [teams, prizes, matches, wiki, isApiWiki]
   );
 
   const officialLabel = OFFICIAL_LABEL[wiki] || "Official Points";
   const officialShort = OFFICIAL_SHORT[wiki]  || "Pts";
 
-  if (cs2Loading) {
+  if (cs2Loading || lolLoading) {
     return (
       <main>
         <div className={styles.hero}><div className="wrap">

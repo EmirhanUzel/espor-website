@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getTournaments, getTeams, getLiveMatches, formatDate, formatPrize, tierLabel } from "../services/api";
-import { getCS2TournamentsByStatus } from "../services/liquipediaApi";
+import { getCS2TournamentsByStatus, getLoLTournamentsByStatus } from "../services/liquipediaApi";
 import TournamentCard from "../components/TournamentCard";
 import styles from "./TournamentsPage.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -77,7 +77,7 @@ const TABS = [
   { id: "completed", key: "tournaments.completed" },
 ];
 
-function CS2TournamentsView() {
+function ApiTournamentsView({ fetchByStatus }) {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("ongoing");
   const [tabData, setTabData]     = useState([]);
@@ -89,7 +89,7 @@ function CS2TournamentsView() {
     let cancelled = false;
     setLoading(true);
     setApiError(false);
-    getCS2TournamentsByStatus(activeTab)
+    fetchByStatus(activeTab)
       .then(data => {
         if (cancelled) return;
         setTabData(data);
@@ -100,7 +100,7 @@ function CS2TournamentsView() {
         if (!cancelled) { setApiError(true); setLoading(false); }
       });
     return () => { cancelled = true; };
-  }, [activeTab]);
+  }, [activeTab, fetchByStatus]);
 
   const totalPrize = ongoingData.reduce((s, t) => s + (t.prizepool || 0), 0);
   const totalTeams = ongoingData.reduce((s, t) => s + Math.max(0, t.participantsnumber || 0), 0);
@@ -168,8 +168,10 @@ function CS2TournamentsView() {
 export default function TournamentsPage({ wiki = "valorant" }) {
   const { t } = useLanguage();
   const isCS2 = wiki === "counterstrike";
+  const isLoL = wiki === "leagueoflegends";
+  const isApi = isCS2 || isLoL;
 
-  const tournaments = isCS2 ? [] : getTournaments(wiki);
+  const tournaments = isApi ? [] : getTournaments(wiki);
   const teams       = getTeams(wiki);
   const liveCount   = getLiveMatches().length;
   const totalPrize  = tournaments.reduce((s, tr) => s + (tr.prizepool || 0), 0);
@@ -180,8 +182,8 @@ export default function TournamentsPage({ wiki = "valorant" }) {
         <div className="wrap">
           <h1 className={styles.pageTitle}>{t("tournaments.title")}</h1>
           <p className={styles.pageSubtitle}>
-            {isCS2
-              ? "CS2 — Tier 1 Tournaments"
+            {isCS2 ? "CS2 — Tier 1 Tournaments"
+              : isLoL ? "League of Legends — Tier 1 Tournaments"
               : `${tournaments.length} ${tournaments.length !== 1 ? t("tournaments.subtitle.other") : t("tournaments.subtitle.one")}`}
           </p>
         </div>
@@ -189,7 +191,9 @@ export default function TournamentsPage({ wiki = "valorant" }) {
 
       <div className="wrap">
         {isCS2 ? (
-          <CS2TournamentsView />
+          <ApiTournamentsView fetchByStatus={getCS2TournamentsByStatus} />
+        ) : isLoL ? (
+          <ApiTournamentsView fetchByStatus={getLoLTournamentsByStatus} />
         ) : (
           <>
             <div className={styles.statsBar}>
