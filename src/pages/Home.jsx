@@ -7,7 +7,7 @@ import {
 } from "../services/api";
 import {
   getCS2FeaturedTournaments, getCS2TournamentMatches, getCS2OngoingMatches, getCS2RecentTournaments, getCS2Transfers,
-  getLoLFeaturedTournaments, getLoLTournamentMatches, getLoLOngoingMatches, getLoLRecentTournaments, getLoLTransfers,
+  getLoLFeaturedTournaments, getLoLTournamentMatches, getLoLNextMatches, getLoLRecentTournaments, getLoLTransfers,
 } from "../services/liquipediaApi";
 import { getTopics, formatRelative } from "../services/forum";
 import MatchCard from "../components/MatchCard";
@@ -349,11 +349,10 @@ export default function Home({ wiki, region }) {
         setLoLTransfers(transfers);
 
         const first = tourneys[0];
-        const ongoingNames = tourneys.filter(t => t._ongoing).map(t => t.name);
 
         const [heroMs, upcomingMs] = await Promise.all([
           first?.name ? getLoLTournamentMatches(first.name) : Promise.resolve([]),
-          ongoingNames.length ? getLoLOngoingMatches(ongoingNames) : Promise.resolve([]),
+          getLoLNextMatches(6),
         ]);
         if (!cancelled) {
           setLoLRecentMatches(heroMs);
@@ -375,9 +374,16 @@ export default function Home({ wiki, region }) {
   const tournaments = (isCS2 && cs2Tournaments.length) ? cs2Tournaments
     : (isLoL && lolTournaments.length) ? lolTournaments
     : mockTournaments;
-  // matches used only for hero Grand Final lookup
+
+  // Hero Grand Final lookup — tüm maçlar (finished + upcoming)
   const matches = (isCS2 && cs2RecentMatches.length) ? cs2RecentMatches
     : (isLoL && lolRecentMatches.length) ? lolRecentMatches
+    : mockMatches;
+
+  // Recent matches display — sadece bitmiş maçlar; API'de yoksa mock'a düş
+  const finishedApiMatches = isLoL ? lolRecentMatches.filter(m => m.finished === 1) : [];
+  const recentMatchesSource = (isCS2 && cs2RecentMatches.length) ? cs2RecentMatches
+    : (isLoL && finishedApiMatches.length) ? finishedApiMatches
     : mockMatches;
 
   const interviews   = getInterviews(wiki);
@@ -397,13 +403,12 @@ export default function Home({ wiki, region }) {
     (a.startdate || "").localeCompare(b.startdate || "")
   );
 
-  const recentMatches   = matches.filter(m => m.finished === 1).slice(0, 3);
+  const recentMatches   = recentMatchesSource.filter(m => m.finished === 1).slice(0, 3);
   // CS2/LoL: use dedicated upcoming matches from ongoing tournaments; others: filter from mock
+  const mockUpcoming = mockMatches.filter(m => m.finished !== 1 && m.match2opponents?.[0]?.name && m.match2opponents?.[1]?.name);
   const upcomingMatches = isCS2 ? cs2UpcomingMatches.slice(0, 3)
     : isLoL ? lolUpcomingMatches.slice(0, 3)
-    : mockMatches
-        .filter(m => m.finished !== 1 && m.match2opponents?.[0]?.name && m.match2opponents?.[1]?.name)
-        .slice(0, 3);
+    : mockUpcoming.slice(0, 3);
 
   const recentInterviews = interviews.slice(0, 3);
   // CS2/LoL: use live transfer data; others: use mock
@@ -431,15 +436,7 @@ export default function Home({ wiki, region }) {
     );
   }
 
-  if (isLoL && lolLoading && !lolTournaments.length) {
-    return (
-      <main>
-        <div className="wrap" style={{ paddingTop: 80, textAlign: "center" }}>
-          <p style={{ color: "var(--text-3)", fontSize: 18 }}>LoL turnuva verisi yükleniyor…</p>
-        </div>
-      </main>
-    );
-  }
+  // LoL için erken return YOK — API yüklenirken mock data göster, gelince güncellenir
 
   if (isCS2 && cs2Error) {
     console.warn("Liquipedia API error (CS2), falling back to mock data:", cs2Error);

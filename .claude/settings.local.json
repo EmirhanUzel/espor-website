@@ -44,7 +44,12 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Emirhan\\\\Desktop\\\\espormax-app\" -Recurse -Directory -Depth 2)",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Emirhan\\\\Desktop\\\\espormax-app\" -Recurse -Filter \"*.jsx\" -ErrorAction SilentlyContinue)",
-      "WebFetch(domain:www.pandascore.co)"
+      "WebFetch(domain:www.pandascore.co)",
+      "Bash(gh repo *)",
+      "WebFetch(domain:lolesports.com)",
+      "WebFetch(domain:docs.google.com)",
+      "WebFetch(domain:lolglobalpowerrankings.devpost.com)",
+      "WebFetch(domain:liquipedia.net)"
     ]
   }
 }

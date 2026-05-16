@@ -22,15 +22,37 @@ export default defineConfig(({ mode }) => {
         },
         // Images are loaded directly by the browser with referrerpolicy="no-referrer"
         // No image proxy needed — avoids sharing the API rate-limit IP
-      },
-      '/pandascore': {
-        target: 'https://api.pandascore.co',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/pandascore/, ''),
-        configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Authorization', `Bearer ${env.VITE_PANDASCORE_API_KEY}`)
-          })
+        '/pandascore': {
+          target: 'https://api.pandascore.co',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/pandascore/, ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.setHeader('Authorization', `Bearer ${env.VITE_PANDASCORE_API_KEY}`)
+            })
+          },
+        },
+        // LoL Esports — general gateway (teams, standings, schedule)
+        '/lolesports-api': {
+          target: 'https://esports-api.lolesports.com/persisted/gw',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/lolesports-api/, ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.setHeader('x-api-key', '0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z')
+            })
+          },
+        },
+        // LoL Esports — Global Power Rankings (different base path than gw)
+        '/lolesports-gpr': {
+          target: 'https://esports-api.lolesports.com/persisted/gpr',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/lolesports-gpr/, ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.setHeader('x-api-key', '0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z')
+            })
+          },
         },
       },
     },

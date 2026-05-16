@@ -1008,6 +1008,24 @@ async function fetchLoLTeamIconMap(opponents) {
 
 // ── LoL Tournament API ────────────────────────────────────────────────────────
 
+// Turnuva ismine göre bilinen Liquipedia banner URL'si döner
+function _lolBannerFallback(name) {
+  const n = (name || '').toLowerCase()
+  if (n.includes('msi') || n.includes('mid-season'))
+    return 'https://liquipedia.net/commons/images/thumb/f/f7/MSI_2021_lightmode.png/600px-MSI_2021_lightmode.png'
+  if (n.includes('worlds') || n.includes('world championship'))
+    return 'https://liquipedia.net/commons/images/thumb/9/96/Worlds_2025_lightmode.png/400px-Worlds_2025_lightmode.png'
+  if (n.includes('lck'))
+    return 'https://liquipedia.net/commons/images/thumb/e/e2/LCK_2021_lightmode.png/600px-LCK_2021_lightmode.png'
+  if (n.includes('lec'))
+    return 'https://liquipedia.net/commons/images/thumb/0/03/LEC_lightmode.png/600px-LEC_lightmode.png'
+  if (n.includes('lcs'))
+    return 'https://liquipedia.net/commons/images/thumb/3/34/LCS_2021_lightmode.png/600px-LCS_2021_lightmode.png'
+  if (n.includes('lpl'))
+    return 'https://liquipedia.net/commons/images/thumb/9/9e/LPL_2021_lightmode.png/600px-LPL_2021_lightmode.png'
+  return ''
+}
+
 export async function getLoLFeaturedTournaments() {
   const today          = new Date().toISOString().slice(0, 10)
   const twoWeeksAgo    = new Date(Date.now() - 14  * 86400000).toISOString().slice(0, 10)
@@ -1024,7 +1042,13 @@ export async function getLoLFeaturedTournaments() {
     (t.name || '').toLowerCase().includes('worlds') ||
     (t.liquipediatiertype || '').toLowerCase().includes('world')
 
-  const tournaments = (data.result || []).map(t => ({ ...mapTournament(t), wiki: 'leagueoflegends' }))
+  const tournaments = (data.result || []).map(t => {
+    const base = { ...mapTournament(t), wiki: 'leagueoflegends' }
+    // Liquipedia çoğu zaman LoL turnuvaları için bannerurl döndürmüyor — isime göre fallback
+    if (!base.bannerurl) base.bannerurl = _lolBannerFallback(base.name)
+    if (!base.bannerdarkurl) base.bannerdarkurl = _lolBannerFallback(base.name)
+    return base
+  })
 
   const sorted = tournaments
     .filter(t => (t._ongoing && isDiscreteEvent(t._raw)) || t._upcoming)
@@ -1106,6 +1130,28 @@ export async function getLoLOngoingMatches(tournamentNames) {
     .filter(m => m.match2opponents[0]?.name && m.match2opponents[1]?.name && !m.date.startsWith('0000'))
 }
 
+// Yaklaşan tier 1-2 LoL maçlarını çeker (tüm turnuvalardan, tier'a göre sıralı)
+export async function getLoLNextMatches(limit = 6) {
+  const now = new Date().toISOString().replace('T', ' ').slice(0, 19)
+  const weekAhead = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+
+  const data = await lqFetch('match', {
+    wiki:       'leagueoflegends',
+    conditions: `([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[finished::0]] AND [[date::>${now}]] AND [[date::<${weekAhead}]]`,
+    limit:      String(limit),
+    order:      'date asc',
+  })
+
+  const matches = (data.result || [])
+    .map(mapLoLMatch)
+    .filter(m => m.match2opponents[0]?.name && m.match2opponents[1]?.name && !m.date.startsWith('0000'))
+
+  // Tier 1 önce, sonra tier 2
+  return matches.sort((a, b) =>
+    Number(a.liquipediatier) - Number(b.liquipediatier) || a.date.localeCompare(b.date)
+  )
+}
+
 // ── LoL Match API ─────────────────────────────────────────────────────────────
 
 export async function getLoLMatchesByDate(date) {
@@ -1150,58 +1196,73 @@ function _calcLoLCircuit(placements) {
   return Math.round(total)
 }
 
+// Normalise team name for fuzzy matching against lolesports API names.
+function _normLolName(n) {
+  return (n || '')
+    .toLowerCase()
+    .replace(/\s+(esports?|gaming|e-sports?)\s*$/i, '')
+    .replace(/[^a-z0-9]/g, '')
+}
+
 export async function getLoLTeamsForRanking(limit = 30) {
-  const today           = new Date().toISOString().slice(0, 10)
-  const twelveMonthsAgo = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10)
-  const threeMonthsAgo  = new Date(Date.now() -  90 * 86400000).toISOString().slice(0, 10)
+  const { getLoLGPRList, getLoLRankPoints } = await import('./lolesportsApi.js')
 
-  const placements = await lqFetch('placement', {
-    wiki:       'leagueoflegends',
-    conditions: `([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[date::>${twelveMonthsAgo}]] AND [[date::<${today}]] AND [[opponenttype::team]] AND [[opponentname::!TBD]]`,
-    limit:      '300',
-    order:      'date desc',
-  })
+  const threeMonthsAgo = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10)
 
-  const byTpl = {}
-  for (const p of placements.result || []) {
-    const raw = (p.opponenttemplate || '').trim().toLowerCase()
-    if (!raw || raw === 'tbd') continue
-    const tpl = _stripVersion(raw)
-    if (!tpl) continue
-    if (!byTpl[tpl]) byTpl[tpl] = { placements: [], hasTier1: false }
-    byTpl[tpl].placements.push(p)
-    if (String(p.liquipediatier) === '1') byTpl[tpl].hasTier1 = true
+  // 1. GPR listesini çek — takım adları ve puanlar buradan geliyor
+  const [gprList, rankMap, matchData] = await Promise.all([
+    getLoLGPRList().catch(() => null),
+    getLoLRankPoints().catch(() => null),
+    lqFetch('match', {
+      wiki:       'leagueoflegends',
+      conditions: `([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[finished::1]] AND [[date::>${threeMonthsAgo}]]`,
+      limit:      '200',
+      order:      'date desc',
+    }),
+  ])
+
+  if (!gprList?.length) {
+    console.log('[LoL] GPR list empty — falling back to placement-based ranking')
+    return []
   }
 
-  const tier1Tpls = Object.entries(byTpl)
-    .filter(([, v]) => v.hasTier1)
-    .map(([tpl]) => tpl)
-    .slice(0, limit)
+  // GPR'deki ilk `limit` takımla çalış
+  const topTeams = gprList.slice(0, limit)
 
-  if (!tier1Tpls.length) return []
+  // 2. Liquipedia'dan logo/bölge/kazanç çek — isimle ara
+  // Her takım adının birden fazla varyantını dene
+  const nameConditions = topTeams.flatMap(({ name }) => [
+    `[[name::${name}]]`,
+    // Title-case versiyonu da dene (BILIBILI GAMING → Bilibili Gaming)
+    `[[name::${toTitleCase(name)}]]`,
+  ])
+  const uniqueConds = [...new Set(nameConditions)]
 
   const teamData = await lqFetch('team', {
     wiki:       'leagueoflegends',
-    conditions: tier1Tpls.map(tpl => `[[template::${tpl}]]`).join(' OR '),
-    limit:      String(limit),
+    conditions: uniqueConds.join(' OR '),
+    limit:      String(limit * 2),
   })
 
-  const matchData = await lqFetch('match', {
-    wiki:       'leagueoflegends',
-    conditions: `([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[finished::1]] AND [[date::>${threeMonthsAgo}]]`,
-    limit:      '200',
-    order:      'date desc',
-  })
+  // Liquipedia takımlarını isimle indeksle (normalize ederek)
+  const liqByNorm = {}
+  for (const t of teamData.result || []) {
+    liqByNorm[_normLolName(t.name)]     = t
+    liqByNorm[_normLolName(t.pagename)] = t
+  }
 
-  return (teamData.result || [])
-    .map(t => {
-      const tpl  = _stripVersion((t.template || '').toLowerCase())
-      const data = byTpl[tpl] || { placements: [] }
-      return {
+  // 3. Her GPR takımını Liquipedia verisiyle birleştir
+  return topTeams
+    .map(({ name, league, score }) => {
+      const normN = _normLolName(name)
+      const t = liqByNorm[normN] || null
+
+      // Liquipedia'dan bulunamazsa minimal obje yap
+      const teamObj = t ? {
         id:                  t.pagename,
         pagename:            t.pagename,
         name:                t.name,
-        region:              t.region || '',
+        region:              t.region || leagueToRegion(league),
         textlesslogourl:     t.textlesslogourl || '',
         textlesslogodarkurl: t.textlesslogodarkurl || t.textlesslogourl || '',
         logourl:             t.logourl || '',
@@ -1209,16 +1270,46 @@ export async function getLoLTeamsForRanking(limit = 30) {
         earningsbyyear:      t.earningsbyyear || {},
         links:               t.links || {},
         template:            t.template || '',
-        rankpoints:          _calcLoLCircuit(data.placements),
-        rankchange:          0,
-        status:              t.status || 'active',
-        wiki:                'leagueoflegends',
-        esm:                 _calcESM(data.placements),
-        form:                _calcForm(matchData.result || [], tpl, t.name, 5),
-        formLong:            _calcForm(matchData.result || [], tpl, t.name, 10),
+      } : {
+        id:                  normN,
+        pagename:            name.replace(/ /g, '_'),
+        name,
+        region:              leagueToRegion(league),
+        textlesslogourl:     '',
+        textlesslogodarkurl: '',
+        logourl:             '',
+        earnings:            0,
+        earningsbyyear:      {},
+        links:               {},
+        template:            '',
+      }
+
+      const tpl = _stripVersion((teamObj.template || '').toLowerCase())
+
+      return {
+        ...teamObj,
+        rankpoints:  score,
+        rankchange:  0,
+        status:      'active',
+        wiki:        'leagueoflegends',
+        esm:         0,
+        form:        _calcForm(matchData.result || [], tpl, teamObj.name, 5),
+        formLong:    _calcForm(matchData.result || [], tpl, teamObj.name, 10),
       }
     })
-    .sort((a, b) => b.rankpoints !== a.rankpoints ? b.rankpoints - a.rankpoints : b.earnings - a.earnings)
+    .sort((a, b) => b.rankpoints - a.rankpoints)
+}
+
+function toTitleCase(str) {
+  return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function leagueToRegion(league) {
+  const map = {
+    lck: 'Korea', lpl: 'China', lec: 'Europe',
+    lcs: 'North America', lcp: 'Pacific', cblol: 'Brazil',
+  }
+  return map[(league || '').toLowerCase()] || ''
 }
 
 export async function getLoLTeamLogos(teamNames) {

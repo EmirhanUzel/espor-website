@@ -43,10 +43,10 @@ export function getForm(team, allMatches, limit = 5) {
 export const OFFICIAL_LABEL = {
   valorant:        "VCT Circuit Points",
   counterstrike:   "Valve Regional Standings (VRS)",
-  leagueoflegends: "Regional Qualification Points",
+  leagueoflegends: "LoL Esports Global Power Rankings",
 };
 export const OFFICIAL_SHORT = {
-  valorant: "VCT Pts", counterstrike: "VRS Pts", leagueoflegends: "Reg. Pts",
+  valorant: "VCT Pts", counterstrike: "VRS Pts", leagueoflegends: "GPR Pts",
 };
 
 // ── Shared atoms ──────────────────────────────────────────────────────────────
