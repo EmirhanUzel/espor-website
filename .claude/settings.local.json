@@ -49,7 +49,31 @@
       "WebFetch(domain:lolesports.com)",
       "WebFetch(domain:docs.google.com)",
       "WebFetch(domain:lolglobalpowerrankings.devpost.com)",
-      "WebFetch(domain:liquipedia.net)"
+      "WebFetch(domain:liquipedia.net)",
+      "WebFetch(domain:docs.esport.is)",
+      "WebFetch(domain:esport.is)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:www.sportdevs.com)",
+      "WebFetch(domain:www.esportsestimates.com)",
+      "WebFetch(domain:pandascore.co)",
+      "Bash(findstr PANDASCORE)",
+      "Bash(Get-Content .env.local -ErrorAction SilentlyContinue)",
+      "WebFetch(domain:api.pandascore.co)",
+      "WebFetch(domain:api.liquipedia.net)",
+      "Bash(python -m json.tool)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); r=d['result'][0]; opp=r['match2opponents'][0]; print\\(json.dumps\\(opp['match2players'][0] if opp.get\\('match2players'\\) else 'NO_PLAYERS', indent=2\\)\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(list\\(d['result'][0].keys\\(\\)\\) if d.get\\('result'\\) else d, indent=2\\)\\)\")",
+      "WebFetch(domain:www.esport-api.com)",
+      "WebFetch(domain:docs.gamescorekeeper.com)",
+      "WebFetch(domain:datasportsgroup.com)",
+      "WebFetch(domain:cs2.space)",
+      "WebFetch(domain:www.cs2bet.io)",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); p=d['result'][0]; print\\('pagename:', p['pagename']\\); print\\('id:', p['id']\\); print\\('name:', p['name']\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); p=d['result'][0]; print\\('earnings:', p.get\\('earnings'\\)\\); print\\('status:', p.get\\('status'\\)\\); print\\('birthdate:', p.get\\('birthdate'\\)\\); print\\('extradata:', json.dumps\\(p.get\\('extradata',{}\\)\\)\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(p.get\\('pagename'\\), p.get\\('earnings'\\), p.get\\('birthdate'\\), p.get\\('status'\\)\\) for p in d.get\\('result',[]\\)]\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); p=d['result'][0] if d.get\\('result'\\) else {}; print\\('pagename:', p.get\\('pagename'\\)\\); print\\('earnings:', p.get\\('earnings'\\)\\); print\\('status:', p.get\\('status'\\)\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('result',[]\\)[:2], indent=2\\)\\)\")"
     ]
   }
 }

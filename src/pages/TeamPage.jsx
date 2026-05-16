@@ -4,9 +4,12 @@ import { getTeam, getPlayer, getMatches, formatDate, formatPrize, getFlag, INTER
 import { useLanguage } from "../contexts/LanguageContext";
 import {
   getCS2TeamByName, getCS2TeamSquad, getCS2TeamTransfersAPI, getCS2TeamRecentMatches, getCS2TeamUpcomingMatches, getCS2PlayerImage, getCS2TeamLogos,
+  getCS2TeamsForRanking, getCS2PlayerProfile, getCS2PlayerAllPlacements, getCS2PlayerCareer,
   getLoLTeamByName, getLoLTeamSquad, getLoLTeamTransfersAPI, getLoLTeamRecentMatches, getLoLTeamUpcomingMatches, getLoLPlayerImage, getLoLTeamLogos,
 } from "../services/liquipediaApi";
 import styles from "./TeamPage.module.css";
+import { calcPlayerValue } from "../services/playerValuation";
+import { getFaceitPlayerStats } from "../services/faceitApi";
 
 const SOCIAL_ICONS = {
   twitter:   <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.733-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
@@ -64,8 +67,10 @@ export default function TeamPage({ wiki }) {
   const [apiUpcoming,    setApiUpcoming]    = useState(null);
   const [apiTransfers,   setApiTransfers]   = useState(null);
   const [squadImages,    setSquadImages]    = useState({});
+  const [squadValuation, setSquadValuation] = useState({});
   const [matchLogos,     setMatchLogos]     = useState({});
   const [apiLoading,     setApiLoading]     = useState(isApiWiki);
+  const [rankInfo,       setRankInfo]       = useState(null);
   const [showAllMatches, setShowAllMatches] = useState(false);
   const [matchPage,      setMatchPage]      = useState(0);
   const MATCHES_PER_PAGE = 10;
@@ -75,7 +80,7 @@ export default function TeamPage({ wiki }) {
     let cancelled = false;
     setApiLoading(true);
     setApiTeam(null); setApiSquad(null); setApiMatches(null); setApiUpcoming(null); setApiTransfers(null);
-    setSquadImages({}); setMatchLogos({});
+    setSquadImages({}); setSquadValuation({}); setMatchLogos({}); setRankInfo(null);
 
     const getTeamFn       = isCS2 ? getCS2TeamByName            : getLoLTeamByName;
     const getSquadFn      = isCS2 ? getCS2TeamSquad             : getLoLTeamSquad;
@@ -90,6 +95,23 @@ export default function TeamPage({ wiki }) {
       setApiTeam(team);
       setApiLoading(false);
 
+      if (isCS2) {
+        getCS2TeamsForRanking().then(allTeams => {
+          if (cancelled) return;
+          const vrsRanked = [...allTeams].sort((a, b) => (b.rankpoints || 0) - (a.rankpoints || 0));
+          const esmRanked = [...allTeams].sort((a, b) => (b.esm || 0) - (a.esm || 0));
+          const nameLower = team.name.toLowerCase();
+          const vrsIdx    = vrsRanked.findIndex(t => t.name.toLowerCase() === nameLower);
+          const esmIdx    = esmRanked.findIndex(t => t.name.toLowerCase() === nameLower);
+          setRankInfo({
+            vrsRank:   vrsIdx >= 0 ? vrsIdx + 1 : null,
+            vrsPoints: vrsIdx >= 0 ? (vrsRanked[vrsIdx].rankpoints || null) : null,
+            esmRank:   esmIdx >= 0 ? esmIdx + 1 : null,
+            esmScore:  esmIdx >= 0 ? (esmRanked[esmIdx].esm || null) : null,
+          });
+        }).catch(() => {});
+      }
+
       getSquadFn(team.pagename).then(squad => {
         if (cancelled) return;
         setApiSquad(squad);
@@ -97,6 +119,29 @@ export default function TeamPage({ wiki }) {
           getPlayerImgFn(p.pagename || p.id).then(url => {
             if (!cancelled && url) setSquadImages(prev => ({ ...prev, [p.id]: url }));
           });
+
+          if (isCS2) {
+            // Her oyuncu için player sayfasıyla aynı veriyi çek → aynı hesaplama
+            Promise.all([
+              getCS2PlayerProfile(p.id).catch(() => null),
+              getFaceitPlayerStats(p.id).catch(() => null),
+              getCS2PlayerCareer(p.pagename || p.id).catch(() => []),
+            ]).then(async ([profile, faceitStats, career]) => {
+              if (cancelled) return;
+              const allTeams = [...new Set([team.name, ...(career || []).map(c => c.team)].filter(Boolean))];
+              const placements = await getCS2PlayerAllPlacements(allTeams).catch(() => []);
+              if (cancelled) return;
+              const playerData = profile || { earnings: p.earnings || 0, status: 'active', roles: p.role ? [p.role] : [] };
+              const faceitId  = profile?.faceitId || null;
+              const faceitResult = faceitStats || await getFaceitPlayerStats(p.id, faceitId).catch(() => null);
+              const { usd, value } = calcPlayerValue({ player: playerData, faceitStats: faceitResult, placements });
+              setSquadValuation(prev => ({ ...prev, [p.id]: { usd, value, faceitStats: faceitResult } }));
+              // Player sayfasıyla aynı değeri cache'e de yaz
+              if (usd) {
+                try { localStorage.setItem(`esm_val_${p.id}`, JSON.stringify({ usd, value, ts: Date.now() })); } catch {}
+              }
+            });
+          }
         });
       });
 
@@ -127,6 +172,7 @@ export default function TeamPage({ wiki }) {
       });
 
       getTransfersFn(team.name, 15).then(t => { if (!cancelled) setApiTransfers(t); });
+
     }).catch(() => { if (!cancelled) setApiLoading(false); });
 
     return () => { cancelled = true; };
@@ -174,6 +220,10 @@ export default function TeamPage({ wiki }) {
     const p = getPlayer(member.id);
     return sum + (p?.marketvalue || 0);
   }, 0);
+
+  const squadBonservis = isCS2 && squad.length > 0
+    ? squad.reduce((sum, p) => sum + (squadValuation[p.id]?.usd || 0), 0)
+    : 0;
 
   const formatMV = (val) => {
     if (!val) return null;
@@ -225,6 +275,12 @@ export default function TeamPage({ wiki }) {
                   <span className={styles.tag}>Disbanded <strong>{formatDate(team.disbanddate)}</strong></span>
                 )}
                 <span className={styles.tag}>Region <strong>{team.region}</strong></span>
+                {isCS2 && rankInfo?.vrsRank && (
+                  <span className={styles.tag}>VRS <strong>#{rankInfo.vrsRank}</strong></span>
+                )}
+                {isCS2 && rankInfo?.esmRank && (
+                  <span className={styles.tag}>ESM <strong>#{rankInfo.esmRank}</strong></span>
+                )}
               </div>
               {socialEntries.length > 0 && (
                 <div className={styles.heroSocial}>
@@ -243,6 +299,13 @@ export default function TeamPage({ wiki }) {
                 <span className={styles.earningsLabel}>Total Earnings</span>
                 {lastYear && <span className={styles.earningsLast}>{lastYear[0]}: {formatPrize(lastYear[1])}</span>}
               </div>
+              {squadBonservis > 0 && (
+                <div className={styles.earningsBadge}>
+                  <span className={styles.earningsTotal}>{formatMV(squadBonservis)}</span>
+                  <span className={styles.earningsLabel}>ESM Bonservis</span>
+                  <span className={styles.earningsLast}>{squad.length} oyuncu</span>
+                </div>
+              )}
               {totalMarketValue > 0 && (
                 <div className={styles.earningsBadge}>
                   <span className={styles.earningsTotal}>{formatMV(totalMarketValue)}</span>
@@ -271,11 +334,30 @@ export default function TeamPage({ wiki }) {
                     : `$${mv}`
                     : null;
                   const allStats = mockPlayer?.recentstats?.stats || [];
-                  const cardStats = mockPlayer?.wiki === "counterstrike"
+                  const valData  = isCS2 ? (squadValuation[member.id] || null) : null;
+                  const fs       = valData?.faceitStats || null;
+                  const cardStats = isCS2 && fs
+                    ? (() => {
+                        const role   = member.role || '';
+                        const isAWP  = role === 'AWPer';
+                        const isUtil = role === 'IGL' || role === 'Support';
+                        const roleStat = isAWP
+                          ? { label: "Sniper/R", value: fs.sniperKillRate  != null ? fs.sniperKillRate.toFixed(2)              : "—" }
+                          : isUtil
+                          ? { label: "Utility%", value: fs.utilitySuccess  != null ? `${Math.round(fs.utilitySuccess * 100)}%`  : "—" }
+                          : { label: "Entry%",   value: fs.entrySuccessRate != null ? `${Math.round(fs.entrySuccessRate * 100)}%` : "—" };
+                        return [
+                          { label: "K/D", value: fs.kd != null ? fs.kd.toFixed(2)      : "—" },
+                          { label: "HS%", value: fs.hs != null ? `${fs.hs.toFixed(0)}%` : "—" },
+                          roleStat,
+                        ];
+                      })()
+                    : mockPlayer?.wiki === "counterstrike"
                     ? allStats.filter(s => ["K/D", "KAST", "HS %"].includes(s.label))
                     : mockPlayer?.wiki === "leagueoflegends"
                     ? allStats.filter(s => ["KDA", "Win Rate", "CS/min"].includes(s.label))
                     : allStats.filter(s => ["ACS", "K/D", "KAST"].includes(s.label));
+                  const cachedVal = valData;
                   const flag    = member.nationality ? getFlag(member.nationality) : (mockPlayer ? getFlag(mockPlayer.nationality) : "🌍");
                   const initial = (member.id || "?")[0].toUpperCase();
                   const imgUrl  = isApiWiki ? (squadImages[member.id] || '') : (mockPlayer?.imageurl || '');
@@ -305,7 +387,11 @@ export default function TeamPage({ wiki }) {
                       )}
                       <div className={styles.playerCardFooter}>
                         <span className={styles.playerCardRole}>{member.role}</span>
-                        {mvFmt && <span className={styles.playerCardMV}>{mvFmt}</span>}
+                        {cachedVal?.value
+                          ? <span className={styles.playerCardMV}>{cachedVal.value}</span>
+                          : (!isCS2 && mvFmt) ? <span className={styles.playerCardMV}>{mvFmt}</span>
+                          : null
+                        }
                       </div>
                     </div>
                   );

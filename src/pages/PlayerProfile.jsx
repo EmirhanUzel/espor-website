@@ -7,6 +7,8 @@ import {
 } from "../services/liquipediaApi";
 import styles from "./PlayerProfile.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
+import { getFaceitPlayerStats } from "../services/faceitApi";
+import { calcPlayerValue } from "../services/playerValuation";
 
 // ── Market Value Line Chart ────────────────────────────────────────────────────
 function MarketValueChart({ history, current }) {
@@ -219,12 +221,13 @@ function useCS2Player(id) {
   const [playerImgUrl, setPlayerImgUrl] = useState("");
   const [matchStats,   setMatchStats]   = useState(null);
   const [matchLogos,   setMatchLogos]   = useState({});
+  const [faceitStats,  setFaceitStats]  = useState(null);
   const [loading,      setLoading]      = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setPlayer(null); setCareer(null); setMatches(null); setUpcoming(null); setPlacements(null); setTeamLogoUrl(""); setPlayerImgUrl(""); setMatchStats(null); setMatchLogos({});
+    setPlayer(null); setCareer(null); setMatches(null); setUpcoming(null); setPlacements(null); setTeamLogoUrl(""); setPlayerImgUrl(""); setMatchStats(null); setMatchLogos({}); setFaceitStats(null);
 
     getCS2PlayerProfile(id).then(p => {
       if (cancelled) return;
@@ -233,6 +236,7 @@ function useCS2Player(id) {
       if (!p) return;
 
       getCS2PlayerImage(p.pagename).then(url => { if (!cancelled) setPlayerImgUrl(url); });
+      getFaceitPlayerStats(id, p.faceitId || null).then(s => { if (!cancelled) setFaceitStats(s); }).catch(() => {});
 
       if (p.team) {
         getCS2TeamRecentMatches(p.team, 20).then(m => {
@@ -272,7 +276,7 @@ function useCS2Player(id) {
     return () => { cancelled = true; };
   }, [id]);
 
-  return { player, career, matches, upcoming, placements, teamLogoUrl, playerImgUrl, matchStats, matchLogos, loading };
+  return { player, career, matches, upcoming, placements, teamLogoUrl, playerImgUrl, matchStats, matchLogos, faceitStats, loading };
 }
 
 // ── LoL API player profile ────────────────────────────────────────────────────
@@ -362,8 +366,10 @@ export default function PlayerProfile() {
   const career       = (isCS2 || isLoL) ? active.career        : mockPlayer?.career;
   const teamLogoUrl  = (isCS2 || isLoL) ? active.teamLogoUrl   : null;
   const playerImgUrl = (isCS2 || isLoL) ? active.playerImgUrl  : (mockPlayer?.imageurl || "");
-  const matchLogos      = (isCS2 || isLoL) ? (active.matchLogos || {}) : {};
-  const upcomingMatches = (isCS2 || isLoL) ? (active.upcoming  || []) : [];
+  const matchLogos      = (isCS2 || isLoL) ? (active.matchLogos  || {}) : {};
+  const upcomingMatches = (isCS2 || isLoL) ? (active.upcoming   || []) : [];
+  const matchStats      = (isCS2 || isLoL) ? (active.matchStats  || null) : null;
+  const faceitStats     = isCS2            ? (active.faceitStats || null) : null;
 
   // Must be before any conditional return — Rules of Hooks
   const [trophyPage,      setTrophyPage]      = useState(0);
@@ -420,6 +426,21 @@ export default function PlayerProfile() {
     : getPrizeResults(player.wiki)
         .filter(p => p.opponentname === player.teampagename && p.placement === "1")
         .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // ESM Player Value — CS2 oyuncuları için (FACEIT olmadan da hesaplanır)
+  const esmValuation = isCS2
+    ? calcPlayerValue({ player, faceitStats, placements: teamPrizes })
+    : null;
+
+  // Hesaplanan değeri cache'e yaz — takım sayfası buradan okur
+  if (esmValuation && player?.id) {
+    try {
+      localStorage.setItem(
+        `esm_val_${player.id}`,
+        JSON.stringify({ usd: esmValuation.usd, value: esmValuation.value, ts: Date.now() })
+      );
+    } catch {}
+  }
 
   const playerInterviews = isApiWiki
     ? []
@@ -498,6 +519,13 @@ export default function PlayerProfile() {
             </div>
 
             <div className={styles.valueBlock}>
+              {esmValuation && (
+                <div className={styles.marketValueBadge}>
+                  <span className={styles.mvVal}>{esmValuation.value}</span>
+                  <span className={styles.mvLabel}>ESM Bonservis</span>
+                  <span className={styles.earningsLatest}>Skor: {esmValuation.score}/100</span>
+                </div>
+              )}
               {player.marketvalue && (
                 <div className={styles.marketValueBadge}>
                   <span className={styles.mvVal}>{formatPrize(player.marketvalue)}</span>
@@ -621,31 +649,37 @@ export default function PlayerProfile() {
               <RecentStats stats={player.recentstats} />
             </section>
           )}
-          {isApiWiki && (
-            <section className={`${styles.card} ${styles.cardWide}`}>
-              <div className={styles.cardTitleRow}>
-                <h2 className={styles.cardTitle}>{t("player.recentForm")}</h2>
-                <span className={styles.recentPeriodBadge}>Son 1 Ay</span>
-              </div>
-              <RecentStats stats={{
-                period: "Son 1 Ay", games: null, gamesLabel: "",
-                stats: isLoL
-                  ? [
-                      { label: "KDA",     value: "—" },
-                      { label: "Kills",   value: "—" },
-                      { label: "Deaths",  value: "—" },
-                      { label: "CS/Game", value: "—" },
-                    ]
-                  : [
-                      { label: "Rating", value: "—" },
-                      { label: "K/D",    value: "—" },
-                      { label: "KAST",   value: "—" },
-                      { label: "HS %",   value: "—" },
-                    ],
-                highlight: null,
-              }} />
-            </section>
-          )}
+          {isCS2 && faceitStats && (() => {
+            const roles = player.roles || [];
+            const isAWP     = roles.some(r => r === "AWPer");
+            const isUtility = roles.some(r => r === "IGL" || r === "Support");
+            const roleStat  = isAWP
+              ? { label: "Sniper/Round", value: faceitStats.sniperKillRate   != null ? faceitStats.sniperKillRate.toFixed(2)           : "—" }
+              : isUtility
+              ? { label: "Utility %",   value: faceitStats.utilitySuccess    != null ? `${Math.round(faceitStats.utilitySuccess * 100)}%` : "—" }
+              : { label: "Entry %",     value: faceitStats.entrySuccessRate  != null ? `${Math.round(faceitStats.entrySuccessRate * 100)}%` : "—" };
+            return (
+              <section className={`${styles.card} ${styles.cardWide}`}>
+                <div className={styles.cardTitleRow}>
+                  <h2 className={styles.cardTitle}>{t("player.recentForm")}</h2>
+                  <span className={styles.recentPeriodBadge}>
+                    FACEIT{faceitStats.matches != null ? ` · ${faceitStats.matches} Maç` : ""}
+                    {faceitStats.level != null ? ` · Lvl ${faceitStats.level}` : ""}
+                  </span>
+                </div>
+                <RecentStats stats={{
+                  period: "", games: null, gamesLabel: "",
+                  stats: [
+                    { label: "K/D",  value: faceitStats.kd  != null ? faceitStats.kd.toFixed(2)      : "—" },
+                    { label: "HS %", value: faceitStats.hs  != null ? `${faceitStats.hs.toFixed(1)}%` : "—" },
+                    { label: "ADR",  value: faceitStats.adr != null ? faceitStats.adr.toFixed(1)      : "—" },
+                    roleStat,
+                  ],
+                  highlight: null,
+                }} />
+              </section>
+            );
+          })()}
 
           {(upcomingMatches.length > 0 || recentMatches.length > 0) && (() => {
             const renderMatchRow = (match, isModal) => {

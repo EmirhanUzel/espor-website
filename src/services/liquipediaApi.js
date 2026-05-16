@@ -677,6 +677,11 @@ export async function getCS2PlayerProfile(id) {
   if (rawLinks.steam64ID && !rawLinks.steam) links.steam = rawLinks.steam64ID
   delete links.steam64ID
 
+  // FACEIT player UUID — faceitdb.com/profile/faceit/{uuid}
+  const faceitId = rawLinks.faceitdb
+    ? (rawLinks.faceitdb.match(/faceit\/([a-f0-9-]{36})/)?.[1] || null)
+    : null
+
   // Roles from extradata (e.g. { "1": "awp", "2": "rifle" })
   const ROLE_NAMES = {
     awp: 'AWPer', rifle: 'Rifler', igl: 'IGL', support: 'Support',
@@ -701,6 +706,7 @@ export async function getCS2PlayerProfile(id) {
     earnings:       p.earnings || 0,
     earningsbyyear: p.earningsbyyear || {},
     links,
+    faceitId,
     roles,
     status:         p.status   || 'Active',
     wiki:           'counterstrike',
@@ -957,6 +963,22 @@ export async function getCS2TeamSquad(teamPagename) {
     })
   }
   return players
+}
+
+// Batch-fetches earnings for a list of player IDs. Returns { [id]: earnings } map.
+export async function getCS2PlayersEarnings(playerIds) {
+  if (!playerIds?.length) return {}
+  const conditions = playerIds.map(id => `[[id::${id}]]`).join(' OR ')
+  const data = await lqFetch('player', {
+    wiki:       'counterstrike',
+    conditions,
+    limit:      String(playerIds.length + 5),
+  })
+  const map = {}
+  for (const p of data.result || []) {
+    if (p.id && p.earnings) map[p.id] = p.earnings
+  }
+  return map
 }
 
 // Fetches recent transfers for a CS2 team.

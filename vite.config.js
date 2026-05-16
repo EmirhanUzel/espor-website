@@ -32,6 +32,16 @@ export default defineConfig(({ mode }) => {
             })
           },
         },
+        '/faceit-api': {
+          target: 'https://open.faceit.com/data/v4',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/faceit-api/, ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.setHeader('Authorization', `Bearer ${env.VITE_FACEIT_API_KEY}`)
+            })
+          },
+        },
         // LoL Esports — general gateway (teams, standings, schedule)
         '/lolesports-api': {
           target: 'https://esports-api.lolesports.com/persisted/gw',
