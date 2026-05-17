@@ -80,7 +80,7 @@ function AppInner() {
           <Route path="/teams/official"    element={<TeamsRankingFull type="official" />} />
           <Route path="/teams/espormax"    element={<TeamsRankingFull type="esm" />} />
           <Route path="/players"           element={<PlayersRanking wiki={wiki} />} />
-          <Route path="/player/:id"        element={<PlayerProfile />} />
+          <Route path="/player/:id"        element={<PlayerProfile wiki={wiki} />} />
           <Route path="/player/:id/stats"  element={<PlayerStats />} />
           <Route path="/team/:name"        element={<TeamPage wiki={wiki} />} />
           <Route path="/news"              element={<NewsPage wiki={wiki} />} />

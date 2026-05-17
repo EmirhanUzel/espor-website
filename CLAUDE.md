@@ -51,3 +51,13 @@ The Vite dev server proxies `/liquipedia-api` → `https://api.liquipedia.net/ap
 - Every new component gets a paired `ComponentName.module.css` in `src/components/`.
 - New UI strings need entries in both `en` and `tr` objects in `src/i18n/translations.js`.
 - Use `getFlag(nationality)` from `src/services/api.js` for flag emojis. Use `formatDate`, `formatPrize`, `tierLabel` from the same file.
+
+## Coding Guidelines
+
+1. **Think Before Coding** — State assumptions explicitly. If multiple interpretations exist, present them. If something is unclear, stop and ask.
+
+2. **Simplicity First** — Minimum code that solves the problem. No features beyond what was asked. No abstractions for single-use code. If you write 200 lines and it could be 50, rewrite it.
+
+3. **Surgical Changes** — Touch only what you must. Don't improve adjacent code or formatting. Match existing style. Every changed line should trace directly to the request.
+
+4. **Goal-Driven Execution** — Define success criteria before implementing. For multi-step tasks, state a brief plan with verifiable steps.

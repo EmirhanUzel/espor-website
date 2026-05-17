@@ -54,7 +54,8 @@ function HeroBanner({ tournaments, allMatches }) {
 
   if (!tournaments.length) return null;
 
-  const tournament = tournaments[idx];
+  const safeIdx = tournaments.length > 0 ? idx % tournaments.length : 0;
+  const tournament = tournaments[safeIdx];
   const tournamentMatches = allMatches.filter(m => m.tournament === tournament.name);
 
   // Support both mock data ("Grand Final" header) and Liquipedia API bracket notation
@@ -137,7 +138,7 @@ function HeroBanner({ tournaments, allMatches }) {
             {tournaments.map((t, i) => (
               <button
                 key={t.id}
-                className={`${styles.heroDot} ${i === idx ? styles.heroDotActive : ""}`}
+                className={`${styles.heroDot} ${i === safeIdx ? styles.heroDotActive : ""}`}
                 onClick={() => goTo(i)}
                 aria-label={t.name}
               />
@@ -395,8 +396,10 @@ export default function Home({ wiki, region }) {
     ? tournaments.filter(tr => tr.locations?.region === region)
     : tournaments;
 
-  // Hero carousel keeps API sort (ongoing first by prize pool, then major)
-  const carouselTournaments = filteredTournaments.length ? filteredTournaments : tournaments;
+  // Hero carousel: only ongoing/upcoming tournaments (never past ones)
+  const _carouselToday = new Date().toISOString().slice(0, 10);
+  const _carouselBase = filteredTournaments.length ? filteredTournaments : tournaments;
+  const carouselTournaments = _carouselBase.filter(tr => !tr.enddate || tr.enddate >= _carouselToday);
 
   // Tournaments section: sort strictly by startdate ascending
   const displayTournaments = [...filteredTournaments].sort((a, b) =>

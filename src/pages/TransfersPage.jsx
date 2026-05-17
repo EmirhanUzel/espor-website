@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getTransfers, formatDate, getFlag } from "../services/api";
+import { getCS2Transfers, getLoLTransfers } from "../services/liquipediaApi";
 import styles from "./TransfersPage.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -112,9 +113,25 @@ function TransferRow({ transfer }) {
 
 export default function TransfersPage() {
   const { t } = useLanguage();
-  const transfers = getTransfers();
+  const [apiTransfers, setApiTransfers] = useState([]);
   const [viewMode, setViewMode] = useState("cards");
   const [wikiFilter, setWikiFilter] = useState("All");
+
+  useEffect(() => {
+    Promise.all([
+      getCS2Transfers(15).catch(() => []),
+      getLoLTransfers(15).catch(() => []),
+    ]).then(([cs2, lol]) => {
+      setApiTransfers([
+        ...cs2.map(tr => ({ ...tr, wiki: 'counterstrike' })),
+        ...lol.map(tr => ({ ...tr, wiki: 'leagueoflegends' })),
+      ]);
+    });
+  }, []);
+
+  const mockTransfers = getTransfers();
+  const mockNonApi = mockTransfers.filter(tr => tr.wiki !== 'counterstrike' && tr.wiki !== 'leagueoflegends');
+  const transfers = [...apiTransfers, ...mockNonApi];
 
   const wikis = ["All", ...new Set(transfers.map(tr => tr.wiki))];
   const filtered = wikiFilter === "All" ? transfers : transfers.filter(tr => tr.wiki === wikiFilter);

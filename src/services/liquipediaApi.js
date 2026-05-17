@@ -170,7 +170,7 @@ export async function getCS2FeaturedTournaments() {
 
   const data = await lqFetch('tournament', {
     wiki: 'counterstrike',
-    conditions: `[[liquipediatier::1]] AND [[startdate::>${twoWeeksAgo}]] AND [[startdate::<${sixMonthsAhead}]]`,
+    conditions: `[[liquipediatier::1]] AND [[startdate::>${twoWeeksAgo}]] AND [[startdate::<${sixMonthsAhead}]] AND [[enddate::>${today}]]`,
     limit: '20',
     order: 'startdate asc',
   })
@@ -180,7 +180,7 @@ export async function getCS2FeaturedTournaments() {
   const isMajor = t => t.liquipediatiertype === 'Major Championship'
 
   const sorted = tournaments
-    .filter(t => (t._ongoing && isDiscreteEvent(t._raw)) || t._upcoming)
+    .filter(t => (t._ongoing && isDiscreteEvent(t._raw)) || (t._upcoming && isDiscreteEvent(t._raw)))
     .sort((a, b) => {
       // Ongoing first; within ongoing, higher prize pool first
       if (a._ongoing && !b._ongoing) return -1
@@ -534,11 +534,10 @@ export async function getCS2TeamsForRanking(limit = 30) {
     )
 }
 
-// Returns last 5 CS2 player transfers
-export async function getCS2Transfers() {
+export async function getCS2Transfers(limit = 5) {
   const data = await lqFetch('transfer', {
     wiki: 'counterstrike',
-    limit: '5',
+    limit: String(limit),
     order: 'date desc',
   })
   return data.result || []
@@ -887,6 +886,17 @@ export async function getCS2PlayerMatchStats(playerPagename, teamName) {
   }
 }
 
+// Fetches a single CS2 tournament by Liquipedia pagename (e.g. "PGL_Astana_2026")
+export async function getCS2TournamentByPagename(pagename) {
+  const data = await lqFetch('tournament', {
+    wiki:       'counterstrike',
+    conditions: `[[pagename::${pagename}]]`,
+    limit:      '1',
+  })
+  const t = data.result?.[0]
+  return t ? mapTournament(t) : null
+}
+
 // Fetches finished + upcoming matches for a tournament by its display name
 export async function getCS2TournamentMatches(tournamentName) {
   if (!tournamentName) return []
@@ -1110,7 +1120,7 @@ export async function getLoLFeaturedTournaments() {
 
   const data = await lqFetch('tournament', {
     wiki:       'leagueoflegends',
-    conditions: `[[liquipediatier::1]] AND [[startdate::>${twoWeeksAgo}]] AND [[startdate::<${sixMonthsAhead}]]`,
+    conditions: `[[liquipediatier::1]] AND [[startdate::>${twoWeeksAgo}]] AND [[startdate::<${sixMonthsAhead}]] AND [[enddate::>${today}]]`,
     limit:      '20',
     order:      'startdate asc',
   })
@@ -1121,14 +1131,13 @@ export async function getLoLFeaturedTournaments() {
 
   const tournaments = (data.result || []).map(t => {
     const base = { ...mapTournament(t), wiki: 'leagueoflegends' }
-    // Liquipedia çoğu zaman LoL turnuvaları için bannerurl döndürmüyor — isime göre fallback
     if (!base.bannerurl) base.bannerurl = _lolBannerFallback(base.name)
     if (!base.bannerdarkurl) base.bannerdarkurl = _lolBannerFallback(base.name)
     return base
   })
 
   const sorted = tournaments
-    .filter(t => (t._ongoing && isDiscreteEvent(t._raw)) || t._upcoming)
+    .filter(t => (t._ongoing && isDiscreteEvent(t._raw)) || (t._upcoming && isDiscreteEvent(t._raw)))
     .sort((a, b) => {
       if (a._ongoing && !b._ongoing) return -1
       if (!a._ongoing && b._ongoing) return 1
@@ -1180,6 +1189,20 @@ export async function getLoLRecentTournaments() {
     .filter(t => t.status !== 'cancelled' && isDiscreteEvent(t))
     .slice(0, 5)
     .map(t => ({ ...mapTournament(t), wiki: 'leagueoflegends' }))
+}
+
+// Fetches a single LoL tournament by Liquipedia pagename
+export async function getLoLTournamentByPagename(pagename) {
+  const data = await lqFetch('tournament', {
+    wiki:       'leagueoflegends',
+    conditions: `[[pagename::${pagename}]]`,
+    limit:      '1',
+  })
+  const t = data.result?.[0]
+  if (!t) return null
+  const base = { ...mapTournament(t), wiki: 'leagueoflegends' }
+  if (!base.bannerurl) base.bannerurl = _lolBannerFallback(base.name)
+  return base
 }
 
 export async function getLoLTournamentMatches(tournamentName) {
@@ -1416,10 +1439,10 @@ export async function getLoLTeamLogos(teamNames) {
   } catch { return {} }
 }
 
-export async function getLoLTransfers() {
+export async function getLoLTransfers(limit = 5) {
   const data = await lqFetch('transfer', {
     wiki:  'leagueoflegends',
-    limit: '5',
+    limit: String(limit),
     order: 'date desc',
   })
   return data.result || []

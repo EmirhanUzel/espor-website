@@ -7,6 +7,7 @@ import {
   getCS2TeamsForRanking, getCS2PlayerProfile, getCS2PlayerAllPlacements, getCS2PlayerCareer, getCS2TeamMapMatches,
   // getCS2PlayerAllPlacements kullanılıyor: squad player valuation için
   getLoLTeamByName, getLoLTeamSquad, getLoLTeamTransfersAPI, getLoLTeamRecentMatches, getLoLTeamUpcomingMatches, getLoLPlayerImage, getLoLTeamLogos,
+  getLoLTeamsForRanking,
 } from "../services/liquipediaApi";
 import styles from "./TeamPage.module.css";
 import { calcPlayerValue } from "../services/playerValuation";
@@ -137,8 +138,9 @@ export default function TeamPage({ wiki }) {
       setApiTeam(team);
       setApiLoading(false);
 
-      if (isCS2) {
-        getCS2TeamsForRanking().then(allTeams => {
+      if (isApiWiki) {
+        const getRankingFn = isCS2 ? getCS2TeamsForRanking : getLoLTeamsForRanking;
+        getRankingFn().then(allTeams => {
           if (cancelled) return;
           const vrsRanked = [...allTeams].sort((a, b) => (b.rankpoints || 0) - (a.rankpoints || 0));
           const esmRanked = [...allTeams].sort((a, b) => (b.esm || 0) - (a.esm || 0));
@@ -215,7 +217,7 @@ export default function TeamPage({ wiki }) {
 
       getTransfersFn(team.name, 15).then(transfers => {
         if (!cancelled) setApiTransfers(transfers);
-        if (isCS2 && transfers?.length) {
+        if (transfers?.length) {
           const teamNames = [...new Set(
             transfers.flatMap(t => [t.fromteam, t.toteam].filter(Boolean))
           )];
@@ -263,7 +265,7 @@ export default function TeamPage({ wiki }) {
 
   // Squad: API for CS2/LoL, mock for others
   const squad = isApiWiki
-    ? (apiSquad || []).map(p => ({ id: p.id, pagename: p.pagename, name: p.name, nationality: p.nationality, role: p.role || p.roles?.[0] || '', earnings: p.earnings }))
+    ? (apiSquad || []).map(p => ({ id: p.id, pagename: p.pagename, name: p.name, nationality: p.nationality, role: p.role || p.roles?.[0] || '', earnings: p.earnings, joindate: p.joindate || '' }))
     : (mockTeam?.squad || []).map(m => {
         const p = getPlayer(m.id);
         return { id: m.id, name: p?.name || '', nationality: p?.nationality || '', role: m.role, earnings: p?.earnings || 0 };
@@ -328,8 +330,8 @@ export default function TeamPage({ wiki }) {
                   <span className={styles.tag}>Disbanded <strong>{formatDate(team.disbanddate)}</strong></span>
                 )}
                 <span className={styles.tag}>Region <strong>{team.region}</strong></span>
-                {isCS2 && rankInfo?.vrsRank && (
-                  <span className={styles.tag}>VRS <strong>#{rankInfo.vrsRank}</strong></span>
+                {rankInfo?.vrsRank && (
+                  <span className={styles.tag}>{isCS2 ? 'VRS' : 'GPR'} <strong>#{rankInfo.vrsRank}</strong></span>
                 )}
                 {isCS2 && rankInfo?.esmRank && (
                   <span className={styles.tag}>ESM <strong>#{rankInfo.esmRank}</strong></span>
@@ -440,9 +442,12 @@ export default function TeamPage({ wiki }) {
                       )}
                       <div className={styles.playerCardFooter}>
                         <span className={styles.playerCardRole}>{member.role}</span>
+                        {isLoL && member.joindate && !member.joindate.startsWith('0000') && (
+                          <span className={styles.playerCardJoin}>Since {member.joindate.slice(0, 4)}</span>
+                        )}
                         {cachedVal?.value
                           ? <span className={styles.playerCardMV}>{cachedVal.value}</span>
-                          : (!isCS2 && mvFmt) ? <span className={styles.playerCardMV}>{mvFmt}</span>
+                          : (!isApiWiki && mvFmt) ? <span className={styles.playerCardMV}>{mvFmt}</span>
                           : null
                         }
                       </div>

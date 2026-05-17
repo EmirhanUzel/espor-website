@@ -280,6 +280,34 @@ function useCS2Player(id) {
 }
 
 // ── LoL API player profile ────────────────────────────────────────────────────
+function calcLoLFormStats(matches, teamName) {
+  if (!matches?.length) return null;
+  const teamLow = teamName.toLowerCase();
+  const finished = matches.filter(m => m.finished === 1);
+  if (!finished.length) return null;
+
+  const wins = finished.filter(m => {
+    const idx = m.match2opponents.findIndex(o => o.name.toLowerCase() === teamLow);
+    return idx !== -1 && m.winner === String(idx + 1);
+  }).length;
+
+  const totalGames = finished.reduce((s, m) =>
+    s + (m.match2games?.filter(g => g.winner === '1' || g.winner === '2').length || 0), 0
+  );
+  const gameWins = finished.reduce((s, m) => {
+    const idx = m.match2opponents.findIndex(o => o.name.toLowerCase() === teamLow);
+    return s + (m.match2games?.filter(g => g.winner === String(idx + 1)).length || 0);
+  }, 0);
+
+  return {
+    wins,
+    losses: finished.length - wins,
+    total: finished.length,
+    winRate: Math.round((wins / finished.length) * 100),
+    gameWinRate: totalGames > 0 ? Math.round((gameWins / totalGames) * 100) : null,
+  };
+}
+
 function useLoLPlayer(id) {
   const [player,       setPlayer]       = useState(null);
   const [career,       setCareer]       = useState(null);
@@ -289,13 +317,14 @@ function useLoLPlayer(id) {
   const [teamLogoUrl,  setTeamLogoUrl]  = useState("");
   const [playerImgUrl, setPlayerImgUrl] = useState("");
   const [matchLogos,   setMatchLogos]   = useState({});
+  const [matchStats,   setMatchStats]   = useState(null);
   const [loading,      setLoading]      = useState(true);
 
   useEffect(() => {
     if (!id) { setLoading(false); return; }
     let cancelled = false;
     setLoading(true);
-    setPlayer(null); setCareer(null); setMatches(null); setUpcoming(null); setPlacements(null); setTeamLogoUrl(""); setPlayerImgUrl(""); setMatchLogos({});
+    setPlayer(null); setCareer(null); setMatches(null); setUpcoming(null); setPlacements(null); setTeamLogoUrl(""); setPlayerImgUrl(""); setMatchLogos({}); setMatchStats(null);
 
     getLoLPlayerProfile(id).then(p => {
       if (cancelled) return;
@@ -309,6 +338,7 @@ function useLoLPlayer(id) {
         getLoLTeamRecentMatches(p.team, 20).then(m => {
           if (cancelled) return;
           setMatches(m);
+          setMatchStats(calcLoLFormStats(m, p.team));
           const oppNames = [...new Set(
             m.flatMap(match => match.match2opponents.map(o => o.name)).filter(n => n && n !== p.team)
           )];
@@ -342,18 +372,19 @@ function useLoLPlayer(id) {
     return () => { cancelled = true; };
   }, [id]);
 
-  return { player, career, matches, upcoming, placements, teamLogoUrl, playerImgUrl, matchStats: null, matchLogos, loading };
+  return { player, career, matches, upcoming, placements, teamLogoUrl, playerImgUrl, matchStats, matchLogos, loading };
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export default function PlayerProfile() {
+export default function PlayerProfile({ wiki }) {
   const { t } = useLanguage();
   const { id } = useParams();
 
-  // Determine wiki from mock data. Unknown players (not in mock) default to CS2.
   const mockPlayer = getPlayer(id);
-  const isLoL = mockPlayer?.wiki === "leagueoflegends";
-  const isCS2 = !isLoL && (mockPlayer?.wiki === "counterstrike" || !mockPlayer);
+  // wiki prop (from App.jsx active game) takes priority over mock player wiki
+  const effectiveWiki = wiki || mockPlayer?.wiki || "counterstrike";
+  const isLoL = effectiveWiki === "leagueoflegends";
+  const isCS2 = !isLoL && effectiveWiki === "counterstrike";
 
   // Hooks must always be called — pass null to disable the inactive one
   const cs2 = useCS2Player(isCS2 ? id : null);
@@ -680,6 +711,27 @@ export default function PlayerProfile() {
               </section>
             );
           })()}
+
+          {isLoL && matchStats && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <div className={styles.cardTitleRow}>
+                <h2 className={styles.cardTitle}>{t("player.recentForm")}</h2>
+                <span className={styles.recentPeriodBadge}>Son {matchStats.total} Maç</span>
+              </div>
+              <RecentStats stats={{
+                period: "", games: null, gamesLabel: "",
+                stats: [
+                  { label: "Win Rate",  value: `${matchStats.winRate}%` },
+                  { label: "W – L",     value: `${matchStats.wins} – ${matchStats.losses}` },
+                  { label: "Seriler",   value: String(matchStats.total) },
+                  ...(matchStats.gameWinRate != null
+                    ? [{ label: "Game Win%", value: `${matchStats.gameWinRate}%` }]
+                    : []),
+                ],
+                highlight: null,
+              }} />
+            </section>
+          )}
 
           {(upcomingMatches.length > 0 || recentMatches.length > 0) && (() => {
             const renderMatchRow = (match, isModal) => {

@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { getTeams, getPrizeResults, getMatches, formatPrize } from "../services/api";
 import { calcESM, getForm, OFFICIAL_LABEL, OFFICIAL_SHORT } from "./TeamsRanking";
-import { getCS2TeamsForRanking } from "../services/liquipediaApi";
+import { getCS2TeamsForRanking, getLoLTeamsForRanking } from "../services/liquipediaApi";
 import styles from "./TeamsRankingFull.module.css";
 
 function TeamLogoImg({ url, name, imgClass, fbClass }) {
@@ -58,29 +58,32 @@ export default function TeamsRankingFull({ type }) {
   const prizes  = getPrizeResults(wiki);
   const matches = getMatches(wiki);
 
-  const [cs2Teams,   setCS2Teams]   = useState(null);
-  const [cs2Loading, setCS2Loading] = useState(false);
+  const [apiTeams,   setApiTeams]   = useState(null);
+  const [apiLoading, setApiLoading] = useState(false);
 
   useEffect(() => {
-    if (wiki !== "counterstrike") { setCS2Teams(null); return; }
-    setCS2Loading(true);
-    setCS2Teams(null);
-    getCS2TeamsForRanking()
-      .then(setCS2Teams)
-      .catch(() => setCS2Teams([]))
-      .finally(() => setCS2Loading(false));
+    const isApiWiki = wiki === "counterstrike" || wiki === "leagueoflegends";
+    if (!isApiWiki) { setApiTeams(null); return; }
+    setApiLoading(true);
+    setApiTeams(null);
+    const fetchFn = wiki === "counterstrike" ? getCS2TeamsForRanking : getLoLTeamsForRanking;
+    fetchFn()
+      .then(setApiTeams)
+      .catch(() => setApiTeams([]))
+      .finally(() => setApiLoading(false));
   }, [wiki]);
 
+  const isApiWiki = wiki === "counterstrike" || wiki === "leagueoflegends";
   const mockTeams = getTeams(wiki);
-  const teams = wiki === "counterstrike" ? (cs2Teams ?? []) : mockTeams;
+  const teams = isApiWiki ? (apiTeams ?? []) : mockTeams;
 
   const enriched = useMemo(() =>
     teams.map(t => ({
       ...t,
-      esm:  wiki === "counterstrike" ? (t.esm  ?? 0)  : calcESM(t, prizes, matches),
-      form: wiki === "counterstrike" ? (t.form ?? []) : getForm(t, matches),
+      esm:  isApiWiki ? (t.esm  ?? 0)  : calcESM(t, prizes, matches),
+      form: isApiWiki ? (t.form ?? []) : getForm(t, matches),
     })),
-    [teams, prizes, matches, wiki]
+    [teams, prizes, matches, wiki, isApiWiki]
   );
 
   const isOfficial = type === "official";
@@ -102,7 +105,7 @@ export default function TeamsRankingFull({ type }) {
   const title    = isOfficial ? "Official Standings" : "eSPORMAX Rankings";
   const subtitle = isOfficial ? officialLabel : "Earnings · Roster MV · Tournaments · Recent Form";
 
-  if (cs2Loading) {
+  if (apiLoading) {
     return (
       <main>
         <div className={styles.hero}><div className="wrap">

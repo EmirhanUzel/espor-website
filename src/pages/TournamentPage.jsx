@@ -1,8 +1,13 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   getTournament, getMatches, getStandings, getPrizeResults,
   formatDate, formatPrize, tierLabel,
 } from "../services/api";
+import {
+  getCS2TournamentByPagename, getCS2TournamentMatches,
+  getLoLTournamentByPagename, getLoLTournamentMatches,
+} from "../services/liquipediaApi";
 import MatchCard from "../components/MatchCard";
 import GroupStandings from "../components/GroupStandings";
 import TournamentBracket from "../components/TournamentBracket";
@@ -13,12 +18,78 @@ const COUNTRY_FLAG = { fr:"🇫🇷", de:"🇩🇪", us:"🇺🇸", kr:"🇰🇷
 export default function TournamentPage({ wiki }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const tournament = getTournament(id);
-  const allMatches = getMatches(wiki);
-  const standings = getStandings(wiki);
-  const prizeResults = getPrizeResults(wiki);
+  const location = useLocation();
 
-  if (!tournament) {
+  const isCS2 = wiki === "counterstrike";
+  const isLoL = wiki === "leagueoflegends";
+  const isApiWiki = isCS2 || isLoL;
+
+  // Tournament passed via router state (from TournamentsPage / TournamentCard clicks)
+  const passedTournament = location.state?.tournament || null;
+
+  // Mock data (Valorant + fallback)
+  const mockTournament = getTournament(id);
+  const mockMatches    = getMatches(wiki);
+  const mockStandings  = getStandings(wiki);
+  const mockPrizes     = getPrizeResults(wiki);
+
+  // API state — skip tournament fetch if already passed via state
+  const [apiTournament, setApiTournament] = useState(passedTournament);
+  const [apiMatches,    setApiMatches]    = useState(null);
+  const [apiLoading,    setApiLoading]    = useState(isApiWiki && !passedTournament);
+  const [apiError,      setApiError]      = useState(false);
+
+  useEffect(() => {
+    if (!isApiWiki) return;
+    let cancelled = false;
+
+    const getMatchesFn = isCS2 ? getCS2TournamentMatches : getLoLTournamentMatches;
+
+    const runFetch = async (t) => {
+      // pagename has original slashes (e.g. "LEC/2026_Spring"); name is display name
+      const tournamentName = t?.name || id.replace(/_/g, ' ');
+      const matches = await getMatchesFn(tournamentName).catch(() => []);
+      if (!cancelled) setApiMatches(matches);
+    };
+
+    if (passedTournament) {
+      // Tournament data already available — only fetch matches
+      runFetch(passedTournament).finally(() => { if (!cancelled) setApiLoading(false); });
+      return () => { cancelled = true; };
+    }
+
+    // Direct URL access — need to fetch tournament too
+    const getTournamentFn = isCS2 ? getCS2TournamentByPagename : getLoLTournamentByPagename;
+    setApiLoading(true);
+    setApiError(false);
+
+    getTournamentFn(id)
+      .then(async t => {
+        if (cancelled) return;
+        setApiTournament(t);
+        await runFetch(t);
+      })
+      .catch(() => { if (!cancelled) setApiError(true); })
+      .finally(() => { if (!cancelled) setApiLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [id, isCS2, isLoL, isApiWiki]);
+
+  // Resolved data
+  const tournament = isApiWiki ? apiTournament : mockTournament;
+  const allMatches  = isApiWiki ? (apiMatches || []) : mockMatches;
+  const standings   = isApiWiki ? [] : mockStandings;
+  const prizeResults = isApiWiki ? [] : mockPrizes;
+
+  if (apiLoading) {
+    return (
+      <div className="wrap" style={{ paddingTop: 80, textAlign: "center", color: "var(--text-2)" }}>
+        Yükleniyor…
+      </div>
+    );
+  }
+
+  if (apiError || (!tournament && !apiLoading)) {
     return (
       <div className="wrap" style={{ paddingTop: 80, textAlign: "center" }}>
         <h2 style={{ color: "var(--text-3)" }}>Tournament not found: {id}</h2>
@@ -27,9 +98,17 @@ export default function TournamentPage({ wiki }) {
     );
   }
 
-  const tournamentMatches = allMatches.filter(m => m.tournament === tournament.name);
+  const tournamentMatches = isApiWiki
+    ? allMatches
+    : allMatches.filter(m => m.tournament === tournament.name);
+
   const bracketMatches = tournamentMatches.filter(m => m.match2bracketdata?.type === "bracket");
-  const groupMatches = tournamentMatches.filter(m => m.match2bracketdata?.type === "league");
+  const groupMatches   = tournamentMatches.filter(m => m.match2bracketdata?.type === "league");
+
+  // For API wikis: show finished matches as results, unfinished as upcoming
+  const finishedMatches  = isApiWiki ? tournamentMatches.filter(m => m.finished === 1) : [];
+  const upcomingMatches  = isApiWiki ? tournamentMatches.filter(m => m.finished !== 1 && m.match2opponents?.[0]?.name && m.match2opponents?.[1]?.name) : [];
+
   const locFlag = COUNTRY_FLAG[tournament.locations?.country?.toLowerCase()] || "🌐";
 
   return (
@@ -48,7 +127,7 @@ export default function TournamentPage({ wiki }) {
           <div className={styles.heroContent}>
             <div className={styles.heroLeft}>
               {tournament.iconurl && (
-                <img src={tournament.iconurl} alt={tournament.name} className={styles.heroIcon} />
+                <img src={tournament.iconurl} alt={tournament.name} className={styles.heroIcon} referrerPolicy="no-referrer" />
               )}
               <div>
                 <h1 className={styles.heroTitle}>{tournament.name}</h1>
@@ -79,14 +158,34 @@ export default function TournamentPage({ wiki }) {
 
       <div className="wrap">
 
-        {bracketMatches.length > 0 && (
+        {/* API wikis: recent results + upcoming */}
+        {isApiWiki && finishedMatches.length > 0 && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Son Maçlar</h2>
+            <div className={styles.matchList}>
+              {finishedMatches.slice(0, 10).map(m => <MatchCard key={m.id} match={m} />)}
+            </div>
+          </section>
+        )}
+
+        {isApiWiki && upcomingMatches.length > 0 && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Yaklaşan Maçlar</h2>
+            <div className={styles.matchList}>
+              {upcomingMatches.slice(0, 10).map(m => <MatchCard key={m.id} match={m} />)}
+            </div>
+          </section>
+        )}
+
+        {/* Mock data wikis: bracket + group stage */}
+        {!isApiWiki && bracketMatches.length > 0 && (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Bracket</h2>
             <TournamentBracket matches={bracketMatches} />
           </section>
         )}
 
-        {(groupMatches.length > 0 || standings.length > 0) && (
+        {!isApiWiki && (groupMatches.length > 0 || standings.length > 0) && (
           <div className={styles.twoCol}>
             {groupMatches.length > 0 && (
               <section className={styles.section}>
@@ -172,8 +271,8 @@ export default function TournamentPage({ wiki }) {
                   ["Region", tournament.locations?.region],
                   ["Country", tournament.locations?.country?.toUpperCase()],
                   ["Prize Pool", formatPrize(tournament.prizepool)],
-                  tournament.locations?.venuelink && ["Venue Site", "→ Visit"],
-                ].filter(([, v]) => v).map(([k, v]) => (
+                  tournament.locations?.venuelink ? ["Venue Site", "→ Visit"] : null,
+                ].filter(item => Array.isArray(item) && item[1]).map(([k, v]) => (
                   <div key={k} className={styles.detailRow}>
                     <span className={styles.detailKey}>{k}</span>
                     {k === "Venue Site" ? (

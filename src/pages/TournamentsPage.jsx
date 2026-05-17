@@ -23,7 +23,7 @@ function TournamentRow({ tournament }) {
   const isLive = !isUpcoming && tournament.enddate >= today;
 
   return (
-    <Link to={`/tournament/${tournament.id}`} className={styles.row}>
+    <Link to={`/tournament/${tournament.id}`} state={{ tournament }} className={styles.row}>
       <div className={styles.rowTier}>
         <span className={`${styles.tierBadge} ${tierClass}`}>
           {tierLabel(tournament.liquipediatier)}
