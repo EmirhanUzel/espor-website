@@ -431,6 +431,160 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Earnings split layout */
+.earningsSplit {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+}
+
+.earningsHalf {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.earningsHalf .transferList,
+.earningsHalf .newsList {
+  flex: 1;
+  justify-content: space-between;
+}
+
+.earningsHalf .transferRow,
+.earningsHalf .newsItem {
+  flex: 1;
+}
+
+.earningsDivider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border);
+  margin: 0 28px;
+  flex-shrink: 0;
+}
+
+.mvLineSvg {
+  width: 100%;
+  flex: 1;
+  display: block;
+  min-height: 0;
+}
+
+/* Ongoing & Upcoming Events */
+.eventList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.eventRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.eventIcon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eventIconImg {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.eventIconFb {
+  font-size: 20px;
+}
+
+.eventInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.eventName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eventDates {
+  font-size: 11px;
+  color: var(--text-4);
+}
+
+.eventMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.eventLive {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--success);
+  letter-spacing: 0.06em;
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
+
+.eventUpcoming {
+  font-size: 11px;
+  color: var(--text-4);
+  white-space: nowrap;
+}
+
+.eventTier {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.06em;
+}
+
+.tierS { background: rgba(234,179,8,0.15);  color: #eab308; border: 1px solid rgba(234,179,8,0.3); }
+.tierA { background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+.tierB { background: var(--surface-2);      color: var(--text-3); border: 1px solid var(--border); }
+
+.eventPrize {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Matches */
 .matchCardHeader {
   display: flex;

@@ -8,6 +8,7 @@ import {
   // getCS2PlayerAllPlacements kullanılıyor: squad player valuation için
   getLoLTeamByName, getLoLTeamSquad, getLoLTeamTransfersAPI, getLoLTeamRecentMatches, getLoLTeamUpcomingMatches, getLoLPlayerImage, getLoLTeamLogos,
   getLoLTeamsForRanking,
+  getCS2TeamOngoingEvents, getLoLTeamOngoingEvents,
 } from "../services/liquipediaApi";
 import styles from "./TeamPage.module.css";
 import { calcPlayerValue } from "../services/playerValuation";
@@ -69,6 +70,72 @@ function SocialIcon({ platform }) {
   );
 }
 
+const AURORA_MV_HISTORY = {
+  '2022': 320_000,
+  '2023': 590_000,
+  '2024': 1_050_000,
+  '2025': 1_480_000,
+};
+
+const AURORA_NEWS = [
+  { type: 'Article', publisher: 'HLTV.org', date: '2025-05-12 00:00:00', title: 'Aurora sign GaNdhi as head coach ahead of summer season', link: '#' },
+  { type: 'Article', publisher: 'Dust2.dk', date: '2025-04-28 00:00:00', title: 'Aurora qualify for ESL Pro League Season 21 through regional qualifier', link: '#' },
+  { type: 'Interview', publisher: 'HLTV.org', date: '2025-04-10 00:00:00', title: 'foreseT: "We have the firepower to compete with any top-10 team"', link: '#' },
+  { type: 'Article', publisher: 'Esports.gg', date: '2025-03-22 00:00:00', title: 'Aurora finish top-4 at IEM Katowice 2025 after thriller run', link: '#' },
+  { type: 'Article', publisher: 'HLTV.org', date: '2025-03-05 00:00:00', title: 'Aurora extend roster with two-year contracts for core lineup', link: '#' },
+];
+
+function MarketValueLine({ data, formatFn }) {
+  const entries = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
+  if (entries.length < 2) return null;
+  const vals = entries.map(([, v]) => v);
+  const max = Math.max(...vals);
+  const min = Math.min(...vals);
+  const range = max - min || 1;
+  const W = 400, H = 140;
+  const PAD = { t: 14, r: 16, b: 32, l: 58 };
+  const iW = W - PAD.l - PAD.r;
+  const iH = H - PAD.t - PAD.b;
+  const pts = entries.map(([yr, v], i) => ({
+    x: PAD.l + (i / (entries.length - 1)) * iW,
+    y: PAD.t + iH - ((v - min) / range) * iH,
+    v, yr,
+  }));
+  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const areaPath = `${linePath} L${pts[pts.length - 1].x},${PAD.t + iH} L${pts[0].x},${PAD.t + iH} Z`;
+  const yLevels = [min, (min + max) / 2, max];
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className={styles.mvLineSvg}>
+      <defs>
+        <linearGradient id="mvGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--text-1)" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="var(--text-1)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {yLevels.map((v, i) => {
+        const y = (PAD.t + iH - ((v - min) / range) * iH).toFixed(1);
+        return <line key={i} x1={PAD.l} y1={y} x2={W - PAD.r} y2={y} stroke="var(--border)" strokeDasharray="3,3" />;
+      })}
+      <path d={areaPath} fill="url(#mvGrad)" />
+      <path d={linePath} fill="none" stroke="var(--text-1)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+      {pts.map((p, i) => (
+        <circle key={i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="4" fill="var(--text-1)" stroke="var(--bg)" strokeWidth="2" />
+      ))}
+      {pts.map((p, i) => (
+        <text key={i} x={p.x.toFixed(1)} y={H - 6} textAnchor="middle" fontSize="11" fill="var(--text-4)">{p.yr}</text>
+      ))}
+      {yLevels.map((v, i) => {
+        const y = (PAD.t + iH - ((v - min) / range) * iH + 4).toFixed(1);
+        return (
+          <text key={i} x={PAD.l - 6} y={y} textAnchor="end" fontSize="10" fill="var(--text-4)">
+            {formatFn(v)}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
 function EarningsBar({ data }) {
   const entries = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
   const max = Math.max(...entries.map(([, v]) => v));
@@ -89,6 +156,12 @@ function EarningsBar({ data }) {
   );
 }
 
+const TRANSFER_STAFF_ROLES = new Set([
+  'coach','head coach','assistant coach','co-coach','analyst','manager',
+  'team manager','general manager','performance manager','ceo','cso',
+  'founder','co-founder','head of esports','content creator','streamer',
+]);
+
 export default function TeamPage({ wiki }) {
   const { name } = useParams();
   const navigate  = useNavigate();
@@ -106,6 +179,7 @@ export default function TeamPage({ wiki }) {
   const [apiSquad,       setApiSquad]       = useState(null);
   const [apiMatches,     setApiMatches]     = useState(null);
   const [apiUpcoming,    setApiUpcoming]    = useState(null);
+  const [apiEvents,      setApiEvents]      = useState(null);
   const [apiTransfers,   setApiTransfers]   = useState(null);
   const [squadImages,    setSquadImages]    = useState({});
   const [squadValuation, setSquadValuation] = useState({});
@@ -122,7 +196,7 @@ export default function TeamPage({ wiki }) {
     if (!isApiWiki) return;
     let cancelled = false;
     setApiLoading(true);
-    setApiTeam(null); setApiSquad(null); setApiMatches(null); setApiUpcoming(null); setApiTransfers(null);
+    setApiTeam(null); setApiSquad(null); setApiMatches(null); setApiUpcoming(null); setApiTransfers(null); setApiEvents(null);
     setSquadImages({}); setSquadValuation({}); setMapMatches(null); setTransferLogos({}); setMatchLogos({}); setRankInfo(null);
 
     const getTeamFn       = isCS2 ? getCS2TeamByName            : getLoLTeamByName;
@@ -213,6 +287,11 @@ export default function TeamPage({ wiki }) {
             if (!cancelled) setMatchLogos(prev => ({ ...prev, ...logoMap }));
           });
         }
+        const upcomingTournNames = [...new Set(upcoming.map(m => m.tournament).filter(Boolean))];
+        const getEventsFn = isCS2 ? getCS2TeamOngoingEvents : getLoLTeamOngoingEvents;
+        getEventsFn(team.name, upcomingTournNames).then(events => {
+          if (!cancelled) setApiEvents(events);
+        });
       });
 
       getTransfersFn(team.name, 15).then(transfers => {
@@ -458,6 +537,42 @@ export default function TeamPage({ wiki }) {
             </section>
           )}
 
+          {/* ── Ongoing & Upcoming Events ── */}
+          {apiEvents?.length > 0 && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <h2 className={styles.cardTitle}>Ongoing &amp; Upcoming Events</h2>
+              <div className={styles.eventList}>
+                {apiEvents.map((ev, i) => {
+                  const tier = ev.liquipediatier;
+                  const tierLabel = tier === '1' ? 'S' : tier === '2' ? 'A' : 'B';
+                  const tierCls   = tier === '1' ? styles.tierS : tier === '2' ? styles.tierA : styles.tierB;
+                  return (
+                    <div key={i} className={styles.eventRow}>
+                      <div className={styles.eventIcon}>
+                        {ev.iconurl
+                          ? <img src={ev.iconurl} alt={ev.name} className={styles.eventIconImg} referrerPolicy="no-referrer" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                          : <span className={styles.eventIconFb}>🏆</span>
+                        }
+                      </div>
+                      <div className={styles.eventInfo}>
+                        <span className={styles.eventName}>{ev.name}</span>
+                        <span className={styles.eventDates}>{formatDate(ev.startdate)} – {formatDate(ev.enddate)}</span>
+                      </div>
+                      <div className={styles.eventMeta}>
+                        {ev._ongoing
+                          ? <span className={styles.eventLive}><span className={styles.liveDot} />LIVE</span>
+                          : <span className={styles.eventUpcoming}>{formatDate(ev.startdate)}</span>
+                        }
+                        <span className={`${styles.eventTier} ${tierCls}`}>{tierLabel}-Tier</span>
+                        {ev.prizepool > 0 && <span className={styles.eventPrize}>{formatPrize(ev.prizepool)}</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {(teamUpcoming.length > 0 || teamMatches.length > 0) && (() => {
             const renderMatchRow = (match, onClickFn) => {
               const [opp1, opp2] = match.match2opponents;
@@ -632,19 +747,32 @@ export default function TeamPage({ wiki }) {
 
           {earningsYears.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
-              <h2 className={styles.cardTitle}>Annual Earnings</h2>
-              <EarningsBar data={team.earningsbyyear} />
-              <div className={styles.earningsTable}>
-                {earningsYears.map(([year, val]) => (
-                  <div key={year} className={styles.earningsRow}>
-                    <span className={styles.earningsRowYear}>{year}</span>
-                    <div className={styles.earningsRowBar}>
-                      <div className={styles.earningsRowFill}
-                        style={{ width: `${(val / Math.max(...earningsYears.map(([, v]) => v))) * 100}%` }} />
-                    </div>
-                    <span className={styles.earningsRowAmt}>{formatPrize(val)}</span>
+              <div className={styles.earningsSplit}>
+                <div className={styles.earningsHalf}>
+                  <h2 className={styles.cardTitle}>Annual Earnings</h2>
+                  <EarningsBar data={team.earningsbyyear} />
+                  <div className={styles.earningsTable}>
+                    {earningsYears.map(([year, val]) => (
+                      <div key={year} className={styles.earningsRow}>
+                        <span className={styles.earningsRowYear}>{year}</span>
+                        <div className={styles.earningsRowBar}>
+                          <div className={styles.earningsRowFill}
+                            style={{ width: `${(val / Math.max(...earningsYears.map(([, v]) => v))) * 100}%` }} />
+                        </div>
+                        <span className={styles.earningsRowAmt}>{formatPrize(val)}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+                {isCS2 && team.name.toLowerCase().includes('aurora') && (
+                  <>
+                    <div className={styles.earningsDivider} />
+                    <div className={styles.earningsHalf}>
+                      <h2 className={styles.cardTitle}>Squad Market Value</h2>
+                      <MarketValueLine data={AURORA_MV_HISTORY} formatFn={formatMV} />
+                    </div>
+                  </>
+                )}
               </div>
             </section>
           )}
@@ -698,6 +826,8 @@ export default function TeamPage({ wiki }) {
           {/* ── Transfers ── */}
           {rawTransfers.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
+              <div className={styles.earningsSplit}>
+              <div className={styles.earningsHalf}>
               <h2 className={styles.cardTitle}>Transfers</h2>
               <div className={styles.transferList}>
                 {rawTransfers.slice(0, 5).map((tr, i) => {
@@ -721,12 +851,16 @@ export default function TeamPage({ wiki }) {
                     ? styles.transferBench
                     : toTeam.toLowerCase() === teamLow ? styles.transferIn : styles.transferOut;
 
+                  const activeRole = role2 || role1;
+                  const staffRole  = TRANSFER_STAFF_ROLES.has(activeRole) ? activeRole : null;
+
                   return (
                     <div key={i} className={styles.transferRow}>
                       <span className={`${styles.transferDir} ${dirCls}`}>{dirLabel}</span>
                       <Link to={`/player/${encodeURIComponent(playerName)}`} className={styles.transferPlayer} onClick={e => e.stopPropagation()}>
                         {playerName}
                       </Link>
+                      {staffRole && <span className={styles.transferRole}>{staffRole}</span>}
                       <div className={styles.transferTeams}>
                         {isBenched ? (
                           <>
@@ -746,6 +880,30 @@ export default function TeamPage({ wiki }) {
                     </div>
                   );
                 })}
+              </div>
+              </div>
+              {isCS2 && team.name.toLowerCase().includes('aurora') && (
+                <>
+                  <div className={styles.earningsDivider} />
+                  <div className={styles.earningsHalf}>
+                    <h2 className={styles.cardTitle}>Latest News</h2>
+                    <div className={styles.newsList}>
+                      {AURORA_NEWS.map((item, i) => (
+                        <a key={i} href={item.link} className={styles.newsItem}>
+                          <div className={styles.newsItemTop}>
+                            <span className={`${styles.newsBadge} ${item.type === 'Interview' ? styles.newsBadgeInterview : styles.newsBadgeArticle}`}>
+                              {item.type}
+                            </span>
+                            <span className={styles.newsPublisher}>{item.publisher}</span>
+                            <span className={styles.newsDate}>{formatDate(item.date)}</span>
+                          </div>
+                          <p className={styles.newsTitle}>{item.title}</p>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
               </div>
             </section>
           )}

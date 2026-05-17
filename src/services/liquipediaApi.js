@@ -1020,6 +1020,57 @@ export async function getCS2TeamTransfersAPI(teamName, limit = 15) {
   return data.result || []
 }
 
+// Resolves ongoing + upcoming tournaments for a team.
+// Strategy 1 (primary): participant table — has confirmed registrations including future events.
+// Strategy 2 (fallback): placement table (past 60 days) — catches ongoing events.
+// Strategy 3 (fallback): tournament names from already-fetched upcoming matches.
+async function _resolveTeamEvents(wiki, teamName, fallbackTournNames = []) {
+  if (!teamName) return []
+  const pastTwo = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10)
+
+  // Primary: participant table
+  const participantData = await lqFetch('participant', {
+    wiki,
+    conditions: `[[name::${teamName}]] AND [[type::team]]`,
+    limit:      '20',
+    order:      'pagename desc',
+  })
+  let tournNames = (participantData.result || []).map(p => p.pagename).filter(Boolean)
+
+  // Fallback: recent placements
+  if (!tournNames.length) {
+    const placementData = await lqFetch('placement', {
+      wiki,
+      conditions: `[[opponentname::${teamName}]] AND [[date::>${pastTwo}]]`,
+      limit:      '25',
+      order:      'date desc',
+    })
+    tournNames = (placementData.result || []).map(p => p.tournament).filter(Boolean)
+  }
+
+  tournNames = [...new Set([...tournNames, ...fallbackTournNames])].slice(0, 20)
+  if (!tournNames.length) return []
+
+  const cond = `(${tournNames.map(t => `[[pagename::${t}]]`).join(' OR ')}) AND ([[liquipediatier::1]] OR [[liquipediatier::2]])`
+  const tournData = await lqFetch('tournament', { wiki, conditions: cond, limit: '20' })
+  return (tournData.result || [])
+    .map(t => ({ ...mapTournament(t), wiki }))
+    .filter(t => (t._ongoing || t._upcoming) && isDiscreteEvent(t._raw))
+    .sort((a, b) => {
+      if (a._ongoing && !b._ongoing) return -1
+      if (!a._ongoing && b._ongoing) return 1
+      return new Date(a.startdate) - new Date(b.startdate)
+    })
+}
+
+export async function getCS2TeamOngoingEvents(teamName, fallbackTournNames = []) {
+  return _resolveTeamEvents('counterstrike', teamName, fallbackTournNames)
+}
+
+export async function getLoLTeamOngoingEvents(teamName, fallbackTournNames = []) {
+  return _resolveTeamEvents('leagueoflegends', teamName, fallbackTournNames)
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ── League of Legends — Liquipedia API v3
 // ═══════════════════════════════════════════════════════════════════════════════

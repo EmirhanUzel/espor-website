@@ -249,6 +249,34 @@
   min-width: 90px; text-align: right; font-variant-numeric: tabular-nums;
 }
 
+/* Earnings split (Aurora bonservis) */
+.earningsSplit {
+  display: flex;
+  align-items: stretch;
+}
+
+.earningsHalf {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.earningsDivider {
+  width: 1px;
+  background: var(--border);
+  margin: 0 28px;
+  flex-shrink: 0;
+}
+
+.mvLineSvg {
+  width: 100%;
+  flex: 1;
+  display: block;
+  min-height: 0;
+  margin-top: 8px;
+}
+
 /* Recent Stats */
 .detailLink {
   font-size: 11px; font-weight: 700; letter-spacing: 0.04em;

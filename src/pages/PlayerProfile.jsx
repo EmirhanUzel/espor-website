@@ -375,6 +375,144 @@ function useLoLPlayer(id) {
   return { player, career, matches, upcoming, placements, teamLogoUrl, playerImgUrl, matchStats, matchLogos, loading };
 }
 
+// Oyuncunun career (transfer geçmişi) verisiyle placements'ı filtreler.
+// Her placement için oyuncunun o takımda o tarihte aktif olup olmadığını kontrol eder.
+// ── Aurora player mock bonservis history (per-player, keyed by lowercase pagename) ──
+// Değerler HLTV sıralama, turnuva performansı ve kariyer olaylarına göre
+// ── Player mock news (keyed by lowercase pagename) ───────────────────────────
+const PLAYER_MOCK_NEWS = {
+  'xantares': [
+    { type: 'Interview', publisher: 'HLTV.org',    date: '2025-04-18 00:00:00', title: 'xantares: "Aurora is the most motivated roster I have ever been part of"', link: '#' },
+    { type: 'Article',   publisher: 'HLTV.org',    date: '2025-03-09 00:00:00', title: 'xantares ranked #14 in HLTV Top 20 players of 2024', link: '#' },
+    { type: 'Article',   publisher: 'Esports.gg',  date: '2024-11-22 00:00:00', title: 'xantares hits 1.25 rating at IEM Cologne as Aurora reach playoffs', link: '#' },
+    { type: 'Interview', publisher: 'Dust2.dk',    date: '2024-08-05 00:00:00', title: 'xantares on longevity: "Age is just a number when you keep grinding"', link: '#' },
+    { type: 'Article',   publisher: 'HLTV.org',    date: '2024-03-14 00:00:00', title: 'Aurora sign xantares on long-term deal ahead of spring season', link: '#' },
+  ],
+  'woxic': [
+    { type: 'Article',   publisher: 'HLTV.org',    date: '2025-05-02 00:00:00', title: 'woxic named best AWPer of ESL Pro League Season 21 group stage', link: '#' },
+    { type: 'Interview', publisher: 'HLTV.org',    date: '2025-02-17 00:00:00', title: 'woxic: "The break was necessary — I came back stronger and hungrier"', link: '#' },
+    { type: 'Article',   publisher: 'Esports.gg',  date: '2024-10-30 00:00:00', title: 'woxic posts 82.3 ADR at BLAST Premier Fall as Aurora upset NaVi', link: '#' },
+    { type: 'Article',   publisher: 'HLTV.org',    date: '2024-06-11 00:00:00', title: 'woxic: From Cloud9 struggles to Aurora revival — a career retrospective', link: '#' },
+    { type: 'Interview', publisher: 'Dust2.global', date: '2023-09-24 00:00:00', title: 'woxic on joining Aurora: "This team has the right structure to go deep"', link: '#' },
+  ],
+  'maj3r': [
+    { type: 'Interview', publisher: 'HLTV.org',    date: '2025-04-30 00:00:00', title: 'maj3r: "I stepped away from CS because I needed to rediscover my love for the game"', link: '#' },
+    { type: 'Article',   publisher: 'Esports.gg',  date: '2025-01-15 00:00:00', title: 'maj3r voted best IGL of 2024 by HLTV community poll', link: '#' },
+    { type: 'Article',   publisher: 'HLTV.org',    date: '2024-09-03 00:00:00', title: 'Aurora\'s tactical dominance at IEM Sydney traced back to maj3r\'s calling', link: '#' },
+    { type: 'Interview', publisher: 'Dust2.dk',    date: '2024-04-19 00:00:00', title: 'maj3r on his comeback: "I trained harder than ever during my time away"', link: '#' },
+    { type: 'Article',   publisher: 'HLTV.org',    date: '2023-11-08 00:00:00', title: 'maj3r officially returns to professional CS2 scene with Aurora', link: '#' },
+  ],
+  'wicadia': [
+    { type: 'Article',   publisher: 'HLTV.org',    date: '2025-05-08 00:00:00', title: 'wicadia breaks onto AWP scene with 1.31 rating at BLAST Spring', link: '#' },
+    { type: 'Interview', publisher: 'Esports.gg',  date: '2025-03-21 00:00:00', title: 'wicadia: "xantares and woxic push me to get better every single day"', link: '#' },
+    { type: 'Article',   publisher: 'HLTV.org',    date: '2024-12-04 00:00:00', title: 'Aurora sign wicadia as rising AWP talent for 2025 season', link: '#' },
+    { type: 'Article',   publisher: 'Dust2.dk',    date: '2024-08-17 00:00:00', title: 'wicadia shines at regional qualifier: "The sky is the limit for this kid"', link: '#' },
+  ],
+  'soulfly': [
+    { type: 'Article',   publisher: 'HLTV.org',    date: '2025-04-25 00:00:00', title: 'soulfly posts career-high 1.28 rating as Aurora top group at ESL Pro League', link: '#' },
+    { type: 'Interview', publisher: 'Esports.gg',  date: '2025-02-10 00:00:00', title: 'soulfly: "Playing alongside this roster has elevated my entire game"', link: '#' },
+    { type: 'Article',   publisher: 'HLTV.org',    date: '2024-11-19 00:00:00', title: 'soulfly named Aurora\'s most consistent fragger through fall season', link: '#' },
+    { type: 'Article',   publisher: 'Dust2.global', date: '2024-07-02 00:00:00', title: 'Aurora complete roster with soulfly signing ahead of second half of 2024', link: '#' },
+  ],
+};
+
+const AURORA_PLAYER_MV_DATA = {
+  // xantares — BIG dönemi uzun kariyer, 2023+ Aurora ile top 20'ye geri dönüş
+  'xantares': { '2018': 450_000, '2019': 750_000, '2020': 880_000, '2021': 700_000, '2022': 620_000, '2023': 920_000, '2024': 1_120_000, '2025': 1_200_000 },
+  // woxic — mousesports'ta dünya #10 (2020), Cloud9 sonrası uzun ara, Aurora comeback
+  'woxic':    { '2019': 820_000, '2020': 1_650_000, '2021': 1_080_000, '2022': 480_000, '2023': 720_000, '2024': 980_000, '2025': 1_060_000 },
+  // maj3r — erken dönem düşük değer, 2021 oyunu bırakma dönemi, Aurora ile büyük sıçrama
+  'maj3r':    { '2019': 175_000, '2020': 290_000, '2021': 110_000, '2022': 220_000, '2023': 510_000, '2024': 780_000, '2025': 940_000 },
+  // Calyx — tutarlı büyüme, güvenilir rifler
+  'calyx':    { '2020': 270_000, '2021': 410_000, '2022': 530_000, '2023': 670_000, '2024': 790_000, '2025': 860_000 },
+  // foreseT — Czech rifler, istikrarlı
+  'foreset':  { '2020': 340_000, '2021': 510_000, '2022': 610_000, '2023': 710_000, '2024': 830_000, '2025': 900_000 },
+  // XELLOW — genç Türk oyuncu, hızlı yükseliş
+  'xellow':   { '2023': 195_000, '2024': 390_000, '2025': 490_000 },
+  // ngiN — yükselen değer
+  'ngin':     { '2022': 170_000, '2023': 310_000, '2024': 470_000, '2025': 530_000 },
+  // wicadia — genç AWPer, Aurora'da çabuk yükseliş
+  'wicadia':  { '2023': 160_000, '2024': 340_000, '2025': 520_000 },
+  // soulfly — Aurora'da form yakalayan rifler
+  'soulfly':  { '2023': 140_000, '2024': 310_000, '2025': 480_000 },
+};
+
+function fmtMV(val) {
+  if (!val) return '$0';
+  if (val >= 1_000_000) return `$${(val / 1_000_000).toFixed(1)}M`;
+  if (val >= 1_000)     return `$${Math.round(val / 1_000)}K`;
+  return `$${val}`;
+}
+
+function AuroraPlayerMVLine({ data }) {
+  const entries = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
+  if (entries.length < 2) return null;
+  const vals  = entries.map(([, v]) => v);
+  const max   = Math.max(...vals);
+  const min   = Math.min(...vals);
+  const range = max - min || 1;
+  const W = 400, H = 140;
+  const PAD = { t: 14, r: 16, b: 32, l: 58 };
+  const iW = W - PAD.l - PAD.r;
+  const iH = H - PAD.t - PAD.b;
+  const pts = entries.map(([yr, v], i) => ({
+    x: PAD.l + (i / (entries.length - 1)) * iW,
+    y: PAD.t + iH - ((v - min) / range) * iH,
+    v, yr,
+  }));
+  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const areaPath = `${linePath} L${pts[pts.length - 1].x},${PAD.t + iH} L${pts[0].x},${PAD.t + iH} Z`;
+  const yLevels  = [min, (min + max) / 2, max];
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className={styles.mvLineSvg}>
+      <defs>
+        <linearGradient id="playerMvGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="var(--text-1)" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="var(--text-1)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {yLevels.map((v, i) => {
+        const y = (PAD.t + iH - ((v - min) / range) * iH).toFixed(1);
+        return <line key={i} x1={PAD.l} y1={y} x2={W - PAD.r} y2={y} stroke="var(--border)" strokeDasharray="3,3" />;
+      })}
+      <path d={areaPath} fill="url(#playerMvGrad)" />
+      <path d={linePath} fill="none" stroke="var(--text-1)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+      {pts.map((p, i) => (
+        <circle key={i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="4" fill="var(--text-1)" stroke="var(--bg)" strokeWidth="2" />
+      ))}
+      {pts.map((p, i) => (
+        <text key={i} x={p.x.toFixed(1)} y={H - 6} textAnchor="middle" fontSize="11" fill="var(--text-4)">{p.yr}</text>
+      ))}
+      {yLevels.map((v, i) => {
+        const y = (PAD.t + iH - ((v - min) / range) * iH + 4).toFixed(1);
+        return (
+          <text key={i} x={PAD.l - 6} y={y} textAnchor="end" fontSize="10" fill="var(--text-4)">
+            {fmtMV(v)}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
+function filterPlacementsByCareer(placements, career) {
+  if (!career?.length) return placements;
+  // career: [{ team, date }] asc sıralı — her entry o takıma katıldığı tarihi gösterir
+  const periods = career.map((entry, i) => ({
+    team: (entry.team || '').toLowerCase(),
+    from: (entry.date || '').slice(0, 10) || '0000-01-01',
+    to:   (career[i + 1]?.date || '').slice(0, 10) || '9999-12-31',
+  }));
+  return placements.filter(p => {
+    const pDate = (p.date || p.startdate || '').slice(0, 10);
+    const pTeam = (p.opponentname || '').toLowerCase();
+    if (!pDate || !pTeam) return true;
+    return periods.some(period =>
+      period.team === pTeam && pDate >= period.from && pDate < period.to
+    );
+  });
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function PlayerProfile({ wiki }) {
   const { t } = useLanguage();
@@ -406,6 +544,7 @@ export default function PlayerProfile({ wiki }) {
   const [trophyPage,      setTrophyPage]      = useState(0);
   const [showAllMatches,  setShowAllMatches]  = useState(false);
   const [matchPage,       setMatchPage]       = useState(0);
+  const [earningsOffset,  setEarningsOffset]  = useState(0);
   const MATCHES_PER_PAGE = 10;
 
   // Loading state (CS2 and LoL)
@@ -445,7 +584,8 @@ export default function PlayerProfile({ wiki }) {
 
   // API: already filtered to placement=1; mock: filter client-side
   const teamPrizes = isApiWiki
-    ? (active.placements || []).map(p => ({
+    ? filterPlacementsByCareer(active.placements || [], active.career)
+        .map(p => ({
         placement:    p.placement    || "1",
         qualifier:    p.tournament   || "",
         date:         p.date || p.startdate || "",
@@ -473,11 +613,14 @@ export default function PlayerProfile({ wiki }) {
     } catch {}
   }
 
-  const playerInterviews = isApiWiki
-    ? []
-    : getInterviews(player.wiki)
-        .filter(i => i.pagename === player.id)
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
+  const playerInterviews = (() => {
+    const pagename = (player.pagename || player.id || '').toLowerCase();
+    const mock = PLAYER_MOCK_NEWS[pagename] || [];
+    const api  = isApiWiki
+      ? []
+      : getInterviews(player.wiki).filter(i => i.pagename === player.id).sort((a, b) => new Date(b.date) - new Date(a.date));
+    return [...mock, ...api].sort((a, b) => new Date(b.date) - new Date(a.date));
+  })();
 
   // Team display for hero
   const teamName    = player.teampagename || player.team || "";
@@ -624,45 +767,6 @@ export default function PlayerProfile({ wiki }) {
             );
           })()}
 
-          {player.marketvaluehistory?.length > 0 && (
-            <section className={`${styles.card} ${styles.cardWide}`}>
-              <div className={styles.cardTitleRow}>
-                <h2 className={styles.cardTitle}>{t("player.mvHistory")}</h2>
-                <span className={styles.currentMV}>{formatPrize(player.marketvalue)}</span>
-              </div>
-              <MarketValueChart history={player.marketvaluehistory} current={player.marketvalue} />
-            </section>
-          )}
-
-          {earningsYears.length > 0 && (
-            <section className={`${styles.card} ${styles.cardWide}`}>
-              <div className={styles.cardTitleRow}>
-                <h2 className={styles.cardTitle}>{t("player.annualEarnings")}</h2>
-                <span className={styles.currentMV}>{formatPrize(player.earnings)}</span>
-              </div>
-              <EarningsChart data={player.earningsbyyear} />
-              <div className={styles.earningsTable}>
-                {earningsYears.map(([year, amount]) => (
-                  <div key={year} className={styles.earningsRow}>
-                    <span className={styles.earningsYear}>{year}</span>
-                    <div className={styles.earningsBar}>
-                      <div className={styles.earningsBarFill}
-                        style={{ width: `${(amount / Math.max(...earningsYears.map(([, v]) => v))) * 100}%` }} />
-                    </div>
-                    <span className={styles.earningsAmount}>{formatPrize(amount)}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {career?.length > 0 && (
-            <section className={`${styles.card} ${styles.cardWide}`}>
-              <h2 className={styles.cardTitle}>{t("player.careerTimeline")}</h2>
-              <CareerTimeline career={career} />
-            </section>
-          )}
-
           {/* Mock players: full recentstats; API players: match-based form */}
           {!isApiWiki && player.recentstats && (
             <section className={`${styles.card} ${styles.cardWide}`}>
@@ -711,7 +815,6 @@ export default function PlayerProfile({ wiki }) {
               </section>
             );
           })()}
-
           {isLoL && matchStats && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <div className={styles.cardTitleRow}>
@@ -730,6 +833,84 @@ export default function PlayerProfile({ wiki }) {
                 ],
                 highlight: null,
               }} />
+            </section>
+          )}
+
+          {player.marketvaluehistory?.length > 0 && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <div className={styles.cardTitleRow}>
+                <h2 className={styles.cardTitle}>{t("player.mvHistory")}</h2>
+                <span className={styles.currentMV}>{formatPrize(player.marketvalue)}</span>
+              </div>
+              <MarketValueChart history={player.marketvaluehistory} current={player.marketvalue} />
+            </section>
+          )}
+
+          {earningsYears.length > 0 && (() => {
+            const EY_PAGE = 5;
+            const windowEnd = earningsYears.length - earningsOffset;
+            const visibleEarnings = earningsYears.slice(Math.max(0, windowEnd - EY_PAGE), windowEnd);
+            const visMax = Math.max(...visibleEarnings.map(([, v]) => v));
+            const canGoOlder = windowEnd - EY_PAGE > 0;
+            const canGoNewer = earningsOffset > 0;
+            return (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <div className={styles.earningsSplit}>
+                <div className={styles.earningsHalf}>
+                  <div className={styles.cardTitleRow}>
+                    <h2 className={styles.cardTitle}>{t("player.annualEarnings")}</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {earningsYears.length > EY_PAGE && (
+                        <div className={styles.trophyNav}>
+                          <button className={styles.trophyNavBtn} disabled={!canGoOlder} onClick={() => setEarningsOffset(o => o + EY_PAGE)}>‹</button>
+                          <button className={styles.trophyNavBtn} disabled={!canGoNewer} onClick={() => setEarningsOffset(o => Math.max(0, o - EY_PAGE))}>›</button>
+                        </div>
+                      )}
+                      <span className={styles.currentMV}>{formatPrize(player.earnings)}</span>
+                    </div>
+                  </div>
+                  <EarningsChart data={Object.fromEntries(visibleEarnings)} />
+                  <div className={styles.earningsTable}>
+                    {visibleEarnings.map(([year, amount]) => (
+                      <div key={year} className={styles.earningsRow}>
+                        <span className={styles.earningsYear}>{year}</span>
+                        <div className={styles.earningsBar}>
+                          <div className={styles.earningsBarFill}
+                            style={{ width: `${(amount / visMax) * 100}%` }} />
+                        </div>
+                        <span className={styles.earningsAmount}>{formatPrize(amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {(() => {
+                  const pagename = (player.pagename || player.id || '').toLowerCase();
+                  let mvData = isCS2 && player.team?.toLowerCase().includes('aurora')
+                    ? AURORA_PLAYER_MV_DATA[pagename] || null
+                    : null;
+                  if (mvData && esmValuation?.usd >= 100_000) {
+                    const lastYear = Object.keys(mvData).sort().at(-1);
+                    mvData = { ...mvData, [lastYear]: esmValuation.usd };
+                  }
+                  return mvData ? (
+                    <>
+                      <div className={styles.earningsDivider} />
+                      <div className={styles.earningsHalf}>
+                        <h2 className={styles.cardTitle}>Bonservis Değişimi</h2>
+                        <AuroraPlayerMVLine data={mvData} />
+                      </div>
+                    </>
+                  ) : null;
+                })()}
+              </div>
+            </section>
+            );
+          })()}
+
+          {career?.length > 0 && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <h2 className={styles.cardTitle}>{t("player.careerTimeline")}</h2>
+              <CareerTimeline career={career} />
             </section>
           )}
 
