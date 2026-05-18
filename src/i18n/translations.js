@@ -161,6 +161,7 @@ export const translations = {
     // Stats Page
     "stats.title": "Statistics",
     "stats.notFound": "Stats not found",
+    "stats.lolComingSoon": "LoL match statistics will be available soon via PandaScore integration.",
     "stats.backToProfile": "Back to profile",
     "stats.filterByChampion": "By champion",
     "stats.filterByAgent": "By agent",
@@ -174,11 +175,21 @@ export const translations = {
     "stats.score": "Score",
     "stats.duration": "Duration",
     "stats.damage": "Damage",
+    // Common
+    "common.loading": "Loading…",
+    "common.apiError": "API is currently unavailable, please try again shortly.",
+    "tournaments.subtitleCS2": "CS2 — Tier 1 Tournaments",
+    "tournaments.subtitleLoL": "League of Legends — Tier 1 Tournaments",
+    "matches.subtitleCS2": "CS2 — Tier 1 & 2 Matches",
+    "matches.subtitleLoL": "League of Legends — Tier 1 & 2 Matches",
+    "home.loadingCS2": "Loading CS2 tournament data…",
+    "home.loadingLoL": "Loading League of Legends tournament data…",
     // Home additions
     "home.comments": "comments",
     // News additions
     "news.searchPublisher": "Search source... (VLR.gg, HLTV.org…)",
     // Forum Page
+    "forum.backToForum": "← Back to forum",
     "forum.title": "Forum",
     "forum.subtitle": "Community discussions, ranked by activity over the last 7 days.",
     "forum.topicsUnit": "topics",
@@ -421,6 +432,7 @@ export const translations = {
     // Stats Page
     "stats.title": "İstatistikler",
     "stats.notFound": "İstatistik bulunamadı",
+    "stats.lolComingSoon": "LoL maç istatistikleri yakında PandaScore entegrasyonuyla eklenecek.",
     "stats.backToProfile": "Profile dön",
     "stats.filterByChampion": "Şampiyona göre",
     "stats.filterByAgent": "Ajana göre",
@@ -434,11 +446,21 @@ export const translations = {
     "stats.score": "Skor",
     "stats.duration": "Süre",
     "stats.damage": "Hasar",
+    // Common
+    "common.loading": "Yükleniyor…",
+    "common.apiError": "API şu an yanıt vermiyor, lütfen biraz bekleyin.",
+    "tournaments.subtitleCS2": "CS2 — Tier 1 Turnuvalar",
+    "tournaments.subtitleLoL": "League of Legends — Tier 1 Turnuvalar",
+    "matches.subtitleCS2": "CS2 — Tier 1 & 2 Maçlar",
+    "matches.subtitleLoL": "League of Legends — Tier 1 & 2 Maçlar",
+    "home.loadingCS2": "CS2 turnuva verisi yükleniyor…",
+    "home.loadingLoL": "League of Legends turnuva verisi yükleniyor…",
     // Home additions
     "home.comments": "yorum",
     // News additions
     "news.searchPublisher": "Kaynak ara... (VLR.gg, HLTV.org…)",
     // Forum Page
+    "forum.backToForum": "← Foruma dön",
     "forum.title": "Forum",
     "forum.subtitle": "Topluluk tartışmaları, son 7 günde aktiviteye göre sıralandı.",
     "forum.topicsUnit": "konu",

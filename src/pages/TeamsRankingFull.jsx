@@ -4,14 +4,18 @@ import { getTeams, getPrizeResults, getMatches, formatPrize } from "../services/
 import { calcESM, getForm, OFFICIAL_LABEL, OFFICIAL_SHORT } from "./TeamsRanking";
 import { getCS2TeamsForRanking, getLoLTeamsForRanking } from "../services/liquipediaApi";
 import styles from "./TeamsRankingFull.module.css";
+import { useLanguage } from "../contexts/LanguageContext";
+import { useTheme } from "../contexts/ThemeContext";
 
-function TeamLogoImg({ url, name, imgClass, fbClass }) {
+function TeamLogoImg({ url, darkUrl, name, imgClass, fbClass }) {
+  const { theme } = useTheme();
   const [failed, setFailed] = useState(false)
-  if (!url || failed) return <div className={fbClass}>{name[0]}</div>
+  const src = (theme === "dark" && darkUrl) ? darkUrl : url;
+  if (!src || failed) return <div className={fbClass}>{name?.[0] ?? '?'}</div>
   return (
     <img
-      key={url}
-      src={url}
+      key={src}
+      src={src}
       alt={name}
       className={imgClass}
       referrerPolicy="no-referrer"
@@ -27,7 +31,7 @@ function RankBadge({ rank }) {
 function TeamCell({ team }) {
   return (
     <Link to={`/team/${encodeURIComponent(team.name)}`} className={styles.teamCell}>
-      <TeamLogoImg url={team.textlesslogourl} name={team.name} imgClass={styles.teamLogo} fbClass={styles.teamLogoFb} />
+      <TeamLogoImg url={team.textlesslogourl} darkUrl={team.textlesslogodarkurl} name={team.name} imgClass={styles.teamLogo} fbClass={styles.teamLogoFb} />
       <div className={styles.teamInfo}>
         <span className={styles.teamName}>{team.name}</span>
         <span className={styles.teamRegion}>{team.region}</span>
@@ -52,6 +56,7 @@ function Trend({ change }) {
 }
 
 export default function TeamsRankingFull({ type }) {
+  const { t } = useLanguage();
   const location = useLocation();
   const wiki = new URLSearchParams(location.search).get("wiki") || "valorant";
 
@@ -113,7 +118,7 @@ export default function TeamsRankingFull({ type }) {
           <h1 className={styles.heroTitle}>{title}</h1>
         </div></div>
         <div className="wrap" style={{ padding: "4rem 0", textAlign: "center", color: "var(--text-2)" }}>
-          Loading…
+          {t("common.loading")}
         </div>
       </main>
     );

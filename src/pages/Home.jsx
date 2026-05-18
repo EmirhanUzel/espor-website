@@ -9,6 +9,7 @@ import {
   getCS2FeaturedTournaments, getCS2TournamentMatches, getCS2OngoingMatches, getCS2RecentTournaments, getCS2Transfers,
   getLoLFeaturedTournaments, getLoLTournamentMatches, getLoLNextMatches, getLoLRecentTournaments, getLoLTransfers,
 } from "../services/liquipediaApi";
+import { getLoLMatchesFromPandaScore, getLoLUpcomingMatchesFromPandaScore } from "../services/pandascoreApi";
 import { getTopics, formatRelative } from "../services/forum";
 import MatchCard from "../components/MatchCard";
 import TournamentCard from "../components/TournamentCard";
@@ -214,12 +215,13 @@ function GuestCard({ guest }) {
 
 // ── Forum Topic Row ────────────────────────────────────────────────────────────
 function ForumTopicRow({ topic }) {
+  const { t } = useLanguage();
   return (
     <Link to={`/forum/${topic.id}`} className={styles.forumRow}>
       <span className={styles.forumCat}>{topic.category}</span>
       <span className={styles.forumTitle}>{topic.title}</span>
       <span className={styles.forumMeta}>
-        <span>{topic.commentCount} {("home.comments")}</span>
+        <span>{topic.commentCount} {t("home.comments")}</span>
         <span>·</span>
         <span>{formatRelative(topic.createdAt)}</span>
       </span>
@@ -229,11 +231,12 @@ function ForumTopicRow({ topic }) {
 
 // ── Player Carousel ────────────────────────────────────────────────────────────
 function PlayerCard({ player }) {
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   return (
     <div className={styles.playerCard} onClick={() => navigate(`/player/${player.id}`)}>
-      <div className={styles.playerCardAvatar}>{player.id[0].toUpperCase()}</div>
+      <div className={styles.playerCardAvatar}>{player.id?.[0]?.toUpperCase() ?? '?'}</div>
       <div className={styles.playerCardInfo}>
         <span className={styles.playerCardNick}>{player.id}</span>
         <span className={styles.playerCardTeam}>
@@ -243,7 +246,7 @@ function PlayerCard({ player }) {
       {player.marketvalue && (
         <div className={styles.playerCardMarket}>
           <span className={styles.playerCardMarketVal}>{formatPrize(player.marketvalue)}</span>
-          <span className={styles.playerCardMarketKey}>Piyasa Değeri</span>
+          <span className={styles.playerCardMarketKey}>{t("player.marketValue")}</span>
         </div>
       )}
     </div>
@@ -355,12 +358,31 @@ export default function Home({ wiki, region }) {
           first?.name ? getLoLTournamentMatches(first.name) : Promise.resolve([]),
           getLoLNextMatches(6),
         ]);
+
+        // Eğer mevcut turnuvada bitmiş maç yoksa en son geçmiş turnuvadan çek
+        let finalHeroMs = heroMs;
+        if (!cancelled && !heroMs.some(m => m.finished === 1) && pastTourneys[0]?.name) {
+          finalHeroMs = await getLoLTournamentMatches(pastTourneys[0].name);
+        }
+
         if (!cancelled) {
-          setLoLRecentMatches(heroMs);
+          setLoLRecentMatches(finalHeroMs);
           setLoLUpcomingMatches(upcomingMs);
         }
       })
-      .catch((err) => { if (!cancelled) setLoLError(err.message); })
+      .catch(async (err) => {
+        if (cancelled) return;
+        // Liquipedia 502/rate-limit → PandaScore fallback
+        const [psRecent, psUpcoming] = await Promise.all([
+          getLoLMatchesFromPandaScore(),
+          getLoLUpcomingMatchesFromPandaScore(6),
+        ]);
+        if (!cancelled) {
+          setLoLRecentMatches(psRecent);
+          setLoLUpcomingMatches(psUpcoming);
+          if (!psRecent.length && !psUpcoming.length) setLoLError(err.message);
+        }
+      })
       .finally(() => { if (!cancelled) setLoLLoading(false); });
 
     return () => { cancelled = true; };
@@ -373,18 +395,18 @@ export default function Home({ wiki, region }) {
   const isLoL = wiki === "leagueoflegends";
 
   const tournaments = (isCS2 && cs2Tournaments.length) ? cs2Tournaments
-    : (isLoL && lolTournaments.length) ? lolTournaments
+    : isLoL ? lolTournaments
     : mockTournaments;
 
   // Hero Grand Final lookup — tüm maçlar (finished + upcoming)
   const matches = (isCS2 && cs2RecentMatches.length) ? cs2RecentMatches
-    : (isLoL && lolRecentMatches.length) ? lolRecentMatches
+    : isLoL ? lolRecentMatches
     : mockMatches;
 
-  // Recent matches display — sadece bitmiş maçlar; API'de yoksa mock'a düş
+  // Recent matches display — sadece bitmiş maçlar; LoL için mock'a düşme
   const finishedApiMatches = isLoL ? lolRecentMatches.filter(m => m.finished === 1) : [];
   const recentMatchesSource = (isCS2 && cs2RecentMatches.length) ? cs2RecentMatches
-    : (isLoL && finishedApiMatches.length) ? finishedApiMatches
+    : isLoL ? finishedApiMatches
     : mockMatches;
 
   const interviews   = getInterviews(wiki);
@@ -416,14 +438,14 @@ export default function Home({ wiki, region }) {
   const recentInterviews = interviews.slice(0, 3);
   // CS2/LoL: use live transfer data; others: use mock
   const recentTransfers  = (isCS2 && cs2Transfers.length) ? cs2Transfers.slice(0, 5)
-    : (isLoL && lolTransfers.length) ? lolTransfers.slice(0, 5)
+    : isLoL ? lolTransfers.slice(0, 5)
     : allTransfers.slice(0, 6);
   const recentTopics     = getTopics().slice(0, 5);
 
   const today = new Date().toISOString().slice(0, 10);
   // CS2/LoL: use live past tournaments from API; others: derive from mock data
   const pastTournaments = (isCS2 && cs2PastTournaments.length) ? cs2PastTournaments
-    : (isLoL && lolPastTournaments.length) ? lolPastTournaments
+    : isLoL ? lolPastTournaments
     : tournaments
         .filter(tr => tr.enddate && tr.enddate <= today)
         .sort((a, b) => b.enddate.localeCompare(a.enddate))
@@ -433,13 +455,21 @@ export default function Home({ wiki, region }) {
     return (
       <main>
         <div className="wrap" style={{ paddingTop: 80, textAlign: "center" }}>
-          <p style={{ color: "var(--text-3)", fontSize: 18 }}>CS2 turnuva verisi yükleniyor…</p>
+          <p style={{ color: "var(--text-3)", fontSize: 18 }}>{t("home.loadingCS2")}</p>
         </div>
       </main>
     );
   }
 
-  // LoL için erken return YOK — API yüklenirken mock data göster, gelince güncellenir
+  if (isLoL && lolLoading && !lolTournaments.length) {
+    return (
+      <main>
+        <div className="wrap" style={{ paddingTop: 80, textAlign: "center" }}>
+          <p style={{ color: "var(--text-3)", fontSize: 18 }}>{t("home.loadingLoL")}</p>
+        </div>
+      </main>
+    );
+  }
 
   if (isCS2 && cs2Error) {
     console.warn("Liquipedia API error (CS2), falling back to mock data:", cs2Error);

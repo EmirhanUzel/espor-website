@@ -138,10 +138,10 @@ function ApiTournamentsView({ fetchByStatus }) {
       </div>
 
       {loading ? (
-        <div className={styles.loadingState}>Yükleniyor…</div>
+        <div className={styles.loadingState}>{t("common.loading")}</div>
       ) : apiError ? (
         <div className={styles.empty} style={{ color: "var(--text-3)", fontSize: 13 }}>
-          API şu an yanıt vermiyor, lütfen biraz bekleyin.
+          {t("common.apiError")}
         </div>
       ) : tabData.length === 0 ? (
         <div className={styles.empty}>{t("tournaments.empty")}</div>
@@ -182,8 +182,8 @@ export default function TournamentsPage({ wiki = "valorant" }) {
         <div className="wrap">
           <h1 className={styles.pageTitle}>{t("tournaments.title")}</h1>
           <p className={styles.pageSubtitle}>
-            {isCS2 ? "CS2 — Tier 1 Tournaments"
-              : isLoL ? "League of Legends — Tier 1 Tournaments"
+            {isCS2 ? t("tournaments.subtitleCS2")
+              : isLoL ? t("tournaments.subtitleLoL")
               : `${tournaments.length} ${tournaments.length !== 1 ? t("tournaments.subtitle.other") : t("tournaments.subtitle.one")}`}
           </p>
         </div>

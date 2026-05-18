@@ -318,7 +318,7 @@ export default function TeamPage({ wiki }) {
   if (apiLoading) {
     return (
       <div className="wrap" style={{ paddingTop: 80, textAlign: "center", color: "var(--text-2)" }}>
-        Loading…
+        {t("common.loading")}
       </div>
     );
   }

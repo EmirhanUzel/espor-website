@@ -2007,12 +2007,14 @@ export function getTeam(name) {
   return TEAMS.find(t => t.name.toLowerCase() === decodeURIComponent(name).toLowerCase()) || null;
 }
 export function getTournaments(wiki = "valorant") {
+  if (wiki === "leagueoflegends") return [];
   return TOURNAMENTS.filter(t => t.wiki === wiki);
 }
 export function getTournament(id) {
   return TOURNAMENTS.find(t => t.id === id) || null;
 }
 export function getMatches(wiki = "valorant") {
+  if (wiki === "leagueoflegends") return [];
   return MATCHES.filter(m => m.wiki === wiki);
 }
 export function getMatch(id) {

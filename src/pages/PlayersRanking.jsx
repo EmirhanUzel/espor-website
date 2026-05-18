@@ -50,7 +50,7 @@ function PlayerRow({ rank, player, metric }) {
   return (
     <Link to={`/player/${player.id}`} className={styles.row}>
       <span className={`${styles.rank} ${rank <= 3 ? styles[`rank${rank}`] : ""}`}>#{rank}</span>
-      <div className={styles.avatar}>{player.id[0].toUpperCase()}</div>
+      <div className={styles.avatar}>{player.id?.[0]?.toUpperCase() ?? '?'}</div>
       <div className={styles.info}>
         <span className={styles.nick}>{player.id}</span>
         <span className={styles.name}>{player.name}</span>

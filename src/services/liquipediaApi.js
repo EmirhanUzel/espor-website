@@ -49,16 +49,25 @@ async function lqFetch(endpoint, params = {}) {
   // 3. Network — serialized through queue so requests don't fire in parallel
   return enqueue(async () => {
     const qs = new URLSearchParams(params).toString()
-    const res = await fetch(`${BASE}/${endpoint}?${qs}`)
-    if (res.status === 429 || res.status === 403) {
-      _blockedUntil = Date.now() + 30 * 60 * 1000
-      throw new Error(`Liquipedia API ${res.status} — blocked for 30 min`)
+    let lastErr
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)))
+      const res = await fetch(`${BASE}/${endpoint}?${qs}`)
+      if (res.status === 429 || res.status === 403) {
+        _blockedUntil = Date.now() + 30 * 60 * 1000
+        throw new Error(`Liquipedia API ${res.status} — blocked for 30 min`)
+      }
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        lastErr = new Error(`Liquipedia API ${res.status}`)
+        continue
+      }
+      if (!res.ok) throw new Error(`Liquipedia API ${res.status}`)
+      const data = await res.json()
+      _memCache.set(key, { data, ts: Date.now() })
+      lsSet(key, data)
+      return data
     }
-    if (!res.ok) throw new Error(`Liquipedia API ${res.status}`)
-    const data = await res.json()
-    _memCache.set(key, { data, ts: Date.now() })
-    lsSet(key, data)
-    return data
+    throw lastErr
   })
 }
 
@@ -1105,14 +1114,61 @@ function mapLoLMatch(m) {
       iconurl: '',
       match2players: o.match2players || [],
     })),
-    match2games: (m.match2games || []).map(g => ({
-      map: g.map || "Summoner's Rift",
-      scores: [g.score1 ?? g.scores?.[0] ?? 0, g.score2 ?? g.scores?.[1] ?? 0],
-      winner: String(g.winner ?? ''),
-      date: g.date || '',
-      length: g.length || '',
-      vod: g.vod || null,
-    })),
+    match2games: (m.match2games || []).filter(g =>
+      // Sadece oynanan game'leri göster (kazanan var veya süre var)
+      g.winner === '1' || g.winner === '2' || (g.length && g.length !== '')
+    ).map(g => {
+      let playerStats = null
+      // participants: keyed by "teamIdx_playerIdx" (e.g. "1_1", "2_3")
+      // Fallback: bazı maçlarda match.match2players altında düz liste olabilir
+      const rawParticipants = g.participants
+        || (g.match2players?.length ? Object.fromEntries(g.match2players.map((p, i) => [`${p.team || Math.floor(i / 5) + 1}_${(i % 5) + 1}`, p])) : null)
+      if (rawParticipants && Object.keys(rawParticipants).length) {
+        const team1 = [], team2 = []
+        for (const [key, p] of Object.entries(rawParticipants)) {
+          const parts = key.split('_')
+          const teamIdx = parseInt(parts[0], 10) || 1
+          const entry = {
+            name: p.player || p.name || p.link || '',
+            champion: p.champion || p.char1 || p.pick || p.heroname || p.character || '',
+            kills: Number(p.kills ?? 0),
+            deaths: Number(p.deaths ?? 0),
+            assists: Number(p.assists ?? 0),
+            cs: Number(p.cs ?? p.creepscore ?? p.minionkills ?? 0),
+            gold: Number(p.gold ?? p.totalgold ?? 0),
+            damage: Number(p.damagedone ?? p.damage ?? p.totaldamagedealt ?? 0),
+            visionScore: Number(p.visionscore ?? p.visionScore ?? p.wardsplaced ?? 0),
+          }
+          if (teamIdx === 1) team1.push(entry)
+          else team2.push(entry)
+        }
+        if (team1.length || team2.length) playerStats = { team1, team2 }
+      }
+      // Picks/bans from extradata (team1picks1..5, team1bans1..5, team2picks1..5, team2bans1..5)
+      let picks = null
+      let bans  = null
+      if (g.extradata) {
+        const ed = g.extradata
+        const t1picks = [1,2,3,4,5].map(n => ed[`team1picks${n}`]).filter(Boolean)
+        const t2picks = [1,2,3,4,5].map(n => ed[`team2picks${n}`]).filter(Boolean)
+        const t1bans  = [1,2,3,4,5].map(n => ed[`team1bans${n}`]).filter(Boolean)
+        const t2bans  = [1,2,3,4,5].map(n => ed[`team2bans${n}`]).filter(Boolean)
+        if (t1picks.length || t2picks.length) picks = { team1: t1picks, team2: t2picks }
+        if (t1bans.length  || t2bans.length)  bans  = { team1: t1bans,  team2: t2bans  }
+      }
+
+      return {
+        map: g.map || "Summoner's Rift",
+        scores: [g.score1 ?? g.scores?.[0] ?? 0, g.score2 ?? g.scores?.[1] ?? 0],
+        winner: String(g.winner ?? ''),
+        date: g.date || '',
+        length: g.length || '',
+        vod: g.vod || null,
+        playerStats,
+        picks,
+        bans,
+      }
+    }),
     wiki: 'leagueoflegends',
   }
 }
@@ -1331,6 +1387,44 @@ export async function getLoLMatchesByDate(date) {
       iconurl: iconMap[o.name] || iconMap[o.name.toLowerCase()] || iconMap[o.template] || '',
     })),
   }))
+}
+
+export async function getLoLMatchById(matchId) {
+  const data = await lqFetch('match', {
+    wiki:       'leagueoflegends',
+    conditions: `[[match2id::${matchId}]]`,
+    limit:      '1',
+  })
+  const m = data.result?.[0]
+  if (!m) return null
+  const match = mapLoLMatch(m)
+  const iconMap = await fetchLoLTeamIconMap(match.match2opponents).catch(() => ({}))
+  return {
+    ...match,
+    match2opponents: match.match2opponents.map(o => ({
+      ...o,
+      iconurl: iconMap[o.name] || iconMap[o.name.toLowerCase()] || '',
+    })),
+  }
+}
+
+export async function getCS2MatchById(matchId) {
+  const data = await lqFetch('match', {
+    wiki:       'counterstrike',
+    conditions: `[[match2id::${matchId}]]`,
+    limit:      '1',
+  })
+  const m = data.result?.[0]
+  if (!m) return null
+  const match = mapMatch(m)
+  const iconMap = await fetchTeamIconMap(match.match2opponents).catch(() => ({}))
+  return {
+    ...match,
+    match2opponents: match.match2opponents.map(o => ({
+      ...o,
+      iconurl: iconMap[o.name] || iconMap[o.name.toLowerCase()] || '',
+    })),
+  }
 }
 
 // ── LoL Team Rankings API ─────────────────────────────────────────────────────
@@ -1722,12 +1816,22 @@ export async function getLoLPlayerAllPlacements(teamNames) {
   const names = [...new Set(teamNames.filter(Boolean))]
   if (!names.length) return []
   const today = new Date().toISOString().slice(0, 10)
-  const cond  = names.map(t => `[[opponentname::${t}]]`).join(' OR ')
-  const data  = await lqFetch('placement', {
-    wiki:       'leagueoflegends',
-    conditions: `(${cond}) AND ([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[placement::1]] AND [[opponenttype::team]] AND [[date::<${today}]]`,
-    limit:      '100',
-    order:      'date desc',
-  })
-  return data.result || []
+  const CHUNK = 4
+  const chunks = []
+  for (let i = 0; i < names.length; i += CHUNK) chunks.push(names.slice(i, i + CHUNK))
+  const results = await Promise.all(chunks.map(async chunk => {
+    const cond = chunk.map(t => `[[opponentname::${t}]]`).join(' OR ')
+    try {
+      const data = await lqFetch('placement', {
+        wiki:       'leagueoflegends',
+        conditions: `(${cond}) AND ([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[placement::1]] AND [[opponenttype::team]] AND [[date::<${today}]]`,
+        limit:      '100',
+        order:      'date desc',
+      })
+      return data.result || []
+    } catch {
+      return []
+    }
+  }))
+  return results.flat()
 }

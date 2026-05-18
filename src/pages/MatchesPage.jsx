@@ -2,6 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getMatchesByDate, formatTime } from "../services/api";
 import { getCS2MatchesByDate, getLoLMatchesByDate } from "../services/liquipediaApi";
+import { getLoLMatchesFromPandaScore } from "../services/pandascoreApi";
+
+function getLoLMatchesByDateWithFallback(dateStr) {
+  return getLoLMatchesByDate(dateStr).catch(() => getLoLMatchesFromPandaScore(dateStr));
+}
 import styles from "./MatchesPage.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -213,9 +218,9 @@ function ApiMatchesView({ selectedDate, todayStr, fetchByDate, label }) {
       </div>
 
       {loading ? (
-        <EmptyState text="Yükleniyor…" />
+        <EmptyState text={t("common.loading")} />
       ) : apiError ? (
-        <EmptyState text="API şu an yanıt vermiyor, lütfen biraz bekleyin." />
+        <EmptyState text={t("common.apiError")} />
       ) : shown.length === 0 ? (
         <EmptyState text={emptyText} />
       ) : (
@@ -268,8 +273,8 @@ export default function MatchesPage({ wiki = "valorant" }) {
         <div className="wrap">
           <h1 className={styles.heroTitle}>{t("matches.title")}</h1>
           <p className={styles.heroSubtitle}>
-            {isCS2 ? "CS2 — Tier 1 & 2 Maçlar"
-              : isLoL ? "League of Legends — Tier 1 & 2 Maçlar"
+            {isCS2 ? t("matches.subtitleCS2")
+              : isLoL ? t("matches.subtitleLoL")
               : relativeLabel ? `${relativeLabel} · ${dateLabel}` : dateLabel}
           </p>
           <DateBar selected={selectedDate} todayStr={todayStr} onChange={setSelectedDate} />
@@ -280,7 +285,7 @@ export default function MatchesPage({ wiki = "valorant" }) {
         {isCS2 ? (
           <ApiMatchesView selectedDate={selectedDate} todayStr={todayStr} fetchByDate={getCS2MatchesByDate} />
         ) : isLoL ? (
-          <ApiMatchesView selectedDate={selectedDate} todayStr={todayStr} fetchByDate={getLoLMatchesByDate} />
+          <ApiMatchesView selectedDate={selectedDate} todayStr={todayStr} fetchByDate={getLoLMatchesByDateWithFallback} />
         ) : (
           <div style={{ paddingTop: 36, paddingBottom: 56 }}>
             {liveMatches.length > 0 && (

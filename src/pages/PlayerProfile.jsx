@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { getPlayer, getTeam, formatDate, formatPrize, getFlag, getMatches, getPrizeResults, getInterviews, TOURNAMENTS } from "../services/api";
 import {
   getCS2PlayerProfile, getCS2PlayerCareer, getCS2PlayerAllPlacements, getCS2TeamRecentMatches, getCS2TeamUpcomingMatches, getCS2TeamLogos, getCS2PlayerImage, getCS2PlayerMatchStats,
@@ -8,6 +8,7 @@ import {
 import styles from "./PlayerProfile.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 import { getFaceitPlayerStats } from "../services/faceitApi";
+import { getLoLPlayerChampionPoolFromPandaScore } from "../services/pandascoreApi";
 import { calcPlayerValue } from "../services/playerValuation";
 
 // ── Market Value Line Chart ────────────────────────────────────────────────────
@@ -318,13 +319,14 @@ function useLoLPlayer(id) {
   const [playerImgUrl, setPlayerImgUrl] = useState("");
   const [matchLogos,   setMatchLogos]   = useState({});
   const [matchStats,   setMatchStats]   = useState(null);
+  const [championPool, setChampionPool] = useState([]);
   const [loading,      setLoading]      = useState(true);
 
   useEffect(() => {
     if (!id) { setLoading(false); return; }
     let cancelled = false;
     setLoading(true);
-    setPlayer(null); setCareer(null); setMatches(null); setUpcoming(null); setPlacements(null); setTeamLogoUrl(""); setPlayerImgUrl(""); setMatchLogos({}); setMatchStats(null);
+    setPlayer(null); setCareer(null); setMatches(null); setUpcoming(null); setPlacements(null); setTeamLogoUrl(""); setPlayerImgUrl(""); setMatchLogos({}); setMatchStats(null); setChampionPool([]);
 
     getLoLPlayerProfile(id).then(p => {
       if (cancelled) return;
@@ -332,47 +334,67 @@ function useLoLPlayer(id) {
       setLoading(false);
       if (!p) return;
 
-      getLoLPlayerImage(p.pagename).then(url => { if (!cancelled) setPlayerImgUrl(url); });
+      getLoLPlayerImage(p.pagename)
+        .then(url => { if (!cancelled) setPlayerImgUrl(url); })
+        .catch(() => {});
 
       if (p.team) {
-        getLoLTeamRecentMatches(p.team, 20).then(m => {
-          if (cancelled) return;
-          setMatches(m);
-          setMatchStats(calcLoLFormStats(m, p.team));
-          const oppNames = [...new Set(
-            m.flatMap(match => match.match2opponents.map(o => o.name)).filter(n => n && n !== p.team)
-          )];
-          if (oppNames.length) {
-            getLoLTeamLogos(oppNames).then(logoMap => { if (!cancelled) setMatchLogos(prev => ({ ...prev, ...logoMap })); });
-          }
-        });
-        getLoLTeamUpcomingMatches(p.team, 5).then(u => {
-          if (cancelled) return;
-          setUpcoming(u);
-          const oppNames = [...new Set(
-            u.flatMap(m => m.match2opponents.map(o => o.name)).filter(n => n && n !== p.team)
-          )];
-          if (oppNames.length) {
-            getLoLTeamLogos(oppNames).then(logoMap => { if (!cancelled) setMatchLogos(prev => ({ ...prev, ...logoMap })); });
-          }
-        });
-        getLoLTeamLogos([p.team]).then(logoMap => {
-          if (!cancelled) setTeamLogoUrl(logoMap[p.team] || "");
-        });
+        getLoLTeamRecentMatches(p.team, 20)
+          .then(m => {
+            if (cancelled) return;
+            setMatches(m);
+            setMatchStats(calcLoLFormStats(m, p.team));
+            const oppNames = [...new Set(
+              m.flatMap(match => match.match2opponents.map(o => o.name)).filter(n => n && n !== p.team)
+            )];
+            if (oppNames.length) {
+              getLoLTeamLogos(oppNames)
+                .then(logoMap => { if (!cancelled) setMatchLogos(prev => ({ ...prev, ...logoMap })); })
+                .catch(() => {});
+            }
+          })
+          .catch(() => { if (!cancelled) { setMatches([]); setMatchStats(null); } });
+
+        getLoLTeamUpcomingMatches(p.team, 5)
+          .then(u => {
+            if (cancelled) return;
+            setUpcoming(u);
+            const oppNames = [...new Set(
+              u.flatMap(m => m.match2opponents.map(o => o.name)).filter(n => n && n !== p.team)
+            )];
+            if (oppNames.length) {
+              getLoLTeamLogos(oppNames)
+                .then(logoMap => { if (!cancelled) setMatchLogos(prev => ({ ...prev, ...logoMap })); })
+                .catch(() => {});
+            }
+          })
+          .catch(() => { if (!cancelled) setUpcoming([]); });
+
+        getLoLTeamLogos([p.team])
+          .then(logoMap => { if (!cancelled) setTeamLogoUrl(logoMap[p.team] || ""); })
+          .catch(() => {});
       }
 
-      getLoLPlayerCareer(p.pagename).then(c => {
-        if (cancelled) return;
-        setCareer(c);
-        const allTeams = [...new Set([p.team, ...c.map(e => e.team)].filter(Boolean))];
-        getLoLPlayerAllPlacements(allTeams).then(pl => { if (!cancelled) setPlacements(pl); });
-      });
+      getLoLPlayerChampionPoolFromPandaScore(p.pagename || id)
+        .then(pool => { if (!cancelled) setChampionPool(pool); })
+        .catch(() => {});
+
+      getLoLPlayerCareer(p.pagename)
+        .then(c => {
+          if (cancelled) return;
+          setCareer(c);
+          const allTeams = [...new Set([p.team, ...c.map(e => e.team)].filter(Boolean))];
+          getLoLPlayerAllPlacements(allTeams)
+            .then(pl => { if (!cancelled) setPlacements(pl); })
+            .catch(() => { if (!cancelled) setPlacements([]); });
+        })
+        .catch(() => { if (!cancelled) setCareer([]); });
     }).catch(() => { if (!cancelled) { setPlayer(null); setLoading(false); } });
 
     return () => { cancelled = true; };
   }, [id]);
 
-  return { player, career, matches, upcoming, placements, teamLogoUrl, playerImgUrl, matchStats, matchLogos, loading };
+  return { player, career, matches, upcoming, placements, teamLogoUrl, playerImgUrl, matchStats, matchLogos, championPool, loading };
 }
 
 // Oyuncunun career (transfer geçmişi) verisiyle placements'ı filtreler.
@@ -517,6 +539,7 @@ function filterPlacementsByCareer(placements, career) {
 export default function PlayerProfile({ wiki }) {
   const { t } = useLanguage();
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const mockPlayer = getPlayer(id);
   // wiki prop (from App.jsx active game) takes priority over mock player wiki
@@ -538,6 +561,7 @@ export default function PlayerProfile({ wiki }) {
   const matchLogos      = (isCS2 || isLoL) ? (active.matchLogos  || {}) : {};
   const upcomingMatches = (isCS2 || isLoL) ? (active.upcoming   || []) : [];
   const matchStats      = (isCS2 || isLoL) ? (active.matchStats  || null) : null;
+  const championPool    = isLoL            ? (active.championPool || []) : [];
   const faceitStats     = isCS2            ? (active.faceitStats || null) : null;
 
   // Must be before any conditional return — Rules of Hooks
@@ -551,7 +575,7 @@ export default function PlayerProfile({ wiki }) {
   if ((isCS2 || isLoL) && active.loading) {
     return (
       <div className="wrap" style={{ paddingTop: 80, textAlign: "center", color: "var(--text-2)" }}>
-        {t("common.loading") || "Loading…"}
+        {t("common.loading")}
       </div>
     );
   }
@@ -836,6 +860,38 @@ export default function PlayerProfile({ wiki }) {
             </section>
           )}
 
+          {isLoL && championPool.length > 0 && (
+            <section className={`${styles.card} ${styles.cardWide}`}>
+              <div className={styles.cardTitleRow}>
+                <h2 className={styles.cardTitle}>Top Şampiyonlar</h2>
+                <span className={styles.recentPeriodBadge}>PandaScore</span>
+              </div>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", paddingTop: 8 }}>
+                {championPool.map((c, i) => {
+                  const wr = c.games ? Math.round((c.wins / c.games) * 100) : null;
+                  return (
+                    <div key={i} style={{
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                      background: "var(--surface)", border: "1px solid var(--border)",
+                      borderRadius: 10, padding: "12px 16px", minWidth: 90,
+                    }}>
+                      {c.imageUrl
+                        ? <img src={c.imageUrl} alt={c.name} style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover" }}
+                            referrerPolicy="no-referrer" onError={e => { e.target.style.display = "none"; }} />
+                        : <div style={{ width: 44, height: 44, borderRadius: 6, background: "var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
+                            {c.name?.[0] ?? '?'}
+                          </div>
+                      }
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-1)" }}>{c.name}</span>
+                      <span style={{ fontSize: 11, color: "var(--text-3)" }}>{c.games}G · {wr != null ? `${wr}% WR` : "—"}</span>
+                      {c.kda != null && <span style={{ fontSize: 11, color: "var(--text-2)" }}>KDA {c.kda.toFixed(2)}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {player.marketvaluehistory?.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <div className={styles.cardTitleRow}>
@@ -927,13 +983,13 @@ export default function PlayerProfile({ wiki }) {
                 <Link key={match.id} to={`/match/${match.id}`} className={styles.matchRow}
                   onClick={() => isModal && setShowAllMatches(false)}>
                   <span className={isWin ? styles.matchW : styles.matchL}>{isWin ? "W" : "L"}</span>
-                  <Link to={`/team/${encodeURIComponent(opp?.name ?? '')}`} className={styles.matchOppWrap} onClick={e => e.stopPropagation()}>
+                  <div className={styles.matchOppWrap} onClick={e => { e.preventDefault(); e.stopPropagation(); navigate(`/team/${encodeURIComponent(opp?.name ?? '')}`); }}>
                     {logoUrl
                       ? <img src={logoUrl} alt={opp?.name} className={styles.matchOppLogo} referrerPolicy="no-referrer" />
                       : <div className={styles.matchOppLogoFb}>{opp?.name?.[0] ?? '?'}</div>
                     }
                     <span className={styles.matchOpp}>{opp?.name}</span>
-                  </Link>
+                  </div>
                   <span className={styles.matchScore}>{myScore} – {oppScore}</span>
                   <div className={styles.matchRight}>
                     {match.tournament && <span className={styles.matchTournament}>{match.tournament}</span>}

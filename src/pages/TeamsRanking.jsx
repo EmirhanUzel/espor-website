@@ -5,6 +5,7 @@ import { PLAYERS } from "../services/api";
 import { getCS2TeamsForRanking, getLoLTeamsForRanking } from "../services/liquipediaApi";
 import styles from "./TeamsRanking.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 // ── Algorithm ─────────────────────────────────────────────────────────────────
 export function calcESM(team, allPrizes, allMatches) {
@@ -50,13 +51,15 @@ export const OFFICIAL_SHORT = {
 };
 
 // ── Shared atoms ──────────────────────────────────────────────────────────────
-function TeamLogoImg({ url, name, imgClass, fbClass }) {
+function TeamLogoImg({ url, darkUrl, name, imgClass, fbClass }) {
+  const { theme } = useTheme();
   const [failed, setFailed] = useState(false)
-  if (!url || failed) return <div className={fbClass}>{name[0]}</div>
+  const src = (theme === "dark" && darkUrl) ? darkUrl : url;
+  if (!src || failed) return <div className={fbClass}>{name?.[0] ?? '?'}</div>
   return (
     <img
-      key={url}
-      src={url}
+      key={src}
+      src={src}
       alt={name}
       className={imgClass}
       referrerPolicy="no-referrer"
@@ -85,7 +88,7 @@ function FormDots({ form }) {
 function TeamCell({ team }) {
   return (
     <Link to={`/team/${encodeURIComponent(team.name)}`} className={styles.teamCell}>
-      <TeamLogoImg url={team.textlesslogourl} name={team.name} imgClass={styles.teamLogo} fbClass={styles.teamLogoFb} />
+      <TeamLogoImg url={team.textlesslogourl} darkUrl={team.textlesslogodarkurl} name={team.name} imgClass={styles.teamLogo} fbClass={styles.teamLogoFb} />
       <div className={styles.teamInfo}>
         <span className={styles.teamName}>{team.name}</span>
         <span className={styles.teamRegion}>{team.region}</span>
@@ -199,7 +202,7 @@ function FormSection({ teams }) {
           <Link key={team.name} to={`/team/${encodeURIComponent(team.name)}`} className={styles.formCard}>
             <div className={styles.formCardRank}>#{i + 1}</div>
             <div className={styles.formCardTeam}>
-              <TeamLogoImg url={team.textlesslogourl} name={team.name} imgClass={styles.formCardLogo} fbClass={styles.formCardLogoFb} />
+              <TeamLogoImg url={team.textlesslogourl} darkUrl={team.textlesslogodarkurl} name={team.name} imgClass={styles.formCardLogo} fbClass={styles.formCardLogoFb} />
               <div>
                 <div className={styles.formCardName}>{team.name}</div>
                 <div className={styles.formCardRegion}>{team.region}</div>
@@ -281,7 +284,7 @@ export default function TeamsRanking({ wiki }) {
           <h1 className={styles.heroTitle}>{t("teams.title")}</h1>
         </div></div>
         <div className="wrap" style={{ padding: "4rem 0", textAlign: "center", color: "var(--text-2)" }}>
-          {t("common.loading") || "Loading…"}
+          {t("common.loading")}
         </div>
       </main>
     );

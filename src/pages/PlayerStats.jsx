@@ -156,6 +156,19 @@ export default function PlayerStats() {
   const isValorant = player.wiki === "valorant";
   const isCS       = player.wiki === "counterstrike";
   const isLoL      = player.wiki === "leagueoflegends";
+
+  if (isLoL) {
+    return (
+      <div className="wrap" style={{ paddingTop: 80, textAlign: "center" }}>
+        <p style={{ color: "var(--text-3)", fontSize: 18, marginBottom: 16 }}>
+          {t("stats.lolComingSoon")}
+        </p>
+        <Link to={`/player/${id}`} style={{ color: "var(--text-1)", fontWeight: 700 }}>
+          ← {t("stats.backToProfile")}
+        </Link>
+      </div>
+    );
+  }
   const filterKey   = isLoL ? "champ" : isValorant ? "agent" : "map";
   const filterLabel = isLoL ? t("stats.filterByChampion") : isValorant ? t("stats.filterByAgent") : t("stats.filterByMap");
 

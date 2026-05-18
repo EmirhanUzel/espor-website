@@ -75,7 +75,7 @@ function AppInner() {
           <Route path="/tournaments"         element={<TournamentsPage wiki={wiki} />} />
           <Route path="/tournament/:id"    element={<TournamentPage wiki={wiki} />} />
           <Route path="/matches"           element={<MatchesPage wiki={wiki} />} />
-          <Route path="/match/:id"         element={<MatchPage />} />
+          <Route path="/match/:id"         element={<MatchPage wiki={wiki} />} />
           <Route path="/teams"             element={<TeamsRanking wiki={wiki} />} />
           <Route path="/teams/official"    element={<TeamsRankingFull type="official" />} />
           <Route path="/teams/espormax"    element={<TeamsRankingFull type="esm" />} />

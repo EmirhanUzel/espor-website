@@ -2,6 +2,7 @@ import { useState, useSyncExternalStore } from "react";
 import { Link, useParams } from "react-router-dom";
 import { addComment, formatRelative, getSnapshot, getTopic, subscribe, toggleLike } from "../services/forum";
 import { useAuth } from "../services/auth.jsx";
+import { useLanguage } from "../contexts/LanguageContext";
 import styles from "./ForumTopicPage.module.css";
 
 function useForumSnapshot() {
@@ -234,6 +235,7 @@ function NewCommentForm({ topicId }) {
 }
 
 export default function ForumTopicPage() {
+  const { t } = useLanguage();
   useForumSnapshot();
   const { topicId } = useParams();
   const topic = getTopic(topicId);
@@ -245,7 +247,7 @@ export default function ForumTopicPage() {
           <div className={styles.notFound}>
             <h2>Topic not found</h2>
             <p>This thread may have been removed.</p>
-            <Link to="/forum" className={styles.btnGhost}>← Back to forum</Link>
+            <Link to="/forum" className={styles.btnGhost}>{t("forum.backToForum")}</Link>
           </div>
         </div>
       </main>

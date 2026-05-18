@@ -12,10 +12,12 @@ import MatchCard from "../components/MatchCard";
 import GroupStandings from "../components/GroupStandings";
 import TournamentBracket from "../components/TournamentBracket";
 import styles from "./TournamentPage.module.css";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const COUNTRY_FLAG = { fr:"🇫🇷", de:"🇩🇪", us:"🇺🇸", kr:"🇰🇷", cn:"🇨🇳", mt:"🇲🇹", gb:"🇬🇧", sg:"🇸🇬" };
 
 export default function TournamentPage({ wiki }) {
+  const { t } = useLanguage();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -84,7 +86,7 @@ export default function TournamentPage({ wiki }) {
   if (apiLoading) {
     return (
       <div className="wrap" style={{ paddingTop: 80, textAlign: "center", color: "var(--text-2)" }}>
-        Yükleniyor…
+        {t("common.loading")}
       </div>
     );
   }
