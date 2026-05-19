@@ -82,7 +82,12 @@
       "Bash(copy *)",
       "WebFetch(domain:grid.helpjuice.com)",
       "WebFetch(domain:portal.grid.gg)",
-      "WebFetch(domain:www.google.com)"
+      "WebFetch(domain:www.google.com)",
+      "Bash(not exist *)",
+      "Bash(dir \"C:\\\\Users\\\\Bayar\\\\Desktop\\\\espor-website\\\\graphify-out\")",
+      "PowerShell(Get-Item \"C:\\\\Users\\\\Bayar\\\\Desktop\\\\espor-website\\\\graphify-out\\\\.graphify_chunk_03.json\" | Select-Object Name, Length; $content = Get-Content \"C:\\\\Users\\\\Bayar\\\\Desktop\\\\espor-website\\\\graphify-out\\\\.graphify_chunk_03.json\" -Raw; $parsed = $content | ConvertFrom-Json; Write-Host \"Nodes: $\\($parsed.nodes.Count\\)\"; Write-Host \"Edges: $\\($parsed.edges.Count\\)\"; Write-Host \"Hyperedges: $\\($parsed.hyperedges.Count\\)\")",
+      "Bash(python *)",
+      "PowerShell(& \\(Get-Content graphify-out\\\\.graphify_python\\) -m graphify claude install s2)"
     ]
   }
 }
