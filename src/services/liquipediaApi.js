@@ -1,4 +1,4 @@
-// Liquipedia API v3 — CS2 only
+﻿// Liquipedia API v3 â€” CS2 only
 const BASE = '/liquipedia-api'
 const _memCache = new Map()
 const CACHE_TTL = 10 * 60 * 1000   // 10 min in-memory
@@ -8,12 +8,15 @@ const LS_PREFIX = 'lq_cache_'
 // After a 429/403, back off for 30 minutes before retrying
 let _blockedUntil = 0
 
-// Serial request queue — ensures max 1 in-flight request at a time
+// Serial request queue â€” ensures max 1 in-flight request at a time
 // with a 1.1s gap between requests (Liquipedia allows 1 req/sec)
 let _queue = Promise.resolve()
 function enqueue(fn) {
-  _queue = _queue.then(() => new Promise(resolve => setTimeout(resolve, 1100))).then(fn)
-  return _queue
+  const p = _queue
+    .then(() => new Promise(resolve => setTimeout(resolve, 1100)))
+    .then(fn)
+  _queue = p.catch(() => {})  // hata olsa bile queue Ã§alÄ±ÅŸmaya devam eder
+  return p
 }
 
 function lsGet(key) {
@@ -33,7 +36,7 @@ function lsSet(key, data) {
 async function lqFetch(endpoint, params = {}) {
   if (Date.now() < _blockedUntil) {
     const minsLeft = Math.ceil((_blockedUntil - Date.now()) / 60000)
-    throw new Error(`Liquipedia API rate-limited — retry in ~${minsLeft} min`)
+    throw new Error(`Liquipedia API rate-limited â€” retry in ~${minsLeft} min`)
   }
 
   const key = endpoint + '|' + new URLSearchParams(params).toString()
@@ -42,11 +45,11 @@ async function lqFetch(endpoint, params = {}) {
   const memHit = _memCache.get(key)
   if (memHit && Date.now() - memHit.ts < CACHE_TTL) return memHit.data
 
-  // 2. localStorage cache (survives page refresh — avoids re-fetching on dev reload)
+  // 2. localStorage cache (survives page refresh â€” avoids re-fetching on dev reload)
   const lsHit = lsGet(key)
   if (lsHit) { _memCache.set(key, { data: lsHit, ts: Date.now() }); return lsHit }
 
-  // 3. Network — serialized through queue so requests don't fire in parallel
+  // 3. Network â€” serialized through queue so requests don't fire in parallel
   return enqueue(async () => {
     const qs = new URLSearchParams(params).toString()
     let lastErr
@@ -55,7 +58,7 @@ async function lqFetch(endpoint, params = {}) {
       const res = await fetch(`${BASE}/${endpoint}?${qs}`)
       if (res.status === 429 || res.status === 403) {
         _blockedUntil = Date.now() + 30 * 60 * 1000
-        throw new Error(`Liquipedia API ${res.status} — blocked for 30 min`)
+        throw new Error(`Liquipedia API ${res.status} â€” blocked for 30 min`)
       }
       if (res.status === 502 || res.status === 503 || res.status === 504) {
         lastErr = new Error(`Liquipedia API ${res.status}`)
@@ -122,6 +125,7 @@ function mapTournament(t) {
     iconurl: t.iconurl || '',
     format: t.format || '',
     patch: t.patch || '',
+    mvp: t.mvp || t.mostvaluableplayer || '',
     wiki: 'counterstrike',
     _ongoing: t.startdate <= today && t.enddate >= today,
     _upcoming: t.startdate > today,
@@ -129,7 +133,7 @@ function mapTournament(t) {
   }
 }
 
-// A "real" tournament: has confirmed participants AND runs ≤ 90 days.
+// A "real" tournament: has confirmed participants AND runs â‰¤ 90 days.
 // Filters out year-long circuits/programs (e.g. BLAST Frequent Flyers) that
 // technically span today but are not active events.
 function isDiscreteEvent(raw) {
@@ -147,10 +151,10 @@ function mapMatch(m) {
     winner: String(m.winner ?? ''),
     finished: m.finished ? 1 : 0,
     date: m.date || '',
-    match2bracketdata: m.match2bracketdata || {},
+    match2bracketdata: (() => { const r = m.match2bracketdata; if (!r) return {}; if (typeof r === 'object') return r; try { return JSON.parse(r); } catch { return {}; } })(),
     match2opponents: (m.match2opponents || []).map(o => ({
       type: o.type || 'team',
-      // Strip HTML from names (e.g. "Group B 2<sup>nd</sup> Place" → "Group B 2nd Place")
+      // Strip HTML from names (e.g. "Group B 2<sup>nd</sup> Place" â†’ "Group B 2nd Place")
       name: (o.name || o.template || '').replace(/<[^>]+>/g, '').trim(),
       template: o.template || '',
       score: o.score ?? 0,
@@ -170,8 +174,8 @@ function mapMatch(m) {
 }
 
 // Returns featured CS2 tournaments for the hero banner:
-// Slide 1 — currently ongoing Tier 1 event (e.g. PGL Astana 2026)
-// Slide 2+ — upcoming Tier 1 / Major events
+// Slide 1 â€” currently ongoing Tier 1 event (e.g. PGL Astana 2026)
+// Slide 2+ â€” upcoming Tier 1 / Major events
 export async function getCS2FeaturedTournaments() {
   const today = new Date().toISOString().slice(0, 10)
   const twoWeeksAgo = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10)
@@ -279,7 +283,7 @@ export async function getCS2OngoingMatches(tournamentNames) {
     )
 }
 
-// Maps local team name → Liquipedia pagename for teams where names don't match exactly.
+// Maps local team name â†’ Liquipedia pagename for teams where names don't match exactly.
 // Extend this map whenever a new team's logo fails to resolve via the default derivation.
 const TEAM_PAGENAMES = {
   'NAVI':       'Natus_Vincere',
@@ -287,9 +291,9 @@ const TEAM_PAGENAMES = {
   'Heroic':     'HEROIC',
 }
 
-// ── VRS — Valve's official GitHub repo ────────────────────────────────────────
+// â”€â”€ VRS â€” Valve's official GitHub repo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Normalises a team display name for fuzzy matching between GitHub and Liquipedia.
-// "Team Vitality" → "vitality", "Natus Vincere" → "natusvincere", "G2 Esports" → "g2"
+// "Team Vitality" â†’ "vitality", "Natus Vincere" â†’ "natusvincere", "G2 Esports" â†’ "g2"
 function _normName(n) {
   return (n || '')
     .toLowerCase()
@@ -303,7 +307,7 @@ const _VRS_TTL    = 6 * 60 * 60 * 1000   // 6-hour cache
 
 // Fetches the latest CS2 global VRS standings from Valve's official GitHub repo.
 // Returns { normalizedName: points } or null on failure.
-// Cached 6 hours in localStorage — no API key required.
+// Cached 6 hours in localStorage â€” no API key required.
 async function _fetchVRSFromGitHub() {
   try {
     const raw = localStorage.getItem(_VRS_LS_KEY)
@@ -333,7 +337,7 @@ async function _fetchVRSFromGitHub() {
     if (!mdRes.ok) return null
     const md = await mdRes.text()
 
-    // Parse markdown table: | Standing | Points | Team Name | …
+    // Parse markdown table: | Standing | Points | Team Name | â€¦
     const map = {}
     for (const line of md.split('\n')) {
       if (!line.startsWith('|') || /---/.test(line) || /standing/i.test(line)) continue
@@ -388,11 +392,11 @@ export async function getCS2TeamLogos(teamNames) {
   }
 }
 
-// Strips versioned suffix from Liquipedia templates: "team vitality 2023" → "team vitality"
+// Strips versioned suffix from Liquipedia templates: "team vitality 2023" â†’ "team vitality"
 const _stripVersion = tpl =>
   (tpl || '').trim().replace(/\s+(?:[a-z]{3}\s+)?\d{4}(?:\s+\d{2})?$/, '').trim()
 
-// ── eSPORMAX Algorithm ────────────────────────────────────────────────────────
+// â”€â”€ eSPORMAX Algorithm â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Score based on last 5 tournament placements. Factors: placement, tier, recency, major bonus.
 const _ESM_PTS = {
   '1': 100, '2': 75,
@@ -467,11 +471,11 @@ function _mapApiTeam(t, vrsMap) {
 }
 
 // Fetches the top CS2 teams from Liquipedia for the rankings page.
-// - Team list & ESM: Tier 1+2 placements (12 months) — dynamic, always current.
+// - Team list & ESM: Tier 1+2 placements (12 months) â€” dynamic, always current.
 // - Logos, earnings, region: Liquipedia team API.
 // - Form: recent finished Tier 1+2 matches (3 months).
 // - VRS points: Valve's official GitHub repo (cached 6 h, no key needed).
-// Teams sorted VRS desc → earnings desc.
+// Teams sorted VRS desc â†’ earnings desc.
 export async function getCS2TeamsForRanking(limit = 30) {
   const today           = new Date().toISOString().slice(0, 10)
   const twelveMonthsAgo = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10)
@@ -479,7 +483,7 @@ export async function getCS2TeamsForRanking(limit = 30) {
 
   const vrsPromise = _fetchVRSFromGitHub()
 
-  // 1. Tier 1+2 placements (12 months) — used for team discovery AND ESM calculation
+  // 1. Tier 1+2 placements (12 months) â€” used for team discovery AND ESM calculation
   const placements = await lqFetch('placement', {
     wiki:       'counterstrike',
     conditions: `([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[date::>${twelveMonthsAgo}]] AND [[date::<${today}]] AND [[opponenttype::team]] AND [[opponentname::!TBD]]`,
@@ -560,7 +564,7 @@ async function fetchTeamIconMap(opponents) {
     const names     = [...new Set(opponents.map(o => o.name).filter(Boolean))]
     const templates = [...new Set(opponents.map(o => o.template).filter(Boolean))]
 
-    // Query by name, pagename (spaces→underscores, handles case), and template
+    // Query by name, pagename (spacesâ†’underscores, handles case), and template
     const conds = [
       ...names.map(n => `[[name::${n}]]`),
       ...names.map(n => `[[pagename::${n.replace(/ /g, '_')}]]`),
@@ -615,7 +619,7 @@ export async function getCS2MatchesByDate(date) {
     ...m,
     match2opponents: m.match2opponents.map(o => ({
       ...o,
-      // Try: exact name → lowercase name → template name
+      // Try: exact name â†’ lowercase name â†’ template name
       iconurl: iconMap[o.name]
             || iconMap[o.name.toLowerCase()]
             || iconMap[o.template]
@@ -624,7 +628,7 @@ export async function getCS2MatchesByDate(date) {
   }))
 }
 
-// ── CS2 Player Profile API ────────────────────────────────────────────────────
+// â”€â”€ CS2 Player Profile API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 // Fetches the player's featured photo via Liquipedia MediaWiki parse API.
 // Uses prop=properties to get metaimageurl, then derives a 400px thumbnail.
@@ -652,7 +656,7 @@ export async function getCS2PlayerImage(pagename) {
     const fullUrl = meta?.['*'] || ''
     if (!fullUrl) { localStorage.setItem(LS_KEY, JSON.stringify({ url: '', ts: Date.now() })); return '' }
 
-    // Derive 400px thumbnail: /commons/images/{hash}/{file} → /commons/images/thumb/{hash}/{file}/400px-{file}
+    // Derive 400px thumbnail: /commons/images/{hash}/{file} â†’ /commons/images/thumb/{hash}/{file}/400px-{file}
     const m = fullUrl.match(/\/commons\/images\/([a-f0-9]\/[a-f0-9]{2})\/(.+)$/)
     const thumbUrl = m
       ? `https://liquipedia.net/commons/images/thumb/${m[1]}/${m[2]}/400px-${m[2]}`
@@ -676,7 +680,7 @@ export async function getCS2PlayerProfile(id) {
   const p = data.result?.[0]
   if (!p) return null
 
-  // Normalise team name: "Team_Vitality" → "Team Vitality"
+  // Normalise team name: "Team_Vitality" â†’ "Team Vitality"
   const teamName = (p.teampagename || p.team || '').replace(/_/g, ' ')
 
   // Normalise social links: API uses "steam64ID" key, we expose it as "steam"
@@ -685,7 +689,7 @@ export async function getCS2PlayerProfile(id) {
   if (rawLinks.steam64ID && !rawLinks.steam) links.steam = rawLinks.steam64ID
   delete links.steam64ID
 
-  // FACEIT player UUID — faceitdb.com/profile/faceit/{uuid}
+  // FACEIT player UUID â€” faceitdb.com/profile/faceit/{uuid}
   const faceitId = rawLinks.faceitdb
     ? (rawLinks.faceitdb.match(/faceit\/([a-f0-9-]{36})/)?.[1] || null)
     : null
@@ -796,7 +800,7 @@ export async function getCS2TeamRecentMatches(teamName, limit = 30) {
     .slice(0, limit)
 }
 
-// Fetches last N finished matches for map win rate stats — direct opponent filter.
+// Fetches last N finished matches for map win rate stats â€” direct opponent filter.
 export async function getCS2TeamMapMatches(teamName, limit = 30) {
   if (!teamName) return []
   const teamLow    = teamName.toLowerCase()
@@ -906,19 +910,124 @@ export async function getCS2TournamentByPagename(pagename) {
   return t ? mapTournament(t) : null
 }
 
+// Returns MVP player name for a tournament from Liquipedia's award table, or null.
+export async function getCS2TournamentMVP(tournamentName) {
+  if (!tournamentName) return null
+  try {
+    const data = await lqFetch('award', {
+      wiki:       'counterstrike',
+      conditions: `[[tournament::${tournamentName}]]`,
+      limit:      '10',
+    })
+    console.log('[MVP award raw]', JSON.stringify(data?.result?.slice(0,3)))
+    if (!data?.result?.length) return null
+    // MVP tipini bul â€” "mvp", "most valuable player" gibi
+    const mvpRow = data.result.find(r => {
+      const type = (r.type || r.award || r.name || '').toLowerCase()
+      return type.includes('mvp') || type.includes('valuable') || type.includes('star')
+    }) || data.result[0]
+    return mvpRow?.player || mvpRow?.recipient || mvpRow?.name || null
+  } catch (e) {
+    console.log('[MVP award error]', e.message)
+    return null
+  }
+}
+
+// Returns sorted prize distribution rows (with logos) for a tournament.
+export async function getCS2TournamentPrizes(tournamentName) {
+  if (!tournamentName) return []
+  const data = await lqFetch('placement', {
+    wiki:       'counterstrike',
+    conditions: `[[tournament::${tournamentName}]] AND [[opponenttype::team]]`,
+    limit:      '16',
+    order:      'placement asc',
+  })
+  const rows = (data.result || [])
+    .filter(p => p.opponentname && p.placement)
+    .map(p => ({
+      placement: String(p.placement).trim(),
+      team:      p.opponentname,
+      prize:     typeof p.prizemoney === 'string'
+                   ? Number(p.prizemoney.replace(/[^0-9]/g, '')) || 0
+                   : (p.prizemoney || 0),
+      logoUrl:   '',
+    }))
+  rows.sort((a, b) => {
+    const n = s => parseInt(s.split(/[-â€“]/)[0]) || 99
+    return n(a.placement) - n(b.placement)
+  })
+  // Batch-fetch logos
+  const teamNames = [...new Set(rows.map(r => r.team))]
+  const logos = await getCS2TeamLogos(teamNames).catch(() => ({}))
+  rows.forEach(r => { r.logoUrl = logos[r.team] || '' })
+  return rows
+}
+
+// Returns { name, logoUrl } of 1st-place team for a finished tournament, or null.
+export async function getCS2TournamentWinner(tournamentName) {
+  if (!tournamentName) return null
+  const data = await lqFetch('placement', {
+    wiki:       'counterstrike',
+    conditions: `[[tournament::${tournamentName}]] AND [[placement::1]] AND [[opponenttype::team]]`,
+    limit:      '1',
+  })
+  const p = data.result?.[0]
+  if (!p?.opponentname) return null
+  const logos = await getCS2TeamLogos([p.opponentname])
+  return { name: p.opponentname, logoUrl: logos[p.opponentname] || '' }
+}
+
 // Fetches finished + upcoming matches for a tournament by its display name
 export async function getCS2TournamentMatches(tournamentName) {
   if (!tournamentName) return []
   const data = await lqFetch('match', {
-    wiki: 'counterstrike',
+    wiki:       'counterstrike',
     conditions: `[[tournament::${tournamentName}]]`,
-    limit: '50',
-    order: 'date desc',
+    limit:      '50',
+    order:      'date asc',
   })
   return (data.result || []).map(mapMatch)
 }
 
-// ── CS2 Team Page API ─────────────────────────────────────────────────────────
+// CS2 Major sub-event isimleri — sırayla denenir
+const GROUP_STAGE_SUFFIXES = [
+  'Challengers_Stage', 'Legends_Stage',
+  'Opening_Stage', 'Group_Stage', 'Swiss_Stage',
+  'Play-In', 'Qualifier',
+]
+
+// Grup aşaması maçları — bilinen sub-event isimlerini deneyerek bulur
+export async function getCS2GroupStageMatches(tournamentName, pagename) {
+  if (!tournamentName || !pagename) return []
+
+  // Olası sub-event pagename'lerini oluştur
+  const candidates = GROUP_STAGE_SUFFIXES.map(s => `${pagename}/${s}`)
+  const cond = candidates.map(p => `[[pagename::${p}]]`).join(' OR ')
+
+  const subData = await lqFetch('tournament', {
+    wiki:       'counterstrike',
+    conditions: cond,
+    limit:      '10',
+    order:      'startdate asc',
+  }).catch(() => ({ result: [] }))
+
+  const subNames = (subData.result || []).map(t => t.name).filter(Boolean)
+  console.log('[GroupStage] sub-events found:', subNames)
+  if (!subNames.length) return []
+
+  const matchCond = subNames.map(n => `[[tournament::${n}]]`).join(' OR ')
+  const data = await lqFetch('match', {
+    wiki:       'counterstrike',
+    conditions: matchCond,
+    limit:      '200',
+    order:      'date asc',
+  })
+  const matches = (data.result || []).map(m => ({ ...mapMatch(m), stageLabel: m.tournament || '' }))
+  console.log('[GroupStage] matches:', matches.length)
+  return matches
+}
+
+// â”€â”€ CS2 Team Page API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const ROLE_DISPLAY = {
   awp: 'AWPer', rifle: 'Rifler', igl: 'IGL', support: 'Support',
@@ -1030,8 +1139,8 @@ export async function getCS2TeamTransfersAPI(teamName, limit = 15) {
 }
 
 // Resolves ongoing + upcoming tournaments for a team.
-// Strategy 1 (primary): participant table — has confirmed registrations including future events.
-// Strategy 2 (fallback): placement table (past 60 days) — catches ongoing events.
+// Strategy 1 (primary): participant table â€” has confirmed registrations including future events.
+// Strategy 2 (fallback): placement table (past 60 days) â€” catches ongoing events.
 // Strategy 3 (fallback): tournament names from already-fetched upcoming matches.
 async function _resolveTeamEvents(wiki, teamName, fallbackTournNames = []) {
   if (!teamName) return []
@@ -1080,9 +1189,9 @@ export async function getLoLTeamOngoingEvents(teamName, fallbackTournNames = [])
   return _resolveTeamEvents('leagueoflegends', teamName, fallbackTournNames)
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ── League of Legends — Liquipedia API v3
-// ═══════════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// â”€â”€ League of Legends â€” Liquipedia API v3
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // Same shared lqFetch / cache / queue as CS2 above.
 // wiki parameter is 'leagueoflegends' throughout.
 
@@ -1105,7 +1214,7 @@ function mapLoLMatch(m) {
     winner: String(m.winner ?? ''),
     finished: m.finished ? 1 : 0,
     date: m.date || '',
-    match2bracketdata: m.match2bracketdata || {},
+    match2bracketdata: (() => { const r = m.match2bracketdata; if (!r) return {}; if (typeof r === 'object') return r; try { return JSON.parse(r); } catch { return {}; } })(),
     match2opponents: (m.match2opponents || []).map(o => ({
       type: o.type || 'team',
       name: (o.name || o.template || '').replace(/<[^>]+>/g, '').trim(),
@@ -1115,12 +1224,12 @@ function mapLoLMatch(m) {
       match2players: o.match2players || [],
     })),
     match2games: (m.match2games || []).filter(g =>
-      // Sadece oynanan game'leri göster (kazanan var veya süre var)
+      // Sadece oynanan game'leri gÃ¶ster (kazanan var veya sÃ¼re var)
       g.winner === '1' || g.winner === '2' || (g.length && g.length !== '')
     ).map(g => {
       let playerStats = null
       // participants: keyed by "teamIdx_playerIdx" (e.g. "1_1", "2_3")
-      // Fallback: bazı maçlarda match.match2players altında düz liste olabilir
+      // Fallback: bazÄ± maÃ§larda match.match2players altÄ±nda dÃ¼z liste olabilir
       const rawParticipants = g.participants
         || (g.match2players?.length ? Object.fromEntries(g.match2players.map((p, i) => [`${p.team || Math.floor(i / 5) + 1}_${(i % 5) + 1}`, p])) : null)
       if (rawParticipants && Object.keys(rawParticipants).length) {
@@ -1200,9 +1309,9 @@ async function fetchLoLTeamIconMap(opponents) {
   } catch { return {} }
 }
 
-// ── LoL Tournament API ────────────────────────────────────────────────────────
+// â”€â”€ LoL Tournament API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// Turnuva ismine göre bilinen Liquipedia banner URL'si döner
+// Turnuva ismine gÃ¶re bilinen Liquipedia banner URL'si dÃ¶ner
 function _lolBannerFallback(name) {
   const n = (name || '').toLowerCase()
   if (n.includes('msi') || n.includes('mid-season'))
@@ -1337,7 +1446,7 @@ export async function getLoLOngoingMatches(tournamentNames) {
     .filter(m => m.match2opponents[0]?.name && m.match2opponents[1]?.name && !m.date.startsWith('0000'))
 }
 
-// Yaklaşan tier 1-2 LoL maçlarını çeker (tüm turnuvalardan, tier'a göre sıralı)
+// YaklaÅŸan tier 1-2 LoL maÃ§larÄ±nÄ± Ã§eker (tÃ¼m turnuvalardan, tier'a gÃ¶re sÄ±ralÄ±)
 export async function getLoLNextMatches(limit = 6) {
   const now = new Date().toISOString().replace('T', ' ').slice(0, 19)
   const weekAhead = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
@@ -1353,13 +1462,13 @@ export async function getLoLNextMatches(limit = 6) {
     .map(mapLoLMatch)
     .filter(m => m.match2opponents[0]?.name && m.match2opponents[1]?.name && !m.date.startsWith('0000'))
 
-  // Tier 1 önce, sonra tier 2
+  // Tier 1 Ã¶nce, sonra tier 2
   return matches.sort((a, b) =>
     Number(a.liquipediatier) - Number(b.liquipediatier) || a.date.localeCompare(b.date)
   )
 }
 
-// ── LoL Match API ─────────────────────────────────────────────────────────────
+// â”€â”€ LoL Match API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getLoLMatchesByDate(date) {
   const d = new Date(date + 'T00:00:00Z')
@@ -1427,9 +1536,9 @@ export async function getCS2MatchById(matchId) {
   }
 }
 
-// ── LoL Team Rankings API ─────────────────────────────────────────────────────
+// â”€â”€ LoL Team Rankings API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// Points from Worlds/MSI placements — LoL equivalent of VRS circuit points.
+// Points from Worlds/MSI placements â€” LoL equivalent of VRS circuit points.
 function _calcLoLCircuit(placements) {
   const pts    = { '1': 100, '2': 75, '3': 50, '3-4': 50, '5': 25, '5-8': 25, '9-12': 10, '13-16': 5 }
   const tierW  = { '1': 1.0, '2': 0.5 }
@@ -1454,7 +1563,7 @@ export async function getLoLTeamsForRanking(limit = 30) {
 
   const threeMonthsAgo = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10)
 
-  // 1. GPR listesini çek — takım adları ve puanlar buradan geliyor
+  // 1. GPR listesini Ã§ek â€” takÄ±m adlarÄ± ve puanlar buradan geliyor
   const [gprList, rankMap, matchData] = await Promise.all([
     getLoLGPRList().catch(() => null),
     getLoLRankPoints().catch(() => null),
@@ -1467,18 +1576,18 @@ export async function getLoLTeamsForRanking(limit = 30) {
   ])
 
   if (!gprList?.length) {
-    console.log('[LoL] GPR list empty — falling back to placement-based ranking')
+    console.log('[LoL] GPR list empty â€” falling back to placement-based ranking')
     return []
   }
 
-  // GPR'deki ilk `limit` takımla çalış
+  // GPR'deki ilk `limit` takÄ±mla Ã§alÄ±ÅŸ
   const topTeams = gprList.slice(0, limit)
 
-  // 2. Liquipedia'dan logo/bölge/kazanç çek — isimle ara
-  // Her takım adının birden fazla varyantını dene
+  // 2. Liquipedia'dan logo/bÃ¶lge/kazanÃ§ Ã§ek â€” isimle ara
+  // Her takÄ±m adÄ±nÄ±n birden fazla varyantÄ±nÄ± dene
   const nameConditions = topTeams.flatMap(({ name }) => [
     `[[name::${name}]]`,
-    // Title-case versiyonu da dene (BILIBILI GAMING → Bilibili Gaming)
+    // Title-case versiyonu da dene (BILIBILI GAMING â†’ Bilibili Gaming)
     `[[name::${toTitleCase(name)}]]`,
   ])
   const uniqueConds = [...new Set(nameConditions)]
@@ -1489,14 +1598,14 @@ export async function getLoLTeamsForRanking(limit = 30) {
     limit:      String(limit * 2),
   })
 
-  // Liquipedia takımlarını isimle indeksle (normalize ederek)
+  // Liquipedia takÄ±mlarÄ±nÄ± isimle indeksle (normalize ederek)
   const liqByNorm = {}
   for (const t of teamData.result || []) {
     liqByNorm[_normLolName(t.name)]     = t
     liqByNorm[_normLolName(t.pagename)] = t
   }
 
-  // 3. Her GPR takımını Liquipedia verisiyle birleştir
+  // 3. Her GPR takÄ±mÄ±nÄ± Liquipedia verisiyle birleÅŸtir
   return topTeams
     .map(({ name, league, score }) => {
       const normN = _normLolName(name)
@@ -1593,7 +1702,7 @@ export async function getLoLTransfers(limit = 5) {
   return data.result || []
 }
 
-// ── LoL Team Page API ─────────────────────────────────────────────────────────
+// â”€â”€ LoL Team Page API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getLoLTeamByName(name) {
   const pagename = name.replace(/ /g, '_')
@@ -1721,7 +1830,7 @@ export async function getLoLTeamUpcomingMatches(teamName, limit = 5) {
     .slice(0, limit)
 }
 
-// ── LoL Player Profile API ────────────────────────────────────────────────────
+// â”€â”€ LoL Player Profile API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getLoLPlayerImage(pagename) {
   const LS_KEY = `lq_lolimg_${pagename}`
@@ -1835,3 +1944,4 @@ export async function getLoLPlayerAllPlacements(teamNames) {
   }))
   return results.flat()
 }
+

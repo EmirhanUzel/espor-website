@@ -42,6 +42,16 @@ export default defineConfig(({ mode }) => {
             })
           },
         },
+        '/grid-api': {
+          target: 'https://api-op.grid.gg',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/grid-api/, ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.setHeader('x-api-key', env.VITE_GRID_API_KEY)
+            })
+          },
+        },
         // LoL Esports — general gateway (teams, standings, schedule)
         '/lolesports-api': {
           target: 'https://esports-api.lolesports.com/persisted/gw',

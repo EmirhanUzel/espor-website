@@ -1,8 +1,34 @@
 /* Hero */
 .hero {
-  background: var(--hero-bg);
+  position: relative;
+  overflow: hidden;
+  background: #0d0d18;
   color: #fff;
   padding: 48px 0 44px;
+}
+
+.heroBgImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: blur(40px) brightness(0.2) saturate(1.3);
+  transform: scale(1.12);
+  z-index: 0;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, transparent 50%, rgba(0,0,0,0.4) 100%);
+  z-index: 1;
+}
+
+.heroInner {
+  position: relative;
+  z-index: 2;
 }
 
 .heroTop {
@@ -74,16 +100,57 @@
   color: rgba(255,255,255,0.6);
 }
 
+.championBlock {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 16px 20px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-lg);
+}
+
+.championTeam {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.championLogo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.championName {
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+  font-family: var(--font-display);
+}
+
+.championLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+
 .heroStats {
   display: flex;
   gap: 24px;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .heroStat {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 4px;
   padding: 16px 20px;
   background: rgba(255,255,255,0.07);
@@ -111,6 +178,235 @@
 /* Sections */
 .section {
   padding: 48px 0 0;
+}
+
+/* ── Group Stage ── */
+.groupRounds {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.groupRound {
+  flex-shrink: 0;
+  width: 220px;
+}
+
+.groupRoundLabel {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.groupRoundMatches {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.groupCard {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.groupCard:hover { border-color: var(--text-3); }
+
+.groupTeam {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  min-height: 34px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.groupTeam:first-child { border-bottom: 1px solid var(--border); }
+
+.groupLogo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.groupTeam span:nth-child(2) {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.groupScore {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-4);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.groupWin { background: rgba(75,170,130,0.05); }
+.groupWin span { color: var(--text-1); font-weight: 700; }
+.groupWin .groupScore { color: #4baa82; }
+.groupLose span { color: var(--text-4); }
+
+/* ── MVP Player ── */
+.mvpCard {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 28px 0 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.mvpCard:hover { border-color: var(--text-3); }
+
+.mvpPhoto {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  background: var(--hero-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.mvpPhoto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+.mvpPhoto span {
+  font-size: 36px;
+  font-weight: 900;
+  color: #fff;
+  font-family: var(--font-display);
+}
+
+.mvpInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mvpName {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text-1);
+  font-family: var(--font-display);
+}
+
+.mvpLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+/* ── Prize Distribution — Pyramid ── */
+.pyramid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pyramidRow {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pyramidCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 16px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-width: 120px;
+  flex: 1;
+  max-width: 180px;
+  transition: background 0.15s, border-color 0.15s;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.pyramidCard:hover { background: var(--bg); border-color: var(--text-3); }
+
+.pyramidCardFirst {
+  max-width: 240px;
+  padding: 20px 24px 18px;
+}
+.pyramidCardFirst .pyramidLogo {
+  width: 64px;
+  height: 64px;
+}
+.pyramidCardFirst .pyramidLogo img { width: 44px; height: 44px; }
+.pyramidCardFirst .pyramidTeam { font-size: 16px; }
+.pyramidCardFirst .pyramidPrize { font-size: 15px; }
+
+.pyramidLogo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.pyramidLogo img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  mix-blend-mode: normal;
+}
+.pyramidLogo span {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--text-1);
+}
+
+.pyramidTeam {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-1);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.pyramidPrize {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-2);
+}
+
+.pyramidPlacement {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-4);
 }
 
 .sectionTitle {

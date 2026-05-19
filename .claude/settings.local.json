@@ -79,7 +79,10 @@
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)\\)\")",
       "Bash(npx vite *)",
       "Bash(gh api *)",
-      "Bash(copy *)"
+      "Bash(copy *)",
+      "WebFetch(domain:grid.helpjuice.com)",
+      "WebFetch(domain:portal.grid.gg)",
+      "WebFetch(domain:www.google.com)"
     ]
   }
 }
