@@ -833,6 +833,40 @@
 .csSwingNeg { color: var(--danger); font-weight: 800; }
 .csSwingZero { color: var(--text-4); font-weight: 700; }
 
+/* LoL stat table — same layout as CS2 but without CS2-specific columns */
+.lolStatTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.lolStatTable th {
+  text-align: right;
+  padding: 8px 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.lolStatTable th:first-child { text-align: left; }
+.lolStatTable td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.lolStatTable td:first-child {
+  text-align: left;
+  font-weight: 800;
+  color: var(--text-1);
+  font-family: var(--font-display);
+}
+.lolStatTable tr:last-child td { border-bottom: none; }
+
 .csDetailRow {
   display: flex;
   justify-content: center;
@@ -866,4 +900,6 @@
   .csStatTable th, .csStatTable td { padding: 8px 6px; font-size: 11px; }
   .csStatTable th:nth-child(5), .csStatTable td:nth-child(5),
   .csStatTable th:nth-child(6), .csStatTable td:nth-child(6) { display: none; }
+  .lolStatTable th, .lolStatTable td { padding: 8px 6px; font-size: 11px; }
+  .lolStatTable th:nth-child(n+8), .lolStatTable td:nth-child(n+8) { display: none; }
 }

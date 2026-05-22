@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import styles from "./TournamentBracket.module.css";
+import { useLanguage } from "../contexts/LanguageContext";
 
 function parseHeader(raw) {
   if (!raw) return null;
@@ -94,6 +95,7 @@ function GroupStage({ matches, logos }) {
 }
 
 export default function TournamentBracket({ matches, groupMatches, logos = {} }) {
+  const { t } = useLanguage();
   if (!matches?.length && !groupMatches?.length) return null;
 
   // 3. lük maçını ayır
@@ -112,13 +114,20 @@ export default function TournamentBracket({ matches, groupMatches, logos = {} })
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, ms]) => ({ label: '', matches: ms }));
 
-  const COUNT_NAMES = { 1: 'Grand Final', 2: 'Semi-Final', 4: 'Quarter-Final', 8: 'Round of 16', 16: 'Round of 32' };
+  const tLabel = (key) => t(key) || key;
+  const COUNT_NAMES = {
+    1: tLabel('bracket.grandFinal'),
+    2: tLabel('bracket.semiFinal'),
+    4: tLabel('bracket.quarterFinal'),
+    8: 'Round of 16',
+    16: 'Round of 32',
+  };
   const singles = rounds.filter(r => r.matches.length === 1);
   rounds.forEach(r => {
     if (r.matches.length > 1) {
-      r.label = COUNT_NAMES[r.matches.length] || `${r.matches.length} Maç`;
+      r.label = COUNT_NAMES[r.matches.length] || t("bracket.matchCount").replace("{count}", r.matches.length);
     } else {
-      r.label = singles[singles.length - 1] === r ? 'Grand Final' : 'Semi-Final';
+      r.label = singles[singles.length - 1] === r ? tLabel('bracket.grandFinal') : tLabel('bracket.semiFinal');
     }
   });
 
@@ -134,7 +143,7 @@ export default function TournamentBracket({ matches, groupMatches, logos = {} })
 
   return (
     <div>
-      {merged.length > 0 && <div className={styles.stageTitle}>Bracket</div>}
+      {merged.length > 0 && <div className={styles.stageTitle}>{t("tournament.bracket")}</div>}
       <div className={styles.wrap}>
         <div className={styles.bracket}>
           {merged.map((round, ri) => {

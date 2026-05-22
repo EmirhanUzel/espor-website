@@ -16,8 +16,6 @@ function StatusBadge({ finished }) {
   return <span className={styles.badgeUpcoming}>Upcoming</span>;
 }
 
-// LoL'de map her zaman "Summoner's Rift" — farklı oyun sonuçları için sadece numara + kazanan yeterli
-const LOL_MAPS = ["summoner's rift", "summoner's rift"];
 function isLoLMatch(match) {
   return match.wiki === "leagueoflegends";
 }
@@ -85,13 +83,13 @@ export default function MatchCard({ match }) {
             const w2 = g.winner === "2";
 
             if (isLoL) {
-              // LoL: G numarası + kazanan takım adı
               return (
                 <div key={i} className={`${styles.gameRow} ${w1 ? styles.gameRowWin1 : w2 ? styles.gameRowWin2 : ""}`}>
                   <span className={styles.gameNum}>G{i + 1}</span>
                   <span className={`${styles.gameLoLWinner} ${w1 ? styles.gameLoLWin : w2 ? styles.gameLoLLose : ""}`}>
                     {w1 ? opp1?.name : w2 ? opp2?.name : "—"}
                   </span>
+                  {g.length && <span className={styles.mapLen}>{g.length}</span>}
                 </div>
               );
             }

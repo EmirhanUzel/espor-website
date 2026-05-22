@@ -20,13 +20,20 @@ function lsSet(key, data) {
 }
 
 async function fetchWikitext() {
-  const res = await fetch(
-    'https://liquipedia.net/leagueoflegends/api.php?action=parse&page=Global_Power_Rankings&prop=wikitext&format=json&origin=*',
-    { headers: { 'User-Agent': 'EsporMax/1.0 (emiruzel01@gmail.com)' } }
-  )
-  if (!res.ok) throw new Error(`MediaWiki ${res.status}`)
-  const json = await res.json()
-  return json?.parse?.wikitext?.['*'] || ''
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(
+        'https://liquipedia.net/leagueoflegends/api.php?action=parse&page=Global_Power_Rankings&prop=wikitext&format=json&origin=*',
+        { headers: { 'User-Agent': 'EsporMax/1.0 (espormax-bot)' } }
+      )
+      if (!res.ok) throw new Error(`MediaWiki ${res.status}`)
+      const json = await res.json()
+      return json?.parse?.wikitext?.['*'] || ''
+    } catch (e) {
+      if (attempt === 1) throw e
+      await new Promise(r => setTimeout(r, 1500))
+    }
+  }
 }
 
 function parseGPR(wikitext) {

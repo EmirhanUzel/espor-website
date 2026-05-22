@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getPlayer, getTeam, formatDate, formatPrize, getFlag, getMatches, getPrizeResults, getInterviews, TOURNAMENTS } from "../services/api";
 import {
@@ -12,8 +12,10 @@ import { getLoLPlayerChampionPoolFromPandaScore } from "../services/pandascoreAp
 import { calcPlayerValue } from "../services/playerValuation";
 
 // ── Market Value Line Chart ────────────────────────────────────────────────────
+let _mvGradCounter = 0;
 function MarketValueChart({ history, current }) {
   const { t } = useLanguage();
+  const gradId = useState(() => `mvGrad-${++_mvGradCounter}`)[0];
   if (!history?.length) return null;
   const W = 560, H = 130, padX = 16, padY = 20;
 
@@ -46,12 +48,12 @@ function MarketValueChart({ history, current }) {
     <div className={styles.mvChartWrap}>
       <svg viewBox={`0 0 ${W} ${H + padY + 32}`} width="100%" style={{ display: "block", overflow: "visible" }}>
         <defs>
-          <linearGradient id="mvGrad" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--text-1)" stopOpacity="0.12" />
             <stop offset="100%" stopColor="var(--text-1)" stopOpacity="0.01" />
           </linearGradient>
         </defs>
-        <path d={areaPath} fill="url(#mvGrad)" />
+        <path d={areaPath} fill={`url(#${gradId})`} />
         <path d={linePath} fill="none" stroke="var(--text-1)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         {pts.map((pt, i) => (
           <g key={i}>
@@ -101,7 +103,7 @@ function EarningsChart({ data }) {
   );
 }
 
-const ALLOWED_SOCIALS = ["twitter", "x", "instagram", "steam", "twitch"];
+const ALLOWED_SOCIALS = ["twitter", "x", "instagram", "steam", "twitch", "youtube", "weibo", "bilibili", "lolpros", "opgg"];
 
 function SocialIcon({ platform }) {
   const icons = {
@@ -467,6 +469,7 @@ function fmtMV(val) {
 }
 
 function AuroraPlayerMVLine({ data }) {
+  const gradId = useState(() => `playerMvGrad-${++_mvGradCounter}`)[0];
   const entries = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
   if (entries.length < 2) return null;
   const vals  = entries.map(([, v]) => v);
@@ -488,7 +491,7 @@ function AuroraPlayerMVLine({ data }) {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className={styles.mvLineSvg}>
       <defs>
-        <linearGradient id="playerMvGrad" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%"   stopColor="var(--text-1)" stopOpacity="0.18" />
           <stop offset="100%" stopColor="var(--text-1)" stopOpacity="0" />
         </linearGradient>
@@ -497,7 +500,7 @@ function AuroraPlayerMVLine({ data }) {
         const y = (PAD.t + iH - ((v - min) / range) * iH).toFixed(1);
         return <line key={i} x1={PAD.l} y1={y} x2={W - PAD.r} y2={y} stroke="var(--border)" strokeDasharray="3,3" />;
       })}
-      <path d={areaPath} fill="url(#playerMvGrad)" />
+      <path d={areaPath} fill={`url(#${gradId})`} />
       <path d={linePath} fill="none" stroke="var(--text-1)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
       {pts.map((p, i) => (
         <circle key={i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="4" fill="var(--text-1)" stroke="var(--bg)" strokeWidth="2" />
@@ -571,6 +574,48 @@ export default function PlayerProfile({ wiki }) {
   const [earningsOffset,  setEarningsOffset]  = useState(0);
   const MATCHES_PER_PAGE = 10;
 
+  // These must also be before early returns (Rules of Hooks)
+  const _isApiWiki = isCS2 || isLoL;
+  const _teamPrizes = useMemo(() => {
+    if (!player) return [];
+    if (_isApiWiki) {
+      return filterPlacementsByCareer(active.placements || [], active.career).map(p => ({
+        placement: p.placement || "1", qualifier: p.tournament || "",
+        date: p.date || p.startdate || "", prizemoney: p.prizemoney || 0,
+        opponentname: p.opponentname || "", iconurl: p.iconurl || "",
+        icondarkurl: p.icondarkurl || p.iconurl || "",
+      }));
+    }
+    return getPrizeResults(player.wiki)
+      .filter(p => p.opponentname === player.teampagename && p.placement === "1")
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [player, _isApiWiki, active.placements, active.career]);
+
+  const _esmValuation = isCS2 && player
+    ? calcPlayerValue({ player, faceitStats, placements: _teamPrizes })
+    : null;
+
+  useEffect(() => {
+    if (_esmValuation && player?.id) {
+      try {
+        localStorage.setItem(
+          `esm_val_${player.id}`,
+          JSON.stringify({ usd: _esmValuation.usd, value: _esmValuation.value, ts: Date.now() })
+        );
+      } catch {}
+    }
+  }, [_esmValuation, player?.id]);
+
+  const _playerInterviews = useMemo(() => {
+    if (!player) return [];
+    const pagename = (player.pagename || player.id || '').toLowerCase();
+    const mock = PLAYER_MOCK_NEWS[pagename] || [];
+    const api = _isApiWiki
+      ? []
+      : getInterviews(player.wiki).filter(i => i.pagename === player.id).sort((a, b) => new Date(b.date) - new Date(a.date));
+    return [...mock, ...api].sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [player?.pagename, player?.id, player?.wiki, _isApiWiki]);
+
   // Loading state (CS2 and LoL)
   if ((isCS2 || isLoL) && active.loading) {
     return (
@@ -589,7 +634,10 @@ export default function PlayerProfile({ wiki }) {
     );
   }
 
-  const isApiWiki = isCS2 || isLoL;
+  const isApiWiki = _isApiWiki;
+  const teamPrizes = _teamPrizes;
+  const esmValuation = _esmValuation;
+  const playerInterviews = _playerInterviews;
 
   // For non-API wikis: use mock data
   const mockTeam = !isApiWiki ? getTeam(player.teampagename) : null;
@@ -605,46 +653,6 @@ export default function PlayerProfile({ wiki }) {
         .filter(m => m.match2opponents.some(o => o.name === player.teampagename))
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .slice(0, 5);
-
-  // API: already filtered to placement=1; mock: filter client-side
-  const teamPrizes = isApiWiki
-    ? filterPlacementsByCareer(active.placements || [], active.career)
-        .map(p => ({
-        placement:    p.placement    || "1",
-        qualifier:    p.tournament   || "",
-        date:         p.date || p.startdate || "",
-        prizemoney:   p.prizemoney   || 0,
-        opponentname: p.opponentname || "",
-        iconurl:      p.iconurl      || "",
-        icondarkurl:  p.icondarkurl  || p.iconurl || "",
-      }))
-    : getPrizeResults(player.wiki)
-        .filter(p => p.opponentname === player.teampagename && p.placement === "1")
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  // ESM Player Value — CS2 oyuncuları için (FACEIT olmadan da hesaplanır)
-  const esmValuation = isCS2
-    ? calcPlayerValue({ player, faceitStats, placements: teamPrizes })
-    : null;
-
-  // Hesaplanan değeri cache'e yaz — takım sayfası buradan okur
-  if (esmValuation && player?.id) {
-    try {
-      localStorage.setItem(
-        `esm_val_${player.id}`,
-        JSON.stringify({ usd: esmValuation.usd, value: esmValuation.value, ts: Date.now() })
-      );
-    } catch {}
-  }
-
-  const playerInterviews = (() => {
-    const pagename = (player.pagename || player.id || '').toLowerCase();
-    const mock = PLAYER_MOCK_NEWS[pagename] || [];
-    const api  = isApiWiki
-      ? []
-      : getInterviews(player.wiki).filter(i => i.pagename === player.id).sort((a, b) => new Date(b.date) - new Date(a.date));
-    return [...mock, ...api].sort((a, b) => new Date(b.date) - new Date(a.date));
-  })();
 
   // Team display for hero
   const teamName    = player.teampagename || player.team || "";
@@ -800,9 +808,11 @@ export default function PlayerProfile({ wiki }) {
                   <span className={styles.recentPeriodBadge}>
                     {player.recentstats.period} · {player.recentstats.games} {player.recentstats.gamesLabel}
                   </span>
-                  <Link to={`/player/${player.id}/stats`} className={styles.detailLink}>
-                    {t("player.viewDetails")}
-                  </Link>
+                  {!isLoL && (
+                    <Link to={`/player/${player.id}/stats`} className={styles.detailLink}>
+                      {t("player.viewDetails")}
+                    </Link>
+                  )}
                 </div>
               </div>
               <RecentStats stats={player.recentstats} />
@@ -848,11 +858,11 @@ export default function PlayerProfile({ wiki }) {
               <RecentStats stats={{
                 period: "", games: null, gamesLabel: "",
                 stats: [
-                  { label: "Win Rate",  value: `${matchStats.winRate}%` },
-                  { label: "W – L",     value: `${matchStats.wins} – ${matchStats.losses}` },
-                  { label: "Seriler",   value: String(matchStats.total) },
+                  { label: t("player.winRate"),    value: `${matchStats.winRate}%` },
+                  { label: t("player.wl"),         value: `${matchStats.wins} – ${matchStats.losses}` },
+                  { label: t("player.series"),     value: String(matchStats.total) },
                   ...(matchStats.gameWinRate != null
-                    ? [{ label: "Game Win%", value: `${matchStats.gameWinRate}%` }]
+                    ? [{ label: t("player.gameWinPct"), value: `${matchStats.gameWinRate}%` }]
                     : []),
                 ],
                 highlight: null,
@@ -863,7 +873,7 @@ export default function PlayerProfile({ wiki }) {
           {isLoL && championPool.length > 0 && (
             <section className={`${styles.card} ${styles.cardWide}`}>
               <div className={styles.cardTitleRow}>
-                <h2 className={styles.cardTitle}>Top Şampiyonlar</h2>
+                <h2 className={styles.cardTitle}>{t("player.champPool")}</h2>
                 <span className={styles.recentPeriodBadge}>PandaScore</span>
               </div>
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap", paddingTop: 8 }}>
@@ -952,7 +962,7 @@ export default function PlayerProfile({ wiki }) {
                     <>
                       <div className={styles.earningsDivider} />
                       <div className={styles.earningsHalf}>
-                        <h2 className={styles.cardTitle}>Bonservis Değişimi</h2>
+                        <h2 className={styles.cardTitle}>{t("player.transferFeeChange")}</h2>
                         <AuroraPlayerMVLine data={mvData} />
                       </div>
                     </>

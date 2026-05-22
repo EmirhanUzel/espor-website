@@ -37,6 +37,9 @@ function HeroBanner({ tournaments, allMatches }) {
 
   useEffect(() => {
     if (tournaments.length <= 1) return;
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
+    const onVisChange = () => { if (document.hidden) clearInterval(timer); };
     const timer = setInterval(() => {
       setFading(true);
       setTimeout(() => {
@@ -44,7 +47,8 @@ function HeroBanner({ tournaments, allMatches }) {
         setFading(false);
       }, 300);
     }, 10000);
-    return () => clearInterval(timer);
+    document.addEventListener('visibilitychange', onVisChange);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', onVisChange); };
   }, [tournaments.length]);
 
   const goTo = (i) => {
@@ -59,11 +63,13 @@ function HeroBanner({ tournaments, allMatches }) {
   const tournament = tournaments[safeIdx];
   const tournamentMatches = allMatches.filter(m => m.tournament === tournament.name);
 
-  // Support both mock data ("Grand Final" header) and Liquipedia API bracket notation
+  // Support mock data, Liquipedia "Grand Final" header, and LoL "!gf" / "Final" notations
   const finished = tournamentMatches.filter(m => m.finished === 1);
-  const grandFinal = finished.find(m => m.match2bracketdata?.header === "Grand Final")
-    || finished.sort((a, b) => b.date.localeCompare(a.date))[0]
-    || null;
+  const normalizeHeader = h => (h || '').replace(/^!/, '').toLowerCase();
+  const grandFinal = finished.find(m => {
+    const h = normalizeHeader(m.match2bracketdata?.header);
+    return h === 'grand final' || h === 'gf' || h.includes('final');
+  }) || finished.sort((a, b) => b.date.localeCompare(a.date))[0] || null;
   const [opp1, opp2] = grandFinal?.match2opponents || [];
 
   return (
@@ -136,12 +142,12 @@ function HeroBanner({ tournaments, allMatches }) {
 
         {tournaments.length > 1 && (
           <div className={styles.heroDots}>
-            {tournaments.map((t, i) => (
+            {tournaments.map((tournament, i) => (
               <button
-                key={t.id}
+                key={tournament.id}
                 className={`${styles.heroDot} ${i === safeIdx ? styles.heroDotActive : ""}`}
                 onClick={() => goTo(i)}
-                aria-label={t.name}
+                aria-label={tournament.name}
               />
             ))}
           </div>
@@ -368,6 +374,17 @@ export default function Home({ wiki, region }) {
         if (!cancelled) {
           setLoLRecentMatches(finalHeroMs);
           setLoLUpcomingMatches(upcomingMs);
+          // PandaScore fallback when Liquipedia returns empty data
+          if (!finalHeroMs.length && !upcomingMs.length) {
+            const [psRecent, psUpcoming] = await Promise.all([
+              getLoLMatchesFromPandaScore(),
+              getLoLUpcomingMatchesFromPandaScore(6),
+            ]);
+            if (!cancelled && (psRecent.length || psUpcoming.length)) {
+              setLoLRecentMatches(psRecent);
+              setLoLUpcomingMatches(psUpcoming);
+            }
+          }
         }
       })
       .catch(async (err) => {

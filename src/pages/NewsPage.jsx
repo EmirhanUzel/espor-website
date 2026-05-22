@@ -21,7 +21,7 @@ function InterviewCard({ item, featured = false }) {
           <span className={styles.publisherBadge}>{item.publisher}</span>
         </div>
         <span className={styles.langBadge}>
-          {getFlag(item.language === "en" ? "united kingdom" : item.language === "tr" ? "turkey" : item.language === "de" ? "germany" : "france")}{" "}
+          {getFlag(item.language === "en" ? "united kingdom" : item.language === "tr" ? "turkey" : item.language === "de" ? "germany" : item.language === "ko" ? "south korea" : "france")}{" "}
           {LANG_LABELS[item.language] || item.language.toUpperCase()}
         </span>
       </div>

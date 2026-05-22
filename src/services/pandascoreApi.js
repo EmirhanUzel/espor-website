@@ -24,6 +24,7 @@ async function psFetch(path, params = {}) {
 
   const qs  = new URLSearchParams({ ...params, token: TOKEN }).toString()
   const res = await fetch(`${BASE}${path}?${qs}`)
+  if (res.status === 401 || res.status === 403) return null  // token invalid/expired — fail silently
   if (!res.ok) throw new Error(`PandaScore ${res.status}: ${path}`)
   const data = await res.json()
   lsSet(cacheKey, data)

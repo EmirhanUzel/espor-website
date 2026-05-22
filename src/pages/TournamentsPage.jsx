@@ -77,13 +77,16 @@ const TABS = [
   { id: "completed", key: "tournaments.completed" },
 ];
 
-function ApiTournamentsView({ fetchByStatus }) {
+const LOL_REGIONS = ['All', 'LCK', 'LEC', 'LCS', 'LPL', 'Other'];
+
+function ApiTournamentsView({ fetchByStatus, showRegionFilter }) {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("ongoing");
   const [tabData, setTabData]     = useState([]);
   const [loading, setLoading]     = useState(true);
   const [apiError, setApiError]   = useState(false);
   const [ongoingData, setOngoingData] = useState([]);
+  const [lolRegion, setLolRegion] = useState('All');
 
   useEffect(() => {
     let cancelled = false;
@@ -137,30 +140,56 @@ function ApiTournamentsView({ fetchByStatus }) {
         ))}
       </div>
 
+      {showRegionFilter && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          {LOL_REGIONS.map(r => (
+            <button
+              key={r}
+              style={{
+                padding: '4px 14px', borderRadius: 6, fontSize: 12, fontWeight: 700,
+                background: lolRegion === r ? 'var(--text-1)' : 'var(--surface)',
+                color: lolRegion === r ? 'var(--bg)' : 'var(--text-2)',
+                border: '1px solid var(--border)', cursor: 'pointer',
+              }}
+              onClick={() => setLolRegion(r)}
+            >{r}</button>
+          ))}
+        </div>
+      )}
+
       {loading ? (
         <div className={styles.loadingState}>{t("common.loading")}</div>
       ) : apiError ? (
         <div className={styles.empty} style={{ color: "var(--text-3)", fontSize: 13 }}>
           {t("common.apiError")}
         </div>
-      ) : tabData.length === 0 ? (
-        <div className={styles.empty}>{t("tournaments.empty")}</div>
-      ) : (
-        <div className={styles.table}>
-          <div className={styles.tableHead}>
-            <span>{t("tournaments.tier")}</span>
-            <span>{t("tournaments.tournament")}</span>
-            <span>{t("tournaments.locationDates")}</span>
-            <span>{t("tournaments.teams")}</span>
-            <span>{t("tournaments.prizePool")}</span>
-            <span>{t("tournaments.status")}</span>
-            <span />
+      ) : (() => {
+        const filtered = showRegionFilter && lolRegion !== 'All'
+          ? tabData.filter(t => {
+              const name = (t.name || '').toLowerCase();
+              if (lolRegion === 'Other') return !['lck', 'lec', 'lcs', 'lpl'].some(l => name.includes(l));
+              return name.includes(lolRegion.toLowerCase());
+            })
+          : tabData;
+        return filtered.length === 0 ? (
+          <div className={styles.empty}>{t("tournaments.empty")}</div>
+        ) : (
+          <div className={styles.table}>
+            <div className={styles.tableHead}>
+              <span>{t("tournaments.tier")}</span>
+              <span>{t("tournaments.tournament")}</span>
+              <span>{t("tournaments.locationDates")}</span>
+              <span>{t("tournaments.teams")}</span>
+              <span>{t("tournaments.prizePool")}</span>
+              <span>{t("tournaments.status")}</span>
+              <span />
+            </div>
+            <div className={styles.tableBody}>
+              {filtered.map(tr => <TournamentRow key={tr.id} tournament={tr} />)}
+            </div>
           </div>
-          <div className={styles.tableBody}>
-            {tabData.map(tr => <TournamentRow key={tr.id} tournament={tr} />)}
-          </div>
-        </div>
-      )}
+        );
+      })()}
     </>
   );
 }
@@ -193,7 +222,7 @@ export default function TournamentsPage({ wiki = "valorant" }) {
         {isCS2 ? (
           <ApiTournamentsView fetchByStatus={getCS2TournamentsByStatus} />
         ) : isLoL ? (
-          <ApiTournamentsView fetchByStatus={getLoLTournamentsByStatus} />
+          <ApiTournamentsView fetchByStatus={getLoLTournamentsByStatus} showRegionFilter />
         ) : (
           <>
             <div className={styles.statsBar}>

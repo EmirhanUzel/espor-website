@@ -123,9 +123,45 @@ function CsMapPanel({ game, opp1Name, opp2Name }) {
   );
 }
 
+const CHAMPION_ALIASES = {
+  'Wukong': 'MonkeyKing',
+  'Nunu & Willump': 'Nunu',
+  'Nunu': 'Nunu',
+  'Renata Glasc': 'Renata',
+};
+
+let _ddVersion = '15.10.1';
+fetch('https://ddragon.leagueoflegends.com/api/versions.json')
+  .then(r => r.json())
+  .then(v => { if (v?.[0]) _ddVersion = v[0]; })
+  .catch(() => {});
+
+function getDDragonUrl(name) {
+  const aliased = CHAMPION_ALIASES[name] || name;
+  const sanitized = aliased.replace(/['\s.]/g, '');
+  return `https://ddragon.leagueoflegends.com/cdn/${_ddVersion}/img/champion/${sanitized}.png`;
+}
+
+function ChampionIcon({ name, size = 24, banned = false }) {
+  const [failed, setFailed] = useState(false);
+  if (!name) return <span style={{ color: "var(--text-4)" }}>—</span>;
+  const src = getDDragonUrl(name);
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+      {!failed && (
+        <img src={src} alt={name} width={size} height={size}
+          style={{ borderRadius: 3, flexShrink: 0, opacity: banned ? 0.4 : 1, filter: banned ? "grayscale(1)" : "none" }}
+          referrerPolicy="no-referrer"
+          onError={() => setFailed(true)} />
+      )}
+      <span style={{ textDecoration: banned ? "line-through" : "none", color: banned ? "var(--text-4)" : "inherit" }}>{name}</span>
+    </span>
+  );
+}
+
 function LolStatTable({ players }) {
   return (
-    <table className={styles.csStatTable}>
+    <table className={styles.lolStatTable}>
       <thead>
         <tr>
           <th>Player</th>
@@ -144,8 +180,7 @@ function LolStatTable({ players }) {
         {players.map((p, i) => {
           const hasData = p.kills > 0 || p.deaths > 0 || p.assists > 0;
           const kda = !hasData ? "—"
-            : p.deaths === 0 ? "Perfect"
-            : ((p.kills + p.assists) / p.deaths).toFixed(2);
+            : ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(2);
           return (
             <tr key={p.name || i}>
               <td>{p.name || "—"}</td>
@@ -167,13 +202,14 @@ function LolStatTable({ players }) {
 }
 
 function LolMatchDetails({ match, opp1Name, opp2Name }) {
+  const { t } = useLanguage();
   const games = match.match2games || [];
   const [activeIdx, setActiveIdx] = useState(0);
   if (!games.length) return null;
   const activeGame = games[activeIdx];
   return (
     <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Match Statistics</h2>
+      <h2 className={styles.sectionTitle}>{t("match.statistics")}</h2>
 
       {/* Game-by-game winner summary */}
       <div className={styles.lolGameSummary}>
@@ -207,23 +243,27 @@ function LolMatchDetails({ match, opp1Name, opp2Name }) {
         </div>
       )}
       {activeGame?.playerStats && (activeGame.playerStats.team1.length > 0 || activeGame.playerStats.team2.length > 0) ? (() => {
-        // Eğer team1 boş ama team2 dolu ise takımlar ters atanmış demek — swap et
         const ps = activeGame.playerStats;
-        const t1 = ps.team1.length > 0 ? ps.team1 : ps.team2;
-        const t2 = ps.team1.length > 0 ? ps.team2 : ps.team1;
+        const swapped = ps.team1.length === 0;
+        const t1 = swapped ? ps.team2 : ps.team1;
+        const t2 = swapped ? ps.team1 : ps.team2;
+        const h1 = swapped ? opp2Name : opp1Name;
+        const h2 = swapped ? opp1Name : opp2Name;
+        const w1 = swapped ? "2" : "1";
+        const w2 = swapped ? "1" : "2";
         return (
-          <div className={styles.csPanel}>
+          <div className={styles.csPanel} style={{ marginTop: 16 }}>
             <div className={styles.csTeamBlock}>
               <div className={styles.csTeamHead}>
-                <span className={styles.csTeamName}>{opp1Name}</span>
-                {activeGame.winner === "1" && <span className={styles.csTeamWin}>Winner</span>}
+                <span className={styles.csTeamName}>{h1}</span>
+                {activeGame.winner === w1 && <span className={styles.csTeamWin}>Winner</span>}
               </div>
               {t1.length > 0 ? <LolStatTable players={t1} /> : <div style={{ padding: 12, fontSize: 12, color: "var(--text-4)" }}>—</div>}
             </div>
             <div className={styles.csTeamBlock}>
               <div className={styles.csTeamHead}>
-                <span className={styles.csTeamName}>{opp2Name}</span>
-                {activeGame.winner === "2" && <span className={styles.csTeamWin}>Winner</span>}
+                <span className={styles.csTeamName}>{h2}</span>
+                {activeGame.winner === w2 && <span className={styles.csTeamWin}>Winner</span>}
               </div>
               {t2.length > 0 ? <LolStatTable players={t2} /> : <div style={{ padding: 12, fontSize: 12, color: "var(--text-4)" }}>—</div>}
             </div>
@@ -231,7 +271,7 @@ function LolMatchDetails({ match, opp1Name, opp2Name }) {
         );
       })() : (
         <div style={{ padding: 24, textAlign: "center", color: "var(--text-4)", fontSize: 13 }}>
-          No player stats available for this game.
+          {t("match.noPlayerStats")}
         </div>
       )}
 
@@ -239,36 +279,79 @@ function LolMatchDetails({ match, opp1Name, opp2Name }) {
         <div style={{ marginTop: 16, display: "flex", gap: 24, flexWrap: "wrap" }}>
           {activeGame.picks && (
             <div style={{ flex: 1, minWidth: 240 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", letterSpacing: 1, marginBottom: 6 }}>PICKS</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", letterSpacing: 1, marginBottom: 6 }}>{t("match.picks")}</div>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                   <span style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 2 }}>{opp1Name}</span>
-                  {activeGame.picks.team1.map((c, i) => <span key={i} style={{ fontSize: 13, color: "var(--text-1)", background: "var(--surface)", borderRadius: 4, padding: "2px 8px" }}>{c}</span>)}
+                  {activeGame.picks.team1.map((c, i) => <span key={i} style={{ padding: "2px 0" }}><ChampionIcon name={c} size={20} /></span>)}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
                   <span style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 2 }}>{opp2Name}</span>
-                  {activeGame.picks.team2.map((c, i) => <span key={i} style={{ fontSize: 13, color: "var(--text-1)", background: "var(--surface)", borderRadius: 4, padding: "2px 8px" }}>{c}</span>)}
+                  {activeGame.picks.team2.map((c, i) => <span key={i} style={{ padding: "2px 0" }}><ChampionIcon name={c} size={20} /></span>)}
                 </div>
               </div>
             </div>
           )}
           {activeGame.bans && (
             <div style={{ flex: 1, minWidth: 240 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", letterSpacing: 1, marginBottom: 6 }}>BANS</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", letterSpacing: 1, marginBottom: 6 }}>{t("match.bans")}</div>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                   <span style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 2 }}>{opp1Name}</span>
-                  {activeGame.bans.team1.map((c, i) => <span key={i} style={{ fontSize: 13, color: "var(--text-3)", background: "var(--surface)", borderRadius: 4, padding: "2px 8px", textDecoration: "line-through" }}>{c}</span>)}
+                  {activeGame.bans.team1.map((c, i) => <span key={i} style={{ padding: "2px 0" }}><ChampionIcon name={c} size={20} banned /></span>)}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
                   <span style={{ fontSize: 11, color: "var(--text-3)", marginBottom: 2 }}>{opp2Name}</span>
-                  {activeGame.bans.team2.map((c, i) => <span key={i} style={{ fontSize: 13, color: "var(--text-3)", background: "var(--surface)", borderRadius: 4, padding: "2px 8px", textDecoration: "line-through" }}>{c}</span>)}
+                  {activeGame.bans.team2.map((c, i) => <span key={i} style={{ padding: "2px 0" }}><ChampionIcon name={c} size={20} banned /></span>)}
                 </div>
               </div>
             </div>
           )}
         </div>
       )}
+
+      {activeGame?.objectives && (activeGame.objectives.team1 || activeGame.objectives.team2) && (() => {
+        const o1 = activeGame.objectives.team1 || {};
+        const o2 = activeGame.objectives.team2 || {};
+        const side1 = activeGame.objectives.team1side;
+        const rows = [
+          { icon: "🐉", label: t("obj.dragon"),  v1: o1.dragons,  v2: o2.dragons  },
+          { icon: "💀", label: t("obj.baron"),   v1: o1.barons,   v2: o2.barons   },
+          { icon: "🏰", label: t("obj.tower"),   v1: o1.towers,   v2: o2.towers   },
+          { icon: "🪲", label: t("obj.grub"),    v1: o1.grubs,    v2: o2.grubs    },
+          { icon: "🦅", label: t("obj.herald"),  v1: o1.heralds,  v2: o2.heralds  },
+          { icon: "🔥", label: t("obj.atakhan"), v1: o1.atakhan,  v2: o2.atakhan  },
+          { icon: "🐲", label: t("obj.elder"),   v1: o1.elder,    v2: o2.elder    },
+        ].filter(r => r.v1 != null || r.v2 != null);
+        if (!rows.length) return null;
+        return (
+          <div style={{ marginTop: 16, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-3)", letterSpacing: 1 }}>{t("match.objectives")}</span>
+              {side1 && <span style={{ fontSize: 11, background: side1 === "blue" ? "#1a3a6a" : "#6a1a1a", borderRadius: 4, padding: "1px 6px", color: "#fff" }}>{opp1Name} {side1}</span>}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {rows.map(({ icon, label, v1, v2 }) => {
+                const total = (v1 ?? 0) + (v2 ?? 0);
+                const pct1 = total > 0 ? ((v1 ?? 0) / total) * 100 : 50;
+                return (
+                  <div key={label} style={{ display: "grid", gridTemplateColumns: "32px 1fr auto 1fr 32px", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, textAlign: "right" }}>{v1 ?? 0}</span>
+                    <div style={{ height: 6, background: "var(--border)", borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${pct1}%`, background: "var(--text-1)", borderRadius: 3 }} />
+                    </div>
+                    <span style={{ fontSize: 11, color: "var(--text-3)", textAlign: "center", whiteSpace: "nowrap" }}>{icon} {label}</span>
+                    <div style={{ height: 6, background: "var(--border)", borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${100 - pct1}%`, background: "var(--text-1)", borderRadius: 3, marginLeft: "auto" }} />
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 700 }}>{v2 ?? 0}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </section>
   );
 }
@@ -310,6 +393,7 @@ export default function MatchPage({ wiki }) {
 
   const [apiMatch, setApiMatch]   = useState(null);
   const [loading,  setLoading]    = useState(false);
+  const [multiVods, setMultiVods] = useState([]);
   const mockMatch = getMatch(id);
 
   useEffect(() => {
@@ -322,7 +406,13 @@ export default function MatchPage({ wiki }) {
     const fetcher = isLoL ? getLoLMatchById : isCS2 ? getCS2MatchById : null;
     if (!fetcher) { setLoading(false); return; }
     fetcher(id)
-      .then(m => { if (!cancelled) { setApiMatch(m); setLoading(false); } })
+      .then(m => {
+        if (!cancelled) {
+          setApiMatch(m);
+          setLoading(false);
+          // matchvod endpoint not available in Liquipedia API v3
+        }
+      })
       .catch(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [id, wiki, mockMatch]);
@@ -351,14 +441,14 @@ export default function MatchPage({ wiki }) {
   const isLive = match.finished === 0;
   const isUpcoming = !isFinished && !isLive;
   const winnerIdx = match.winner != null ? parseInt(match.winner, 10) - 1 : -1;
-  const streams = Object.entries(match.stream || {});
+  const streams = typeof match.stream === 'object' && match.stream !== null ? Object.entries(match.stream) : [];
 
   return (
     <main>
       <div className={styles.hero}>
         <div className="wrap">
           <div className={styles.heroBreadcrumb}>
-            <Link to="/" className={styles.breadLink}>Home</Link>
+            <Link to="/" className={styles.breadLink}>{t("nav.home")}</Link>
             <span className={styles.breadSep}>›</span>
             <Link to={`/tournament/${match.tournament.replace(/ /g, "_")}`} className={styles.breadLink}>
               {match.tournament}
@@ -429,13 +519,21 @@ export default function MatchPage({ wiki }) {
             </div>
           </div>
 
-          {streams.length > 0 && (
+          {(streams.length > 0 || multiVods.length > 0) && (
             <div className={styles.heroStreams}>
               {streams.map(([key, url]) => {
                 const lang = key.match(/_([a-z]{2})_/)?.[1]?.toUpperCase() || "EN";
                 return (
                   <a key={key} href={url} target="_blank" rel="noreferrer" className={styles.streamBtn}>
                     ▶ Watch {lang} Stream
+                  </a>
+                );
+              })}
+              {multiVods.map((v, i) => {
+                const langFlag = v.language === 'KO' ? '🇰🇷' : v.language === 'EN' ? '🇬🇧' : v.language === 'CN' ? '🇨🇳' : '🌐';
+                return (
+                  <a key={i} href={v.url} target="_blank" rel="noreferrer" className={styles.streamBtn}>
+                    {langFlag} VOD
                   </a>
                 );
               })}

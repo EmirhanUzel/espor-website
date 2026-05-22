@@ -6,7 +6,7 @@ import {
 } from "../services/api";
 import {
   getCS2TournamentByPagename, getCS2TournamentMatches, getCS2GroupStageMatches, getCS2TournamentWinner, getCS2TournamentPrizes, getCS2PlayerImage, getCS2TeamLogos,
-  getLoLTournamentByPagename, getLoLTournamentMatches,
+  getLoLTournamentByPagename, getLoLTournamentMatches, getLoLTournamentStreams, getLoLTournamentWinner, getLoLTournamentPrizes, getLoLTournamentMVP, getLoLGroupStageMatches, getLoLTeamLogos, getLoLBroadcasters,
 } from "../services/liquipediaApi";
 import MatchCard from "../components/MatchCard";
 import GroupStandings from "../components/GroupStandings";
@@ -46,6 +46,8 @@ export default function TournamentPage({ wiki }) {
   const [mvpImgUrl,     setMvpImgUrl]     = useState("");
   const [bracketLogos,  setBracketLogos]  = useState({});
   const [groupStage,    setGroupStage]    = useState([]);
+  const [, setLolStreams] = useState([]);
+  const [broadcasters,   setBroadcasters]  = useState([]);
 
   useEffect(() => {
     if (!isApiWiki) return;
@@ -58,27 +60,44 @@ export default function TournamentPage({ wiki }) {
       const today = new Date().toISOString().slice(0, 10);
       const isFinished = t?.enddate && t.enddate < today;
 
+      const winnerFn = isCS2 && isFinished ? getCS2TournamentWinner(tournamentName).catch(() => null)
+                     : isLoL && isFinished ? getLoLTournamentWinner(tournamentName).catch(() => null)
+                     : Promise.resolve(null);
+      const prizesFn = isCS2 ? getCS2TournamentPrizes(tournamentName).catch(() => [])
+                     : isLoL ? getLoLTournamentPrizes(tournamentName).catch(() => [])
+                     : Promise.resolve([]);
       const [matches, w, prizeRows] = await Promise.all([
         getMatchesFn(tournamentName).catch(() => []),
-        isCS2 && isFinished ? getCS2TournamentWinner(tournamentName).catch(() => null) : Promise.resolve(null),
-        isCS2 ? getCS2TournamentPrizes(tournamentName).catch(() => []) : Promise.resolve([]),
+        winnerFn,
+        prizesFn,
       ]);
       if (!cancelled) {
         setApiMatches(matches);
         if (w) setWinner(w);
         if (prizeRows.length) setPrizes(prizeRows);
-        if (t?.mvp) getCS2PlayerImage(t.mvp).then(url => { if (!cancelled) setMvpImgUrl(url); });
+        if (t?.mvp && isCS2) getCS2PlayerImage(t.mvp).then(url => { if (!cancelled) setMvpImgUrl(url); });
         // Group Stage
         if (isCS2 && isFinished) {
           getCS2GroupStageMatches(tournamentName, t?.pagename).then(gm => { if (!cancelled && gm.length) setGroupStage(gm); });
         }
+        if (isLoL) {
+          getLoLTournamentStreams(tournamentName).then(s => { if (!cancelled) setLolStreams(s); }).catch(() => {});
+          getLoLBroadcasters(tournamentName).then(bc => { if (!cancelled && bc.length) setBroadcasters(bc); }).catch(() => {});
+          if (isFinished) {
+            getLoLGroupStageMatches(tournamentName, t?.pagename).then(gm => { if (!cancelled && gm.length) setGroupStage(gm); }).catch(() => {});
+            getLoLTournamentMVP(tournamentName).then(mvpName => {
+              if (!cancelled && mvpName && !t?.mvp) setApiTournament(prev => prev ? { ...prev, mvp: mvpName } : prev);
+            }).catch(() => {});
+          }
+        }
 
         // Bracket logoları
-        if (isCS2 && matches.length) {
+        const logoFn = isCS2 ? getCS2TeamLogos : isLoL ? getLoLTeamLogos : null;
+        if (logoFn && matches.length) {
           const names = [...new Set(
             matches.flatMap(m => (m.match2opponents || []).map(o => o.name).filter(Boolean))
           )];
-          if (names.length) getCS2TeamLogos(names).then(map => { if (!cancelled) setBracketLogos(map); });
+          if (names.length) logoFn(names).then(map => { if (!cancelled) setBracketLogos(map); });
         }
       }
     };
@@ -162,7 +181,7 @@ export default function TournamentPage({ wiki }) {
                     <span>{locFlag} {tournament.locations?.city}, {tournament.locations?.venue}</span>
                     <span>·</span>
                     <span>{formatDate(tournament.startdate)} – {formatDate(tournament.enddate)}</span>
-                    {tournament.patch && <><span>·</span><span>Patch {tournament.patch}</span></>}
+                    {tournament.patch && <><span>·</span><span>{t("common.patch").replace("{version}", tournament.patch)}</span></>}
                   </div>
                 </div>
               </div>
@@ -197,7 +216,7 @@ export default function TournamentPage({ wiki }) {
       <div className="wrap">
 
         {/* Prize Distribution */}
-        {isCS2 && prizes.length > 0 && (() => {
+        {isApiWiki && prizes.length > 0 && (() => {
           const rankNum = s => parseInt(String(s).split(/[-–]/)[0]) || 99;
           const MEDAL = { 1: "#f0b429", 2: "#a8b5c0", 3: "#b07040" };
 
@@ -220,7 +239,7 @@ export default function TournamentPage({ wiki }) {
                       <Link key={row.team} to={`/team/${encodeURIComponent(row.team)}`} className={`${styles.pyramidCard} ${ri === 0 ? styles.pyramidCardFirst : ""}`}>
                         <div className={styles.pyramidLogo}>
                           {row.logoUrl
-                            ? <img src={row.logoUrl} alt={row.team} referrerPolicy="no-referrer" onError={e => e.target.style.display='none'} />
+                            ? <img src={row.logoUrl} alt={row.team} referrerPolicy="no-referrer" onError={e => e.currentTarget.style.display='none'} />
                             : <span>{row.team[0]}</span>}
                         </div>
                         <span className={styles.pyramidTeam}>{row.team}</span>
@@ -238,13 +257,13 @@ export default function TournamentPage({ wiki }) {
         })()}
 
         {/* MVP Player */}
-        {isCS2 && tournament.mvp && (
+        {isApiWiki && tournament.mvp && (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>MVP Player</h2>
             <Link to={`/player/${encodeURIComponent(tournament.mvp)}`} className={styles.mvpCard}>
               <div className={styles.mvpPhoto}>
                 {mvpImgUrl
-                  ? <img src={mvpImgUrl} alt={tournament.mvp} referrerPolicy="no-referrer" onError={e => e.target.style.display='none'} />
+                  ? <img src={mvpImgUrl} alt={tournament.mvp} referrerPolicy="no-referrer" onError={e => e.currentTarget.style.display='none'} />
                   : <span>{tournament.mvp[0]?.toUpperCase()}</span>}
               </div>
               <div className={styles.mvpInfo}>
@@ -255,8 +274,29 @@ export default function TournamentPage({ wiki }) {
           </section>
         )}
 
+        {/* Broadcast Team */}
+        {isLoL && broadcasters.length > 0 && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Broadcast Team</h2>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", paddingTop: 8 }}>
+              {broadcasters.map((b, i) => (
+                <a key={i} href={b.link || undefined} target="_blank" rel="noreferrer"
+                  style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 16px", minWidth: 160, textDecoration: "none", color: "inherit" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--surface-2)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 14, color: "var(--text-1)" }}>
+                    {b.name[0]?.toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text-1)" }}>{b.name}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-3)" }}>{b.role} · {b.language}</div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Group Stage — sub-event maçları */}
-        {isCS2 && groupStage.length > 0 && (() => {
+        {isApiWiki && groupStage.length > 0 && (() => {
           // Stage'e göre grupla (Challengers/Legends)
           const stages = {};
           for (const m of groupStage) {
@@ -374,6 +414,9 @@ export default function TournamentPage({ wiki }) {
                 <div key={i}
                   className={`${styles.prizeRow} ${r.placement === "1" ? styles.prizeRowGold : ""}`}
                   onClick={() => navigate(`/team/${encodeURIComponent(r.opponentname)}`)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/team/${encodeURIComponent(r.opponentname)}`); } }}
                 >
                   <span className={styles.prizeColSmall}><span className={styles.placement}>{r.placement}</span></span>
                   <span className={styles.prizeColTeam}>
@@ -406,7 +449,7 @@ export default function TournamentPage({ wiki }) {
                   ["End", formatDate(tournament.enddate)],
                   ["Format", tournament.format],
                   ["Teams", `${tournament.participantsnumber} Teams`],
-                  tournament.patch && ["Patch", `Patch ${tournament.patch}`],
+                  tournament.patch && ["Patch", t("common.patch").replace("{version}", tournament.patch)],
                   ["Game", tournament.wiki],
                 ].filter(Boolean).map(([k, v]) => (
                   <div key={k} className={styles.detailRow}>

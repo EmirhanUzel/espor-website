@@ -437,7 +437,7 @@ export default function TeamPage({ wiki }) {
                 <div className={styles.earningsBadge}>
                   <span className={styles.earningsTotal}>{formatMV(squadBonservis)}</span>
                   <span className={styles.earningsLabel}>ESM Bonservis</span>
-                  <span className={styles.earningsLast}>{squad.length} oyuncu</span>
+                  <span className={styles.earningsLast}>{squad.length} {t("team.playerCount")}</span>
                 </div>
               )}
               {totalMarketValue > 0 && (

@@ -519,7 +519,26 @@ export const MATCHES = [
       { type: "team", name: "G2 Esports", score: 1, match2players: [] },
     ],
     match2games: [
-      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-11-02 10:00:00", length: "31:45", vod: null },
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-11-02 10:00:00", length: "31:45", vod: null,
+        picks: { team1: ["Azir", "Vi", "Garen", "Jinx", "Thresh"], team2: ["Orianna", "Sejuani", "Aatrox", "Jhin", "Nautilus"] },
+        bans: { team1: ["Viktor", "Kalista", "Rumble", "Caitlyn", "Syndra"], team2: ["Zeri", "Leblanc", "Karma", "Rakan", "Jayce"] },
+        playerStats: {
+          team1: [
+            { name: "Zeus",  champion: "Garen",   kills: 6, deaths: 2, assists: 9,  cs: 248, gold: 13200, damage: 21600, visionScore: 18 },
+            { name: "Oner",  champion: "Vi",      kills: 5, deaths: 1, assists: 14, cs: 136, gold: 11100, damage: 13800, visionScore: 42 },
+            { name: "Faker", champion: "Azir",    kills: 9, deaths: 1, assists: 11, cs: 304, gold: 15400, damage: 31200, visionScore: 24 },
+            { name: "Ruler", champion: "Jinx",    kills: 8, deaths: 0, assists: 8,  cs: 318, gold: 16200, damage: 33400, visionScore: 14 },
+            { name: "Keria", champion: "Thresh",  kills: 1, deaths: 2, assists: 20, cs: 26,  gold: 7600,  damage: 6400,  visionScore: 58 },
+          ],
+          team2: [
+            { name: "BrokenBlade", champion: "Aatrox",   kills: 2, deaths: 5, assists: 4, cs: 204, gold: 10800, damage: 18200, visionScore: 16 },
+            { name: "Yike",        champion: "Sejuani",  kills: 1, deaths: 5, assists: 5, cs: 112, gold: 8800,  damage: 9200,  visionScore: 34 },
+            { name: "Caps",        champion: "Orianna",  kills: 5, deaths: 6, assists: 5, cs: 268, gold: 12600, damage: 24800, visionScore: 22 },
+            { name: "Hans sama",   champion: "Jhin",     kills: 4, deaths: 6, assists: 3, cs: 278, gold: 13200, damage: 22600, visionScore: 12 },
+            { name: "Mikyx",       champion: "Nautilus", kills: 0, deaths: 7, assists: 9, cs: 22,  gold: 7000,  damage: 5800,  visionScore: 50 },
+          ],
+        },
+      },
       { map: "Summoner's Rift", scores: [0, 1], winner: "2", date: "2025-11-02 11:20:00", length: "38:22", vod: null },
       { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-11-02 12:50:00", length: "28:10", vod: null },
       { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-11-02 14:05:00", length: "35:40", vod: null },
@@ -593,6 +612,27 @@ export const MATCHES = [
           ],
         },
       },
+    ],
+    wiki: "leagueoflegends",
+  },
+  {
+    id: "WORLDS25SF2",
+    tournament: "Worlds 2025",
+    liquipediatier: "1", liquipediatiertype: "",
+    bestof: 5, winner: "1", finished: 1,
+    date: "2025-10-31 10:00:00",
+    stream: { twitch_en_1: "https://www.twitch.tv/riotgames" },
+    match2bracketdata: { type: "bracket", header: "Semi-Final" },
+    match2opponents: [
+      { type: "team", name: "T1", score: 3, match2players: [] },
+      { type: "team", name: "Gen.G", score: 2, match2players: [] },
+    ],
+    match2games: [
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-10-31 10:00:00", length: "34:12", vod: null },
+      { map: "Summoner's Rift", scores: [0, 1], winner: "2", date: "2025-10-31 11:30:00", length: "29:44", vod: null },
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-10-31 13:00:00", length: "41:05", vod: null },
+      { map: "Summoner's Rift", scores: [0, 1], winner: "2", date: "2025-10-31 14:40:00", length: "27:33", vod: null },
+      { map: "Summoner's Rift", scores: [1, 0], winner: "1", date: "2025-10-31 16:00:00", length: "38:20", vod: null },
     ],
     wiki: "leagueoflegends",
   },
@@ -1287,8 +1327,8 @@ export const PLAYERS = [
     birthdate: "1996-05-07", teampagename: "T1",
     links: { twitter: "https://twitter.com/faker", twitch: "https://www.twitch.tv/faker", instagram: "https://www.instagram.com/faker", youtube: "https://www.youtube.com/c/Faker" },
     status: "Active",
-    earnings: 4800000,
-    earningsbyyear: { "2019": 380000, "2020": 290000, "2021": 520000, "2022": 680000, "2023": 820000, "2024": 420000, "2025": 200000 },
+    earnings: 4810000,
+    earningsbyyear: { "2015": 120000, "2016": 180000, "2017": 240000, "2018": 180000, "2019": 380000, "2020": 290000, "2021": 520000, "2022": 680000, "2023": 820000, "2024": 420000, "2025": 200000 },
     marketvalue: 5000000,
     marketvaluehistory: [
       { date: "2019-01", value: 2500000 }, { date: "2020-01", value: 3000000 },
@@ -1337,7 +1377,7 @@ export const PLAYERS = [
       { year: "2019", team: "G2 Esports", note: "Joined G2 — MSI & Worlds finalist" },
       { year: "2021", team: "G2 Esports", note: "3x LEC Champion — dominant split" },
       { year: "2022", team: "G2 Esports", note: "Worlds Semifinalist" },
-      { year: "2024", team: "G2 Esports", note: "Worlds finalist — best year with G2" },
+      { year: "2024", team: "G2 Esports", note: "Worlds Semifinalist" },
       { year: "2025", team: "G2 Esports", note: "Worlds 2025 Finalist (Shanghai)" },
     ],
     recentstats: {
@@ -1798,7 +1838,7 @@ export const TEAMS = [
     earnings: 12500000,
     earningsbyyear: { "2019": 1200000, "2020": 950000, "2021": 1800000, "2022": 2100000, "2023": 2500000, "2024": 1900000, "2025": 2050000 },
     links: { twitter: "https://twitter.com/T1LoL", instagram: "https://www.instagram.com/t1lol", youtube: "https://www.youtube.com/c/T1" },
-    squad: [{ id: "Zeus", role: "Top" }, { id: "Oner", role: "Jungle" }, { id: "Faker", role: "Mid" }, { id: "Ruler", role: "Bot" }, { id: "BeryL", role: "Support" }],
+    squad: [{ id: "Zeus", role: "Top" }, { id: "Oner", role: "Jungle" }, { id: "Faker", role: "Mid" }, { id: "Ruler", role: "Bot" }, { id: "Keria", role: "Support" }],
     wiki: "leagueoflegends",
   },
   {
@@ -1824,7 +1864,7 @@ export const TEAMS = [
     earnings: 4200000,
     earningsbyyear: { "2020": 320000, "2021": 580000, "2022": 820000, "2023": 1100000, "2024": 880000, "2025": 500000 },
     links: { twitter: "https://twitter.com/Cloud9", instagram: "https://www.instagram.com/cloud9", twitch: "https://www.twitch.tv/cloud9" },
-    squad: [{ id: "Fudge", role: "Top" }, { id: "Blaber", role: "Jungle" }, { id: "Jensen", role: "Mid" }, { id: "Berserker", role: "Bot" }, { id: "Zven", role: "Support" }],
+    squad: [{ id: "Tenacity", role: "Top" }, { id: "Contractz", role: "Jungle" }, { id: "Jojopyun", role: "Mid" }, { id: "Berserker", role: "Bot" }, { id: "Vulcan", role: "Support" }],
     wiki: "leagueoflegends",
   },
 
@@ -1847,7 +1887,10 @@ export const TEAMS = [
   { name: "Cloud9",        region: "Americas", status: "active", createdate: "2014-06-01", disbanddate: "0000-01-01", rankpoints:  580, rankchange:  1, earnings: 1100000, earningsbyyear: {"2022":180000,"2023":320000,"2024":310000,"2025":290000}, squad: [], links: {}, wiki: "counterstrike" },
 
   // ── LoL extra teams ───────────────────────────────────────────────────────
-  { name: "Gen.G",               region: "Korea",   status: "active", createdate: "2017-09-01", disbanddate: "0000-01-01", rankpoints: 2100, rankchange:  2, earnings: 3800000, earningsbyyear: {"2022":600000,"2023":900000,"2024":1100000,"2025":1200000}, squad: [], links: {}, wiki: "leagueoflegends" },
+  { name: "Dplus KIA",           region: "Korea",   status: "active", createdate: "2019-01-01", disbanddate: "0000-01-01", rankpoints:  920, rankchange:  0, earnings: 1400000, earningsbyyear: {"2022":220000,"2023":380000,"2024":420000,"2025":380000}, squad: [], links: {}, wiki: "leagueoflegends" },
+  { name: "Bilibili Gaming",     region: "China",   status: "active", createdate: "2017-11-01", disbanddate: "0000-01-01", rankpoints: 1900, rankchange:  1, earnings: 2600000, earningsbyyear: {"2022":400000,"2023":700000,"2024":800000,"2025":700000}, squad: [], links: {}, wiki: "leagueoflegends" },
+  { name: "Weibo Gaming",        region: "China",   status: "active", createdate: "2020-11-01", disbanddate: "0000-01-01", rankpoints: 1750, rankchange: -1, earnings: 1800000, earningsbyyear: {"2022":300000,"2023":480000,"2024":560000,"2025":460000}, squad: [], links: {}, wiki: "leagueoflegends" },
+  { name: "Gen.G",               region: "Korea",   status: "active", createdate: "2017-09-01", disbanddate: "0000-01-01", rankpoints: 2100, rankchange:  2, earnings: 3800000, earningsbyyear: {"2022":600000,"2023":900000,"2024":1100000,"2025":1200000}, squad: [{ id: "Doran", role: "Top" }, { id: "Peanut", role: "Jungle" }, { id: "Chovy", role: "Mid" }, { id: "Peyz", role: "Bot" }, { id: "Lehends", role: "Support" }], links: {}, wiki: "leagueoflegends" },
   { name: "Hanwha Life Esports", region: "Korea",   status: "active", createdate: "2017-01-01", disbanddate: "0000-01-01", rankpoints: 1400, rankchange: -1, earnings: 1200000, earningsbyyear: {"2022":180000,"2023":320000,"2024":360000,"2025":340000}, squad: [], links: {}, wiki: "leagueoflegends" },
   { name: "KT Rolster",          region: "Korea",   status: "active", createdate: "2012-01-01", disbanddate: "0000-01-01", rankpoints: 1280, rankchange:  2, earnings: 2100000, earningsbyyear: {"2022":320000,"2023":580000,"2024":620000,"2025":580000}, squad: [], links: {}, wiki: "leagueoflegends" },
   { name: "Fnatic",              region: "Europe",  status: "active", createdate: "2011-01-01", disbanddate: "0000-01-01", rankpoints:  980, rankchange:  1, earnings: 2800000, earningsbyyear: {"2022":450000,"2023":700000,"2024":820000,"2025":830000}, squad: [], links: {}, wiki: "leagueoflegends" },
@@ -2007,14 +2050,12 @@ export function getTeam(name) {
   return TEAMS.find(t => t.name.toLowerCase() === decodeURIComponent(name).toLowerCase()) || null;
 }
 export function getTournaments(wiki = "valorant") {
-  if (wiki === "leagueoflegends") return [];
   return TOURNAMENTS.filter(t => t.wiki === wiki);
 }
 export function getTournament(id) {
   return TOURNAMENTS.find(t => t.id === id) || null;
 }
 export function getMatches(wiki = "valorant") {
-  if (wiki === "leagueoflegends") return [];
   return MATCHES.filter(m => m.wiki === wiki);
 }
 export function getMatch(id) {

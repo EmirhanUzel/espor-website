@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getPlayers, formatPrize, getFlag } from "../services/api";
+import { getLoLPlayersForRanking } from "../services/liquipediaApi";
 import styles from "./PlayersRanking.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -68,7 +69,22 @@ function PlayerRow({ rank, player, metric }) {
 export default function PlayersRanking({ wiki }) {
   const { t } = useLanguage();
   const [tab, setTab] = useState("mv");
-  const allPlayers = getPlayers(wiki);
+  const [lolPlayers, setLolPlayers] = useState([]);
+  const [lolLoading, setLolLoading] = useState(false);
+
+  useEffect(() => {
+    if (wiki !== 'leagueoflegends') return;
+    let cancelled = false;
+    setLolLoading(true);
+    getLoLPlayersForRanking(50)
+      .then(players => { if (!cancelled) setLolPlayers(players); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLolLoading(false); });
+    return () => { cancelled = true; };
+  }, [wiki]);
+
+  const mockPlayers = getPlayers(wiki);
+  const allPlayers = wiki === 'leagueoflegends' ? lolPlayers : mockPlayers;
 
   const TABS = [
     { id: "mv",    labelKey: "players.marketValue" },
@@ -76,7 +92,18 @@ export default function PlayersRanking({ wiki }) {
     { id: "views", labelKey: "players.mostViewed" },
   ];
 
+  const isLoLApi = wiki === 'leagueoflegends' && lolPlayers.length > 0;
+
   const ranked = useMemo(() => {
+    if (isLoLApi) {
+      // API LoL players don't have marketvalue/recentstats/views — show all sorted by role
+      const ROLE_ORDER = { Top: 0, Jungle: 1, Mid: 2, Bot: 3, Support: 4 };
+      return [...allPlayers].sort((a, b) => {
+        const ra = ROLE_ORDER[a.role] ?? 9;
+        const rb = ROLE_ORDER[b.role] ?? 9;
+        return ra !== rb ? ra - rb : a.id.localeCompare(b.id);
+      });
+    }
     if (tab === "mv") {
       return [...allPlayers]
         .filter(p => p.marketvalue)
@@ -94,11 +121,14 @@ export default function PlayersRanking({ wiki }) {
         .sort((a, b) => (b.views || 0) - (a.views || 0));
     }
     return allPlayers;
-  }, [allPlayers, tab]);
+  }, [allPlayers, tab, isLoLApi]);
 
   const maxForm = Math.max(...ranked.map(p => p._form || 0), 1);
 
   function renderMetric(player) {
+    if (isLoLApi) {
+      return <span className={styles.mvVal} style={{ color: "var(--text-3)", fontSize: 12 }}>{player.role || player.team || "—"}</span>;
+    }
     if (tab === "mv") {
       return <span className={styles.mvVal}>{formatPrize(player.marketvalue)}</span>;
     }
@@ -149,8 +179,14 @@ export default function PlayersRanking({ wiki }) {
 
         <p className={styles.tabDesc}>{tabDesc}</p>
 
+        {lolLoading && (
+          <div style={{ textAlign: "center", padding: "48px 0", color: "var(--text-3)" }}>
+            {t("common.loading")}
+          </div>
+        )}
+
         <div className={styles.list}>
-          {ranked.map((player, i) => (
+          {!lolLoading && ranked.map((player, i) => (
             <PlayerRow
               key={player.id}
               rank={i + 1}
@@ -158,7 +194,7 @@ export default function PlayersRanking({ wiki }) {
               metric={renderMetric(player)}
             />
           ))}
-          {ranked.length === 0 && (
+          {!lolLoading && ranked.length === 0 && (
             <p className={styles.empty}>{t("players.noData")}</p>
           )}
         </div>

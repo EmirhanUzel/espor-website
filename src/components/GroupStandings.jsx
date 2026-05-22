@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import styles from "./GroupStandings.module.css";
+import { useLanguage } from "../contexts/LanguageContext";
 
 function PlacementChange({ change }) {
   if (change > 0) return <span className={styles.up}>↑{change}</span>;
@@ -8,6 +9,7 @@ function PlacementChange({ change }) {
 }
 
 export default function GroupStandings({ groups }) {
+  const { t } = useLanguage();
   if (!groups?.length) return null;
 
   return (
@@ -16,7 +18,7 @@ export default function GroupStandings({ groups }) {
         <div key={group.title} className={styles.group}>
           <div className={styles.groupHeader}>
             <span className={styles.groupTitle}>{group.title}</span>
-            <span className={styles.groupType}>{group.type === "league" ? "Round Robin" : "Bracket"}</span>
+            <span className={styles.groupType}>{group.type === "league" ? t("standings.roundRobin") : t("standings.bracket")}</span>
           </div>
 
           <div className={styles.tableWrapper}>
@@ -24,13 +26,13 @@ export default function GroupStandings({ groups }) {
               <thead>
                 <tr>
                   <th className={styles.thPos}>#</th>
-                  <th className={styles.thTeam}>Team</th>
-                  <th className={styles.thStat} title="Match Wins">MW</th>
-                  <th className={styles.thStat} title="Match Losses">ML</th>
-                  <th className={styles.thStat} title="Game Wins">GW</th>
-                  <th className={styles.thStat} title="Game Losses">GL</th>
+                  <th className={styles.thTeam}>{t("standings.team")}</th>
+                  <th className={styles.thStat} title="Match Wins">{t("standings.mw")}</th>
+                  <th className={styles.thStat} title="Match Losses">{t("standings.ml")}</th>
+                  <th className={styles.thStat} title="Game Wins">{t("standings.gw")}</th>
+                  <th className={styles.thStat} title="Game Losses">{t("standings.gl")}</th>
                   <th className={styles.thStat} title="Differential">±</th>
-                  <th className={styles.thStat} title="Points">Pts</th>
+                  <th className={styles.thStat} title="Points">{t("standings.pts")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -60,7 +62,7 @@ export default function GroupStandings({ groups }) {
           </div>
 
           {group.matches?.length > 0 && (
-            <div className={styles.matchCount}>{group.matches.length} matches played</div>
+            <div className={styles.matchCount}>{t("standings.matchesPlayed").replace("{n}", group.matches.length)}</div>
           )}
         </div>
       ))}

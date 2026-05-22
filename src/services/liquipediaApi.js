@@ -5,8 +5,8 @@ const CACHE_TTL = 10 * 60 * 1000   // 10 min in-memory
 const LS_CACHE_TTL = 30 * 60 * 1000 // 30 min localStorage (survives page refresh)
 const LS_PREFIX = 'lq_cache_'
 
-// After a 429/403, back off for 30 minutes before retrying
-let _blockedUntil = 0
+// After a 429/403, back off for 30 minutes before retrying (per-wiki)
+const _blockedUntil = {}
 
 // Serial request queue â€” ensures max 1 in-flight request at a time
 // with a 1.1s gap between requests (Liquipedia allows 1 req/sec)
@@ -34,12 +34,15 @@ function lsSet(key, data) {
 }
 
 async function lqFetch(endpoint, params = {}) {
-  if (Date.now() < _blockedUntil) {
-    const minsLeft = Math.ceil((_blockedUntil - Date.now()) / 60000)
-    throw new Error(`Liquipedia API rate-limited â€” retry in ~${minsLeft} min`)
+  const wiki = params.wiki || 'global'
+  const blockedTs = _blockedUntil[wiki] || 0
+  if (Date.now() < blockedTs) {
+    const minsLeft = Math.ceil((blockedTs - Date.now()) / 60000)
+    throw new Error('Liquipedia API rate-limited (' + wiki + ') — retry in ~' + minsLeft + ' min')
   }
 
-  const key = endpoint + '|' + new URLSearchParams(params).toString()
+  const sortedParams = Object.fromEntries(Object.entries(params).sort(([a], [b]) => a.localeCompare(b)))
+  const key = endpoint + '|' + new URLSearchParams(sortedParams).toString()
 
   // 1. In-memory cache
   const memHit = _memCache.get(key)
@@ -57,8 +60,11 @@ async function lqFetch(endpoint, params = {}) {
       if (attempt > 0) await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)))
       const res = await fetch(`${BASE}/${endpoint}?${qs}`)
       if (res.status === 429 || res.status === 403) {
-        _blockedUntil = Date.now() + 30 * 60 * 1000
-        throw new Error(`Liquipedia API ${res.status} â€” blocked for 30 min`)
+        _blockedUntil[wiki] = Date.now() + 30 * 60 * 1000
+        throw new Error('Liquipedia API ' + res.status + ' (' + wiki + ') — blocked for 30 min')
+      }
+      if (res.status === 404) {
+        return { result: [] }  // no results — not an error
       }
       if (res.status === 502 || res.status === 503 || res.status === 504) {
         lastErr = new Error(`Liquipedia API ${res.status}`)
@@ -647,7 +653,7 @@ export async function getCS2PlayerImage(pagename) {
   try {
     const r = await fetch(
       `https://liquipedia.net/counterstrike/api.php?action=parse&page=${encodeURIComponent(pagename)}&prop=properties&format=json&origin=*`,
-      { headers: { 'User-Agent': 'EsporMax/1.0 (emiruzel01@gmail.com)' } }
+      { headers: { 'User-Agent': 'EsporMax/1.0 (espormax-bot)' } }
     )
     if (!r.ok) return ''
     const data  = await r.json()
@@ -1234,18 +1240,28 @@ function mapLoLMatch(m) {
         || (g.match2players?.length ? Object.fromEntries(g.match2players.map((p, i) => [`${p.team || Math.floor(i / 5) + 1}_${(i % 5) + 1}`, p])) : null)
       if (rawParticipants && Object.keys(rawParticipants).length) {
         const team1 = [], team2 = []
+        const PARTICIPANT_KEY_RE = /^(\d+)_(\d+)$/
+        // Clean pagename → display name: "Soopers_(Korean_player)" → "Soopers"
+        const cleanPlayerName = (raw) => {
+          if (!raw) return ''
+          return raw.replace(/_\([^)]+\)$/, '').replace(/_/g, ' ').trim()
+        }
         for (const [key, p] of Object.entries(rawParticipants)) {
-          const parts = key.split('_')
-          const teamIdx = parseInt(parts[0], 10) || 1
+          const match = PARTICIPANT_KEY_RE.exec(key)
+          if (!match) continue
+          const teamIdx = parseInt(match[1], 10)
+          const rawName = p.player || p.name || p.link || ''
+          const name = cleanPlayerName(rawName)
+          if (!name) continue  // skip empty entries (causes the extra "—" row)
           const entry = {
-            name: p.player || p.name || p.link || '',
+            name,
             champion: p.champion || p.char1 || p.pick || p.heroname || p.character || '',
-            kills: Number(p.kills ?? 0),
-            deaths: Number(p.deaths ?? 0),
-            assists: Number(p.assists ?? 0),
-            cs: Number(p.cs ?? p.creepscore ?? p.minionkills ?? 0),
-            gold: Number(p.gold ?? p.totalgold ?? 0),
-            damage: Number(p.damagedone ?? p.damage ?? p.totaldamagedealt ?? 0),
+            kills:       Number(p.kills ?? 0),
+            deaths:      Number(p.deaths ?? 0),
+            assists:     Number(p.assists ?? 0),
+            cs:          Number(p.cs ?? p.creepscore ?? p.minionkills ?? 0),
+            gold:        Number(p.gold ?? p.totalgold ?? 0),
+            damage:      Number(p.damagedone ?? p.damage ?? p.totaldamagedealt ?? 0),
             visionScore: Number(p.visionscore ?? p.visionScore ?? p.wardsplaced ?? 0),
           }
           if (teamIdx === 1) team1.push(entry)
@@ -1258,13 +1274,25 @@ function mapLoLMatch(m) {
       let bans  = null
       if (g.extradata) {
         const ed = g.extradata
-        const t1picks = [1,2,3,4,5].map(n => ed[`team1picks${n}`]).filter(Boolean)
-        const t2picks = [1,2,3,4,5].map(n => ed[`team2picks${n}`]).filter(Boolean)
-        const t1bans  = [1,2,3,4,5].map(n => ed[`team1bans${n}`]).filter(Boolean)
-        const t2bans  = [1,2,3,4,5].map(n => ed[`team2bans${n}`]).filter(Boolean)
+        const t1picks = [1,2,3,4,5].map(n => ed[`team1champion${n}`]).filter(Boolean)
+        const t2picks = [1,2,3,4,5].map(n => ed[`team2champion${n}`]).filter(Boolean)
+        const t1bans  = [1,2,3,4,5].map(n => ed[`team1ban${n}`]).filter(Boolean)
+        const t2bans  = [1,2,3,4,5].map(n => ed[`team2ban${n}`]).filter(Boolean)
         if (t1picks.length || t2picks.length) picks = { team1: t1picks, team2: t2picks }
         if (t1bans.length  || t2bans.length)  bans  = { team1: t1bans,  team2: t2bans  }
       }
+
+      const parseObjectives = (raw) => {
+        if (!raw) return null
+        if (typeof raw === 'object') return raw
+        const [dragons, barons, towers, grubs, heralds] = String(raw).split('-').map(Number)
+        return { dragons, barons, towers, grubs, heralds }
+      }
+      const objectives = g.extradata ? {
+        team1: parseObjectives(g.extradata.team1objectives),
+        team2: parseObjectives(g.extradata.team2objectives),
+        team1side: g.extradata.team1side || null,
+      } : null
 
       return {
         map: g.map || "Summoner's Rift",
@@ -1276,6 +1304,7 @@ function mapLoLMatch(m) {
         playerStats,
         picks,
         bans,
+        objectives,
       }
     }),
     wiki: 'leagueoflegends',
@@ -1421,6 +1450,94 @@ export async function getLoLTournamentByPagename(pagename) {
   return base
 }
 
+export async function getLoLTournamentWinner(tournamentName) {
+  if (!tournamentName) return null
+  const data = await lqFetch('placement', {
+    wiki:       'leagueoflegends',
+    conditions: `[[tournament::${tournamentName}]] AND [[placement::1]] AND [[opponenttype::team]]`,
+    limit:      '1',
+  })
+  const p = data.result?.[0]
+  if (!p?.opponentname) return null
+  const logos = await getLoLTeamLogos([p.opponentname]).catch(() => ({}))
+  return { name: p.opponentname, logoUrl: logos[p.opponentname] || '' }
+}
+
+export async function getLoLTournamentPrizes(tournamentName) {
+  if (!tournamentName) return []
+  const data = await lqFetch('placement', {
+    wiki:       'leagueoflegends',
+    conditions: `[[tournament::${tournamentName}]] AND [[opponenttype::team]]`,
+    limit:      '16',
+    order:      'placement asc',
+  })
+  const rows = (data.result || [])
+    .filter(p => p.opponentname && p.placement)
+    .map(p => ({
+      placement: String(p.placement).trim(),
+      team:      p.opponentname,
+      prize:     typeof p.prizemoney === 'string'
+                   ? Number(p.prizemoney.replace(/[^0-9]/g, '')) || 0
+                   : (p.prizemoney || 0),
+      logoUrl:   '',
+    }))
+  rows.sort((a, b) => {
+    const n = s => parseInt(s.split(/[-–]/)[0]) || 99
+    return n(a.placement) - n(b.placement)
+  })
+  const teamNames = [...new Set(rows.map(r => r.team))]
+  const logos = await getLoLTeamLogos(teamNames).catch(() => ({}))
+  rows.forEach(r => { r.logoUrl = logos[r.team] || '' })
+  return rows
+}
+
+export async function getLoLTournamentMVP(tournamentName) {
+  if (!tournamentName) return null
+  try {
+    const data = await lqFetch('award', {
+      wiki:       'leagueoflegends',
+      conditions: `[[tournament::${tournamentName}]]`,
+      limit:      '10',
+    })
+    if (!data?.result?.length) return null
+    const mvpRow = data.result.find(r => {
+      const type = (r.type || r.award || r.name || '').toLowerCase()
+      return type.includes('mvp') || type.includes('valuable') || type.includes('star')
+    }) || data.result[0]
+    return mvpRow?.player || mvpRow?.recipient || mvpRow?.name || null
+  } catch { return null }
+}
+
+const LOL_GROUP_STAGE_SUFFIXES = [
+  'Play-In', 'Swiss_Stage', 'Group_Stage', 'Regional_Qualifier',
+  'Opening_Stage', 'Playoff', 'Qualifier',
+]
+
+export async function getLoLGroupStageMatches(tournamentName, pagename) {
+  if (!tournamentName || !pagename) return []
+  const candidates = LOL_GROUP_STAGE_SUFFIXES.map(s => `${pagename}/${s}`)
+  const cond = candidates.map(p => `[[pagename::${p}]]`).join(' OR ')
+  const subData = await lqFetch('tournament', {
+    wiki:       'leagueoflegends',
+    conditions: cond,
+    limit:      '10',
+    order:      'startdate asc',
+  }).catch(() => ({ result: [] }))
+  const subNames = (subData.result || []).map(t => t.name).filter(Boolean)
+  if (!subNames.length) return []
+  const matchCond = subNames.map(n => `[[tournament::${n}]]`).join(' OR ')
+  const data = await lqFetch('match', {
+    wiki:       'leagueoflegends',
+    conditions: matchCond,
+    limit:      '100',
+    order:      'date asc',
+  }).catch(() => ({ result: [] }))
+  return (data.result || []).map(m => ({
+    ...mapLoLMatch(m),
+    stageLabel: subNames.find(n => n === m.tournament) || subNames[0],
+  }))
+}
+
 export async function getLoLTournamentMatches(tournamentName) {
   if (!tournamentName) return []
   const data = await lqFetch('match', {
@@ -1430,6 +1547,23 @@ export async function getLoLTournamentMatches(tournamentName) {
     order:      'date desc',
   })
   return (data.result || []).map(mapLoLMatch)
+}
+
+export async function getLoLTournamentStreams(tournamentName) {
+  try {
+    const data = await lqFetch('streaming', {
+      wiki:       'leagueoflegends',
+      conditions: `[[tournament::${tournamentName}]]`,
+      limit:      '20',
+    })
+    return (data.result || [])
+      .filter(s => s.platform && s.link)
+      .map(s => ({
+        platform: s.platform,
+        link:     s.link.startsWith('http') ? s.link : `https://${s.link}`,
+        language: s.language || 'EN',
+      }))
+  } catch { return [] }
 }
 
 export async function getLoLOngoingMatches(tournamentNames) {
@@ -1498,6 +1632,43 @@ export async function getLoLMatchesByDate(date) {
   }))
 }
 
+export async function getLoLBroadcasters(tournamentName) {
+  if (!tournamentName) return []
+  try {
+    const data = await lqFetch('broadcasters', {
+      wiki:       'leagueoflegends',
+      conditions: `[[tournament::${tournamentName}]]`,
+      limit:      '20',
+    })
+    return (data.result || [])
+      .filter(b => b.name && (b.twitch || b.youtube || b.link))
+      .map(b => ({
+        name:     b.name || '',
+        role:     b.role || 'Caster',
+        language: b.language || 'EN',
+        link:     b.twitch ? `https://twitch.tv/${b.twitch}` : b.youtube ? `https://youtube.com/@${b.youtube}` : (b.link || ''),
+      }))
+  } catch { return [] }
+}
+
+export async function getLoLMatchVods(matchId) {
+  if (!matchId) return []
+  try {
+    const data = await lqFetch('matchvod', {
+      wiki:       'leagueoflegends',
+      conditions: `[[match::${matchId}]]`,
+      limit:      '10',
+    })
+    return (data.result || [])
+      .filter(v => v.vod || v.link)
+      .map(v => ({
+        language: v.language || 'EN',
+        url:      v.vod || v.link || '',
+        platform: v.platform || 'youtube',
+      }))
+  } catch { return [] }
+}
+
 export async function getLoLMatchById(matchId) {
   const data = await lqFetch('match', {
     wiki:       'leagueoflegends',
@@ -1559,14 +1730,15 @@ function _normLolName(n) {
 }
 
 export async function getLoLTeamsForRanking(limit = 30) {
-  const { getLoLGPRList, getLoLRankPoints } = await import('./lolesportsApi.js')
+  const { getLoLGPRList } = await import('./lolesportsApi.js')
 
   const threeMonthsAgo = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10)
 
-  // 1. GPR listesini Ã§ek â€” takÄ±m adlarÄ± ve puanlar buradan geliyor
-  const [gprList, rankMap, matchData] = await Promise.all([
-    getLoLGPRList().catch(() => null),
-    getLoLRankPoints().catch(() => null),
+  // 1. GPR listesi önce tek seferinde çek — race condition'ı önlemek için
+  const gprList = await getLoLGPRList().catch(() => null)
+
+  const [, matchData] = await Promise.all([
+    Promise.resolve(gprList ? Object.fromEntries(gprList.map(r => [r.name.toLowerCase(), r.score])) : null),
     lqFetch('match', {
       wiki:       'leagueoflegends',
       conditions: `([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[finished::1]] AND [[date::>${threeMonthsAgo}]]`,
@@ -1666,30 +1838,55 @@ function leagueToRegion(league) {
   return map[(league || '').toLowerCase()] || ''
 }
 
+const _lolLogoCache = {}  // { name: { url, ts } }
+const _LOL_LOGO_TTL = 10 * 60 * 1000  // 10 min
+
+const LOL_TEAM_PAGENAMES = {
+  'Gen.G':            'Gen.G_Esports',
+  'T1':               'T1_(South_Korean_Team)',
+  'JDG':              'JD_Gaming',
+  'JD Gaming':        'JD_Gaming',
+  'BLG':              'Bilibili_Gaming',
+  'Bilibili Gaming':  'Bilibili_Gaming',
+  'NRG':              'NRG_(League_of_Legends)',
+  'Weibo Gaming':     'Weibo_Gaming',
+  'Hanwha Life':      'Hanwha_Life_Esports',
+  'KT':               'KT_Rolster',
+  'Cloud9':           'Cloud9_(League_of_Legends)',
+}
+
 export async function getLoLTeamLogos(teamNames) {
   if (!teamNames.length) return {}
   try {
-    const conds = teamNames.flatMap(n => [
-      `[[pagename::${n.replace(/ /g, '_')}]]`,
-      `[[name::${n}]]`,
-    ])
-    const data = await lqFetch('team', {
-      wiki:       'leagueoflegends',
-      conditions: [...new Set(conds)].join(' OR '),
-      limit:      String(teamNames.length * 3),
-    })
-    const byPage = {}, byName = {}
-    for (const t of data.result || []) {
-      const url = t.textlesslogourl || t.logourl || ''
-      if (!url) continue
-      if (t.pagename) byPage[t.pagename] = url
-      if (t.name)     byName[t.name]     = url
+    const now = Date.now()
+    const missing = teamNames.filter(n => !_lolLogoCache[n] || now - _lolLogoCache[n].ts > _LOL_LOGO_TTL)
+    if (missing.length) {
+      try {
+        const conds = missing.flatMap(n => {
+          const pg = LOL_TEAM_PAGENAMES[n] || n.replace(/ /g, '_')
+          return [`[[pagename::${pg}]]`, `[[name::${n}]]`]
+        })
+        const data = await lqFetch('team', {
+          wiki:       'leagueoflegends',
+          conditions: [...new Set(conds)].join(' OR '),
+          limit:      String(missing.length * 3),
+        })
+        const byPage = {}, byName = {}
+        for (const t of data.result || []) {
+          const url = t.textlesslogourl || t.logourl || ''
+          if (!url) continue
+          if (t.pagename) byPage[t.pagename] = url
+          if (t.name)     byName[t.name]     = url
+        }
+        for (const n of missing) {
+          const pg = LOL_TEAM_PAGENAMES[n] || n.replace(/ /g, '_')
+          _lolLogoCache[n] = { url: byPage[pg] || byName[n] || '', ts: Date.now() }
+        }
+      } catch {
+        for (const n of missing) _lolLogoCache[n] = { url: '', ts: Date.now() }
+      }
     }
-    const map = {}
-    for (const n of teamNames) {
-      map[n] = byPage[n.replace(/ /g, '_')] || byName[n] || ''
-    }
-    return map
+    return Object.fromEntries(teamNames.map(n => [n, _lolLogoCache[n]?.url || '']))
   } catch { return {} }
 }
 
@@ -1734,7 +1931,7 @@ export async function getLoLTeamByName(name) {
 export async function getLoLTeamSquad(teamPagename) {
   const data = await lqFetch('squadplayer', {
     wiki:       'leagueoflegends',
-    conditions: `[[pagename::${teamPagename}]] AND [[status::active]] AND [[type::player]]`,
+    conditions: `[[pagename::${teamPagename}]] AND ([[status::active]] OR [[status::Active]]) AND [[type::player]]`,
     limit:      '10',
   })
 
@@ -1783,12 +1980,25 @@ export async function getLoLTeamRecentMatches(teamName, limit = 30) {
   const teamLow    = teamName.toLowerCase()
   const oneYearAgo = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10)
 
+  // Try direct opponent filter first (works for new teams without placement history)
+  const direct = await lqFetch('match', {
+    wiki:       'leagueoflegends',
+    conditions: `([[opponent1::${teamName}]] OR [[opponent2::${teamName}]]) AND [[finished::1]] AND [[date::>${oneYearAgo}]]`,
+    limit:      String(limit),
+    order:      'date desc',
+  }).catch(() => ({ result: [] }))
+
+  if (direct.result?.length) {
+    return direct.result.map(mapLoLMatch).slice(0, limit)
+  }
+
+  // Fallback: placement-based lookup for established teams
   const placements = await lqFetch('placement', {
     wiki:       'leagueoflegends',
     conditions: `[[opponentname::${teamName}]] AND [[date::>${oneYearAgo}]]`,
     limit:      '25',
     order:      'date desc',
-  })
+  }).catch(() => ({ result: [] }))
   const tournaments = [...new Set(
     (placements.result || []).map(p => p.tournament).filter(Boolean)
   )].slice(0, 10)
@@ -1812,21 +2022,18 @@ export async function getLoLTeamRecentMatches(teamName, limit = 30) {
 
 export async function getLoLTeamUpcomingMatches(teamName, limit = 5) {
   if (!teamName) return []
-  const teamLow       = teamName.toLowerCase()
   const today         = new Date().toISOString().slice(0, 10)
   const twoWeeksAhead = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10)
 
   const data = await lqFetch('match', {
     wiki:       'leagueoflegends',
-    conditions: `([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[finished::0]] AND [[date::>${today}]] AND [[date::<${twoWeeksAhead}]]`,
-    limit:      '50',
+    conditions: `([[opponent1::${teamName}]] OR [[opponent2::${teamName}]]) AND [[finished::0]] AND [[date::>${today}]] AND [[date::<${twoWeeksAhead}]]`,
+    limit:      String(limit),
     order:      'date asc',
   })
 
   return (data.result || [])
     .map(mapLoLMatch)
-    .filter(m => m.match2opponents.some(o => (o.name || '').toLowerCase() === teamLow))
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, limit)
 }
 
@@ -1846,7 +2053,7 @@ export async function getLoLPlayerImage(pagename) {
   try {
     const r = await fetch(
       `https://liquipedia.net/leagueoflegends/api.php?action=parse&page=${encodeURIComponent(pagename)}&prop=properties&format=json&origin=*`,
-      { headers: { 'User-Agent': 'EsporMax/1.0 (emiruzel01@gmail.com)' } }
+      { headers: { 'User-Agent': 'EsporMax/1.0 (espormax-bot)' } }
     )
     if (!r.ok) return ''
     const data  = await r.json()
@@ -1863,6 +2070,91 @@ export async function getLoLPlayerImage(pagename) {
     try { localStorage.setItem(LS_KEY, JSON.stringify({ url: thumbUrl, ts: Date.now() })) } catch {}
     return thumbUrl
   } catch { return '' }
+}
+
+export async function getLoLPlayersForRanking(limit = 30) {
+  const data = await lqFetch('squadplayer', {
+    wiki:       'leagueoflegends',
+    conditions: `([[status::active]] OR [[status::Active]]) AND [[type::player]]`,
+    limit:      String(limit),
+    order:      'joindate desc',
+  })
+  const seen = new Set()
+  return (data.result || [])
+    .filter(p => p.id || p.link)
+    .filter(p => {
+      const key = p.id || p.link
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .map(p => ({
+      id:          p.id || p.link || '',
+      pagename:    p.link || p.id || '',
+      name:        p.name || p.id || '',
+      nationality: p.nationality || '',
+      role:        LOL_ROLE_DISPLAY?.[(p.role || '').toLowerCase()] || p.role || '',
+      team:        p.pagename || '',
+      earnings:    0,
+      views:       0,
+      wiki:        'leagueoflegends',
+    }))
+    .slice(0, limit)
+}
+
+export async function getLoLPlayerMatchStats(playerPagename, teamName) {
+  if (!playerPagename) return null
+  const oneYearAgo = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10)
+
+  // Get recent matches for the player's team
+  const teamCond = teamName
+    ? `([[opponent1::${teamName}]] OR [[opponent2::${teamName}]]) AND`
+    : ''
+  const data = await lqFetch('match', {
+    wiki:       'leagueoflegends',
+    conditions: `${teamCond} [[finished::1]] AND [[date::>${oneYearAgo}]] AND ([[liquipediatier::1]] OR [[liquipediatier::2]])`,
+    limit:      '30',
+    order:      'date desc',
+  }).catch(() => ({ result: [] }))
+
+  const matches = (data.result || []).map(mapLoLMatch)
+  const stats = { games: 0, wins: 0, kills: 0, deaths: 0, assists: 0, cs: 0, damage: 0, visionScore: 0 }
+
+  for (const m of matches) {
+    for (const g of m.match2games || []) {
+      const ps = g.playerStats
+      if (!ps) continue
+      const allPlayers = [...(ps.team1 || []), ...(ps.team2 || [])]
+      const player = allPlayers.find(p => {
+        const name = (p.name || '').toLowerCase()
+        const pg = playerPagename.toLowerCase().replace(/_/g, ' ')
+        return name === pg || name === pg.split('_').join(' ')
+      })
+      if (!player) continue
+      stats.games++
+      const teamIdx = ps.team1.includes(player) ? 1 : 2
+      if (String(g.winner) === String(teamIdx)) stats.wins++
+      stats.kills += player.kills || 0
+      stats.deaths += player.deaths || 0
+      stats.assists += player.assists || 0
+      stats.cs += player.cs || 0
+      stats.damage += player.damage || 0
+      stats.visionScore += player.visionScore || 0
+    }
+  }
+
+  if (!stats.games) return null
+  return {
+    games:      stats.games,
+    winRate:    Math.round((stats.wins / stats.games) * 100),
+    avgKills:   (stats.kills / stats.games).toFixed(1),
+    avgDeaths:  (stats.deaths / stats.games).toFixed(1),
+    avgAssists: (stats.assists / stats.games).toFixed(1),
+    kda:        stats.deaths === 0 ? 'Perfect' : ((stats.kills + stats.assists) / stats.deaths).toFixed(2),
+    avgCs:      Math.round(stats.cs / stats.games),
+    avgDamage:  Math.round(stats.damage / stats.games),
+    avgVision:  Math.round(stats.visionScore / stats.games),
+  }
 }
 
 export async function getLoLPlayerProfile(id) {
@@ -1933,7 +2225,7 @@ export async function getLoLPlayerAllPlacements(teamNames) {
     try {
       const data = await lqFetch('placement', {
         wiki:       'leagueoflegends',
-        conditions: `(${cond}) AND ([[liquipediatier::1]] OR [[liquipediatier::2]]) AND [[placement::1]] AND [[opponenttype::team]] AND [[date::<${today}]]`,
+        conditions: `(${cond}) AND ([[liquipediatier::1]] OR [[liquipediatier::2]]) AND ([[placement::1]] OR [[placement::2]] OR [[placement::3]] OR [[placement::4]] OR [[placement::3-4]] OR [[placement::5-6]] OR [[placement::5-8]]) AND [[opponenttype::team]] AND [[date::<${today}]]`,
         limit:      '100',
         order:      'date desc',
       })
@@ -1945,3 +2237,86 @@ export async function getLoLPlayerAllPlacements(teamNames) {
   return results.flat()
 }
 
+
+// ── 5.5: playerprize — per-tournament prize earnings ──────────────────────────
+export async function getLoLPlayerPrizes(pagename) {
+  if (!pagename) return []
+  try {
+    const data = await lqFetch('placement', {
+      wiki:       'leagueoflegends',
+      conditions: `[[participants::${pagename}]] AND [[opponenttype::team]]`,
+      limit:      '30',
+      order:      'date desc',
+    })
+    return (data.result || [])
+      .filter(p => p.prizemoney && Number(p.prizemoney) > 0)
+      .map(p => ({
+        tournament: p.tournament || '',
+        date:       p.date || '',
+        placement:  p.placement || '',
+        prize:      Number(p.prizemoney) || 0,
+      }))
+  } catch { return [] }
+}
+
+// ── 5.6: news — Liquipedia LoL news table ─────────────────────────────────────
+export async function getLoLNews(limit = 20) {
+  try {
+    const data = await lqFetch('news', {
+      wiki:  'leagueoflegends',
+      limit: String(limit),
+      order: 'date desc',
+    })
+    return (data.result || [])
+      .filter(n => n.title || n.pagename)
+      .map(n => ({
+        title:      n.title || n.pagename || '',
+        date:       n.date || '',
+        author:     n.author || '',
+        tournament: n.tournament || '',
+        pagename:   n.pagename || '',
+        wiki:       'leagueoflegends',
+        type:       'News',
+        publisher:  'Liquipedia',
+        language:   'en',
+        link:       n.pagename ? `https://liquipedia.net/leagueoflegends/${n.pagename}` : '',
+      }))
+  } catch { return [] }
+}
+
+// ── 5.7: series — tournament series grouping ──────────────────────────────────
+export async function getLoLSeries(limit = 10) {
+  try {
+    const data = await lqFetch('series', {
+      wiki:  'leagueoflegends',
+      limit: String(limit),
+      order: 'startdate desc',
+    })
+    return (data.result || []).map(s => ({
+      name:      s.name || s.pagename || '',
+      pagename:  s.pagename || '',
+      startdate: s.startdate || '',
+      enddate:   s.enddate || '',
+    }))
+  } catch { return [] }
+}
+
+// ── 5.8: playerrecord — career win/loss statistics ────────────────────────────
+export async function getLoLPlayerRecord(pagename) {
+  if (!pagename) return null
+  try {
+    const data = await lqFetch('playerrecord', {
+      wiki:       'leagueoflegends',
+      conditions: `[[pagename::${pagename}]]`,
+      limit:      '1',
+    })
+    const r = data.result?.[0]
+    if (!r) return null
+    return {
+      totalWins:   Number(r.win || r.wins || 0),
+      totalLosses: Number(r.loss || r.losses || 0),
+      totalGames:  Number(r.total || r.games || 0),
+      earnings:    Number(r.earnings || 0),
+    }
+  } catch { return null }
+}

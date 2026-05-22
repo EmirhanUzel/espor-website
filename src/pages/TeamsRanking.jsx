@@ -12,7 +12,7 @@ export function calcESM(team, allPrizes, allMatches) {
   const earningsScore = Math.min(Math.log10(Math.max(team.earnings, 1)) * 6, 40);
   const rosterMV = (team.squad || []).reduce((sum, m) => {
     const p = PLAYERS.find(pl => pl.id === m.id && pl.wiki === team.wiki);
-    return sum + (p?.marketvalue || 0);
+    return sum + (p?.marketvalue || m.marketvalue || 0);
   }, 0);
   const rosterScore = rosterMV > 0 ? Math.min(Math.log10(rosterMV) * 5, 30) : 0;
   const ptsMap = { "1": 10, "2": 6, "3-4": 3, "5-8": 1.5 };
