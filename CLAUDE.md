@@ -42,6 +42,7 @@ The Vite dev server proxies `/liquipedia-api` → `https://api.liquipedia.net/ap
 - `src/services/api.js` — mock Liquipedia-style data for all three games (tournaments, matches, players, teams, news, transfers). Source of truth when real APIs are unavailable.
 - `src/services/liquipediaApi.js` — real Liquipedia API v3, CS2 only. Has a serial request queue (1.1s between requests) and two-layer cache: in-memory (10 min) + localStorage (30 min). Backs off 30 min after a 429/403.
 - `src/services/pandascoreApi.js` — PandaScore API for CS2 player stats. Direct browser fetch (CORS enabled), token appended as query param, localStorage cache (1 hour).
+- `src/services/xApi.js` — X (Twitter) API v2 search via Vite proxy. Requires `VITE_X_BEARER_TOKEN` (X Basic tier, $100/mo). Currently built but not wired to any page.
 - `src/services/forum.js` — localStorage-backed forum posts/replies with seed data.
 - `src/services/playerStats.js` — static player match history dataset.
 
@@ -61,6 +62,70 @@ The Vite dev server proxies `/liquipedia-api` → `https://api.liquipedia.net/ap
 3. **Surgical Changes** — Touch only what you must. Don't improve adjacent code or formatting. Match existing style. Every changed line should trace directly to the request.
 
 4. **Goal-Driven Execution** — Define success criteria before implementing. For multi-step tasks, state a brief plan with verifiable steps.
+
+## Environment Variables (full list)
+
+```
+VITE_LIQUIPEDIA_API_KEY=...     # Liquipedia API v3 — CS2/LoL data
+VITE_PANDASCORE_API_KEY=...     # PandaScore — CS2 player stats
+VITE_FACEIT_API_KEY=...         # FACEIT — player stats
+VITE_GRID_API_KEY=...           # GRID — esports data
+VITE_X_BEARER_TOKEN=...         # X API v2 Basic tier — tweet search (optional)
+```
+
+Vite dev server proxies: `/liquipedia-api`, `/pandascore`, `/faceit-api`, `/grid-api`, `/x-api`, `/lolesports-api`, `/lolesports-gpr`.
+
+## MatchPage (`src/pages/MatchPage.jsx`)
+
+The match detail page has three wiki branches: `counterstrike`, `leagueoflegends`, and generic.
+
+### CS2 match page components
+
+| Component | Purpose |
+|---|---|
+| `VetoBoard` | Map veto list. 2-col grid; each item has a background map image (opacity 0.18) from `CS2_MAP_IMG`. Decider spans both columns. |
+| `CsMapPanel` | Per-map tab panel. Shows `HalftimePanel` (CT/T half breakdown from `extradata`) + `PlayerStatTable`. |
+| `PlayerStatTable` | K/D/A/KD/ADR/Rating/HS% table. Player names link to `/player/:id`. Avatars via `PlayerAvatarImg`. |
+| `PlayerAvatarImg` | Fetches player photo from Liquipedia MediaWiki parse API (`getCS2PlayerImage`). Falls back to letter avatar. 24h localStorage cache. |
+| `MatchVideos` | Per-map VOD cards from `match2games[].vod` + `getCS2MatchVods`. YouTube thumbnail auto-extracted; harita görseli fallback. Hidden if no VODs. |
+| `H2HSection` | Last 5 head-to-head matches via `getCS2H2HMatches`. Single-row cards: team logos + score + tournament + date. |
+
+### CS2 mock overlay (`MOCK_MATCH_STATS` in `api.js`)
+
+Keyed by Liquipedia `match2id`. Overlays real API data (logos, scores) with:
+- `veto` — map ban/pick order (not in Liquipedia API)
+- `games[].playerStats` — HLTV player K/D/ADR/Rating stats (Liquipedia CS2 `participants` is always empty)
+
+Only match implemented: `"Ffcq6omMBC_R01-M003"` (MOUZ 2–0 Aurora Gaming, BLAST Premier 2026-05-15).
+
+### Map images
+
+```js
+const GH = 'https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/thumbs';
+const CS2_MAP_IMG = { 'Dust2': `${GH}/de_dust2_1_png.png`, ... };
+```
+
+Same URLs used in `TeamPage.jsx` (`MAP_BANNERS`). Keys: `Ancient`, `Anubis`, `Dust2`, `Dust II`, `Inferno`, `Mirage`, `Nuke`, `Overpass`, `Vertigo`, `Train`, `Cache`.
+
+### New `liquipediaApi.js` exports (appended at end of file)
+
+- `getCS2H2HMatches(team1, team2, limit=5)` — recent finished matches where both teams are opponents
+- `getCS2TournamentImage(pagename)` — tournament banner via MediaWiki parse API, 24h cache
+- `getCS2MatchVods(matchId)` — VOD links from `matchvod` table
+
+### ⚠️ liquipediaApi.js encoding issue
+
+The file has **CRLF line endings + UTF-8 mojibake** (e.g. `→` renders as `â†'`). The `Edit` tool cannot match strings reliably. Always use **Node.js `.cjs` scripts** to modify this file:
+
+```js
+// fix_something.cjs
+const fs = require('fs');
+const content = fs.readFileSync('src/services/liquipediaApi.js', 'utf8');
+// ... string operations ...
+fs.writeFileSync('src/services/liquipediaApi.js', modified);
+```
+
+Run with `node fix_something.cjs`, then delete the script. Never use bash `[[` or `]]` in Node.js template literals run from shell — the shell interprets them as test operators.
 
 ## graphify
 

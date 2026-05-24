@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getMatch, formatDate, tierLabel } from "../services/api";
-import { getLoLMatchById, getCS2MatchById } from "../services/liquipediaApi";
+import { getMatch, getMockMatchStats, formatDate, tierLabel } from "../services/api";
+import { getLoLMatchById, getCS2MatchById, getCS2PlayerImage, getCS2H2HMatches, getCS2MatchVods } from "../services/liquipediaApi";
 import { useLanguage } from "../contexts/LanguageContext";
 import styles from "./MatchPage.module.css";
 
@@ -19,6 +19,166 @@ function TierBadge({ tier, tiertype }) {
   );
 }
 
+function PlayerAvatarImg({ name }) {
+  const [url, setUrl] = useState('');
+  useEffect(() => {
+    getCS2PlayerImage(name).then(u => { if (u) setUrl(u); });
+  }, [name]);
+  if (url) return <img src={url} alt={name} className={styles.statPlayerAvatar} referrerPolicy="no-referrer" />;
+  return <span className={styles.statPlayerAvatarFallback}>{name[0]?.toUpperCase()}</span>;
+}
+
+const GH = 'https://raw.githubusercontent.com/MurkyYT/cs2-map-icons/main/images/thumbs';
+const CS2_MAP_IMG = {
+  'Ancient':   `${GH}/de_ancient_1_png.png`,
+  'Anubis':    `${GH}/de_anubis_1_png.png`,
+  'Dust2':     `${GH}/de_dust2_1_png.png`,
+  'Dust II':   `${GH}/de_dust2_1_png.png`,
+  'Inferno':   `${GH}/de_inferno_1_png.png`,
+  'Mirage':    `${GH}/de_mirage_1_png.png`,
+  'Nuke':      `${GH}/de_nuke_1_png.png`,
+  'Overpass':  `${GH}/de_overpass_1_png.png`,
+  'Vertigo':   `${GH}/de_vertigo_1_png.png`,
+  'Train':     `${GH}/de_train_1_png.png`,
+  'Cache':     `${GH}/de_cache_1_png.png`,
+};
+const getMapImg = name => CS2_MAP_IMG[name] || null;
+
+function ytId(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function MatchVideos({ match }) {
+  const [apiVods, setApiVods] = useState(null);
+
+  useEffect(() => {
+    if (!match?.id) return;
+    getCS2MatchVods(match.id).then(setApiVods);
+  }, [match?.id]);
+
+  if (!match) return null;
+
+  // Per-map VODs from match2games
+  const mapVods = (match.match2games || [])
+    .filter(g => g.vod)
+    .map(g => ({ url: g.vod, map: g.map, score: `${g.scores?.[0] ?? ''} : ${g.scores?.[1] ?? ''}` }));
+
+  // Full-match VODs from matchvod endpoint
+  const fullVods = (apiVods || []).map(v => ({ url: v.url, label: `${v.language} VOD` }));
+
+  const all = [...mapVods, ...fullVods];
+  if (!all.length) return null;
+
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>Maç Videosu</h2>
+      <div className={styles.videoGrid}>
+        {all.map((v, i) => {
+          const id = ytId(v.url);
+          const thumb = id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : null;
+          const mapImg = v.map ? getMapImg(v.map) : null;
+          const fallbackImg = mapImg || null;
+          const label = v.map ? v.map : (v.label || 'VOD');
+          return (
+            <a key={i} href={v.url} target="_blank" rel="noreferrer" className={styles.videoCard}>
+              <div className={styles.videoThumbWrap}>
+                {(thumb || fallbackImg) && (
+                  <img
+                    src={thumb || fallbackImg}
+                    alt={label}
+                    className={styles.videoThumb}
+                    referrerPolicy="no-referrer"
+                    onError={e => { if (fallbackImg && e.target.src !== fallbackImg) e.target.src = fallbackImg; }}
+                  />
+                )}
+                <div className={styles.videoThumbOverlay} />
+                <div className={styles.videoPlayBtn}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+                {v.map && mapImg && (
+                  <div className={styles.videoMapBadge}>
+                    <img src={mapImg} alt={v.map} className={styles.videoMapBadgeImg} referrerPolicy="no-referrer" />
+                    <span>{v.map}</span>
+                  </div>
+                )}
+              </div>
+              <div className={styles.videoInfo}>
+                <span className={styles.videoTitle}>{label}</span>
+                {v.score && (
+                  <div className={styles.videoMeta}>
+                    <span className={styles.videoScore}>{v.score}</span>
+                  </div>
+                )}
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function H2HSection({ team1, team2, team1Icon, team2Icon }) {
+  const [matches, setMatches] = useState(null);
+  useEffect(() => {
+    if (!team1 || !team2) return;
+    setMatches(null);
+    getCS2H2HMatches(team1, team2, 5).then(setMatches);
+  }, [team1, team2]);
+
+  if (!matches) return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>Head-to-Head</h2>
+      <div className={styles.h2hLoading}>Yükleniyor…</div>
+    </section>
+  );
+  if (!matches.length) return null;
+
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>Head-to-Head</h2>
+      <div className={styles.h2hList}>
+        {matches.map((m, i) => {
+          const o1 = m.match2opponents?.[0];
+          const o2 = m.match2opponents?.[1];
+          const isTeam1Left = (o1?.name || '').toLowerCase() === team1.toLowerCase();
+          const left  = isTeam1Left ? o1 : o2;
+          const right = isTeam1Left ? o2 : o1;
+          const leftWon  = left?.result  === "W" || left?.score  > right?.score;
+          const rightWon = right?.result === "W" || right?.score > left?.score;
+          const leftIcon  = isTeam1Left ? team1Icon : team2Icon;
+          const rightIcon = isTeam1Left ? team2Icon : team1Icon;
+          return (
+            <div key={i} className={styles.h2hRow}>
+              <Link to={`/team/${encodeURIComponent(left?.name || '')}`} className={`${styles.h2hTeam} ${leftWon ? styles.h2hWinner : styles.h2hLoser}`}>
+                {leftIcon && <img src={leftIcon} alt={left?.name} className={styles.h2hLogo} referrerPolicy="no-referrer" />}
+                <span>{left?.name}</span>
+              </Link>
+              <span className={styles.h2hScore}>
+                <span className={leftWon  ? styles.h2hScoreWin : styles.h2hScoreLoss}>{left?.score  ?? "—"}</span>
+                <span className={styles.h2hScoreSep}>:</span>
+                <span className={rightWon ? styles.h2hScoreWin : styles.h2hScoreLoss}>{right?.score ?? "—"}</span>
+              </span>
+              <Link to={`/team/${encodeURIComponent(right?.name || '')}`} className={`${styles.h2hTeam} ${styles.h2hTeamRight} ${rightWon ? styles.h2hWinner : styles.h2hLoser}`}>
+                {rightIcon && <img src={rightIcon} alt={right?.name} className={styles.h2hLogo} referrerPolicy="no-referrer" />}
+                <span>{right?.name}</span>
+              </Link>
+              <div className={styles.h2hMeta}>
+                <span className={styles.h2hTournament}>{m.tournament || "—"}</span>
+                <span className={styles.h2hDate}>{formatDate(m.date)}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function VetoBoard({ veto, opp1Name, opp2Name }) {
   const teamLabel = (t) => t === "1" ? opp1Name : t === "2" ? opp2Name : null;
   return (
@@ -26,14 +186,22 @@ function VetoBoard({ veto, opp1Name, opp2Name }) {
       <h3 className={styles.vetoTitle}>Map Veto</h3>
       <div className={styles.vetoList}>
         {veto.map((v, i) => {
-          const cls = v.type === "ban" ? styles.vetoBan : v.type === "pick" ? styles.vetoPick : styles.vetoDecider;
-          const tagCls = v.type === "ban" ? styles.vetoTagBan : v.type === "pick" ? styles.vetoTagPick : styles.vetoTagDecider;
+          const isBan = v.type === "ban";
+          const isPick = v.type === "pick";
+          const cls = isBan ? styles.vetoBan : isPick ? styles.vetoPick : styles.vetoDecider;
+          const tagCls = isBan ? styles.vetoTagBan : isPick ? styles.vetoTagPick : styles.vetoTagDecider;
           const team = teamLabel(v.team);
+          const imgUrl = getMapImg(v.map);
           return (
             <div key={i} className={`${styles.vetoItem} ${cls}`}>
-              <span className={`${styles.vetoTag} ${tagCls}`}>{v.type}</span>
-              {team && <span className={styles.vetoTeamLabel}>{team}</span>}
-              <span>{v.map}</span>
+              {imgUrl && (
+                <div className={styles.vetoMapBg} style={{ backgroundImage: `url(${imgUrl})` }} />
+              )}
+              <div className={styles.vetoContent}>
+                <span className={`${styles.vetoTag} ${tagCls}`}>{v.type}</span>
+                {team && <span className={styles.vetoTeamLabel}>{team}</span>}
+                <span className={styles.vetoMapName}>{v.map}</span>
+              </div>
             </div>
           );
         })}
@@ -42,13 +210,8 @@ function VetoBoard({ veto, opp1Name, opp2Name }) {
   );
 }
 
-function SwingCell({ value }) {
-  if (value > 0) return <span className={styles.csSwingPos}>+{value}</span>;
-  if (value < 0) return <span className={styles.csSwingNeg}>{value}</span>;
-  return <span className={styles.csSwingZero}>0</span>;
-}
 
-function PlayerStatTable({ players, totalRounds }) {
+function PlayerStatTable({ players }) {
   return (
     <table className={styles.csStatTable}>
       <thead>
@@ -56,22 +219,29 @@ function PlayerStatTable({ players, totalRounds }) {
           <th>Player</th>
           <th>K</th>
           <th>D</th>
+          <th>A</th>
           <th>K/D</th>
           <th>ADR</th>
-          <th>Damage</th>
-          <th>Round Swing</th>
+          <th>Rating</th>
+          <th>HS%</th>
         </tr>
       </thead>
       <tbody>
         {players.map(p => (
           <tr key={p.name}>
-            <td>{p.name}</td>
+            <td>
+              <Link to={`/player/${encodeURIComponent(p.name)}`} className={styles.statPlayerCell}>
+                <PlayerAvatarImg name={p.name} />
+                {p.name}
+              </Link>
+            </td>
             <td>{p.kills}</td>
             <td>{p.deaths}</td>
-            <td>{p.kd.toFixed(2)}</td>
-            <td>{p.adr.toFixed(1)}</td>
-            <td>{Math.round(p.adr * totalRounds)}</td>
-            <td><SwingCell value={p.swing} /></td>
+            <td>{p.assists > 0 ? p.assists : "—"}</td>
+            <td>{typeof p.kd === "number" ? p.kd.toFixed(2) : "—"}</td>
+            <td>{p.adr > 0 ? p.adr.toFixed(1) : "—"}</td>
+            <td>{p.rating > 0 ? p.rating.toFixed(2) : "—"}</td>
+            <td>{p.hs > 0 ? `${p.hs.toFixed(1)}%` : "—"}</td>
           </tr>
         ))}
       </tbody>
@@ -79,13 +249,66 @@ function PlayerStatTable({ players, totalRounds }) {
   );
 }
 
-function CsMapPanel({ game, opp1Name, opp2Name }) {
-  if (!game?.playerStats) {
-    return <div style={{ padding: 24, textAlign: "center", color: "var(--text-4)", fontSize: 13 }}>No player stats available for this map.</div>;
-  }
+function HalftimePanel({ extradata, opp1Name, opp2Name }) {
+  if (!extradata) return null;
+  const t1halfs = extradata.t1halfs || {};
+  const t2halfs = extradata.t2halfs || {};
+  const t1sides = extradata.t1sides || {};
+
+  const halves = Object.keys(t1halfs).sort();
+  if (!halves.length) return null;
+
+  const sideLabel = s => s === "ct" ? "CT" : s === "t" ? "T" : s?.toUpperCase() || "—";
+  const sideColor = s => s === "ct" ? "#4a9eff" : "#e8a020";
+
+  return (
+    <div className={styles.halftimePanel}>
+      <div className={styles.halftimeTitle}>Half-time Breakdown</div>
+      <div className={styles.halftimeGrid}>
+        <div className={styles.halftimeHeader}>
+          <span />
+          <span className={styles.halftimeTeam}>{opp1Name}</span>
+          <span className={styles.halftimeTeam}>{opp2Name}</span>
+        </div>
+        {halves.map(h => {
+          const t1side = t1sides[h];
+          const t2side = t1side === "ct" ? "t" : "ct";
+          return (
+            <div key={h} className={styles.halftimeRow}>
+              <span className={styles.halftimeLabel}>Half {h}</span>
+              <span className={styles.halftimeCell}>
+                <span className={styles.halfSideBadge} style={{ background: sideColor(t1side) }}>
+                  {sideLabel(t1side)}
+                </span>
+                <span className={styles.halftimeScore}>{t1halfs[h] ?? "—"}</span>
+              </span>
+              <span className={styles.halftimeCell}>
+                <span className={styles.halfSideBadge} style={{ background: sideColor(t2side) }}>
+                  {sideLabel(t2side)}
+                </span>
+                <span className={styles.halftimeScore}>{t2halfs[h] ?? "—"}</span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CsMapPanel({ game, opp1Name, opp2Name, opp1Icon, opp2Icon }) {
   const isWin1 = game.winner === "1";
   const isWin2 = game.winner === "2";
-  const totalRounds = (game.scores?.[0] ?? 0) + (game.scores?.[1] ?? 0);
+
+  const hasPlayerStats = game?.playerStats &&
+    (game.playerStats.team1?.length > 0 || game.playerStats.team2?.length > 0);
+  const hasHalftime = game?.extradata?.t1halfs &&
+    Object.keys(game.extradata.t1halfs).length > 0;
+
+  if (!hasPlayerStats && !hasHalftime) {
+    return <div style={{ padding: 24, textAlign: "center", color: "var(--text-4)", fontSize: 13 }}>No match details available for this map.</div>;
+  }
+
   return (
     <div className={styles.csPanel}>
       <div className={styles.csPanelHead}>
@@ -94,31 +317,29 @@ function CsMapPanel({ game, opp1Name, opp2Name }) {
         <span className={styles.csPanelLen}>{game.length || ""}</span>
       </div>
 
-      <div className={styles.csTeamBlock}>
-        <div className={styles.csTeamHead}>
-          <span className={styles.csTeamName}>{opp1Name}</span>
-          {isWin1 && <span className={styles.csTeamWin}>Winner</span>}
-        </div>
-        <PlayerStatTable players={game.playerStats.team1} totalRounds={totalRounds} />
-      </div>
+      <HalftimePanel extradata={game.extradata} opp1Name={opp1Name} opp2Name={opp2Name} />
 
-      <div className={styles.csTeamBlock}>
-        <div className={styles.csTeamHead}>
-          <span className={styles.csTeamName}>{opp2Name}</span>
-          {isWin2 && <span className={styles.csTeamWin}>Winner</span>}
-        </div>
-        <PlayerStatTable players={game.playerStats.team2} totalRounds={totalRounds} />
-      </div>
+      {hasPlayerStats && (
+        <>
+          <div className={styles.csTeamBlock}>
+            <div className={styles.csTeamHead}>
+              {opp1Icon && <img src={opp1Icon} alt={opp1Name} className={styles.csTeamHeadLogo} referrerPolicy="no-referrer" />}
+              <Link to={`/team/${encodeURIComponent(opp1Name)}`} className={styles.csTeamName}>{opp1Name}</Link>
+              {isWin1 && <span className={styles.csTeamWin}>Winner</span>}
+            </div>
+            <PlayerStatTable players={game.playerStats.team1} />
+          </div>
 
-      <div className={styles.csDetailRow}>
-        <button
-          type="button"
-          className={styles.csDetailBtn}
-          onClick={() => {}}
-        >
-          View Details →
-        </button>
-      </div>
+          <div className={styles.csTeamBlock}>
+            <div className={styles.csTeamHead}>
+              {opp2Icon && <img src={opp2Icon} alt={opp2Name} className={styles.csTeamHeadLogo} referrerPolicy="no-referrer" />}
+              <Link to={`/team/${encodeURIComponent(opp2Name)}`} className={styles.csTeamName}>{opp2Name}</Link>
+              {isWin2 && <span className={styles.csTeamWin}>Winner</span>}
+            </div>
+            <PlayerStatTable players={game.playerStats.team2} />
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -356,11 +577,13 @@ function LolMatchDetails({ match, opp1Name, opp2Name }) {
   );
 }
 
-function CsMatchDetails({ match, opp1Name, opp2Name }) {
-  const games = match.match2games || [];
+function CsMatchDetails({ match, opp1Name, opp2Name, opp1Icon, opp2Icon }) {
+  const games = (match.match2games || []).filter(g =>
+    g.winner || (g.scores?.[0] ?? 0) > 0 || (g.scores?.[1] ?? 0) > 0
+  );
   const [activeIdx, setActiveIdx] = useState(0);
   if (games.length === 0 && !match.veto) return null;
-  const activeGame = games[activeIdx];
+  const activeGame = games[Math.min(activeIdx, games.length - 1)];
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Match Details</h2>
@@ -379,7 +602,7 @@ function CsMatchDetails({ match, opp1Name, opp2Name }) {
               </button>
             ))}
           </div>
-          <CsMapPanel game={activeGame} opp1Name={opp1Name} opp2Name={opp2Name} />
+          <CsMapPanel game={activeGame} opp1Name={opp1Name} opp2Name={opp2Name} opp1Icon={opp1Icon} opp2Icon={opp2Icon} />
         </>
       )}
     </section>
@@ -410,12 +633,27 @@ export default function MatchPage({ wiki }) {
         if (!cancelled) {
           setApiMatch(m);
           setLoading(false);
-          // matchvod endpoint not available in Liquipedia API v3
         }
       })
       .catch(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [id, wiki, mockMatch]);
+
+  // useMemo must come before early returns (Rules of Hooks)
+  const match = useMemo(() => {
+    if (mockMatch) return mockMatch;
+    if (!apiMatch) return null;
+    const mockData = getMockMatchStats(id);
+    if (!mockData) return apiMatch;
+    return {
+      ...apiMatch,
+      ...(mockData.veto ? { veto: mockData.veto } : {}),
+      match2games: apiMatch.match2games.map((g, i) => ({
+        ...g,
+        playerStats: mockData.games?.[i]?.playerStats ?? g.playerStats,
+      })),
+    };
+  }, [mockMatch, apiMatch, id]);
 
   if (loading) {
     return (
@@ -424,8 +662,6 @@ export default function MatchPage({ wiki }) {
       </div>
     );
   }
-
-  const match = mockMatch || apiMatch;
 
   if (!match) {
     return (
@@ -544,14 +780,18 @@ export default function MatchPage({ wiki }) {
 
       <div className="wrap">
         {match.wiki === "counterstrike" && (
-          <CsMatchDetails match={match} opp1Name={opp1?.name} opp2Name={opp2?.name} />
+          <>
+            <CsMatchDetails match={match} opp1Name={opp1?.name} opp2Name={opp2?.name} opp1Icon={opp1?.iconurl} opp2Icon={opp2?.iconurl} />
+            <MatchVideos match={match} />
+            <H2HSection team1={opp1?.name} team2={opp2?.name} team1Icon={opp1?.iconurl} team2Icon={opp2?.iconurl} />
+          </>
         )}
 
         {match.wiki === "leagueoflegends" && (
           <LolMatchDetails match={match} opp1Name={opp1?.name} opp2Name={opp2?.name} />
         )}
 
-        {match.wiki !== "leagueoflegends" && match.match2games?.length > 0 && (
+        {match.wiki !== "leagueoflegends" && match.wiki !== "counterstrike" && match.match2games?.length > 0 && (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Map Results</h2>
             <div className={styles.mapSummary}>

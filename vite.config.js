@@ -63,6 +63,18 @@ export default defineConfig(({ mode }) => {
             })
           },
         },
+        '/x-api': {
+          target: 'https://api.twitter.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/x-api/, ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              if (env.VITE_X_BEARER_TOKEN) {
+                proxyReq.setHeader('Authorization', `Bearer ${env.VITE_X_BEARER_TOKEN}`)
+              }
+            })
+          },
+        },
         // LoL Esports — Global Power Rankings (different base path than gw)
         '/lolesports-gpr': {
           target: 'https://esports-api.lolesports.com/persisted/gpr',

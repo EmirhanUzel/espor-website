@@ -2061,6 +2061,67 @@ export function getMatches(wiki = "valorant") {
 export function getMatch(id) {
   return MATCHES.find(m => m.id === id) || null;
 }
+
+// Per-map player stats sourced from HLTV, keyed by Liquipedia match2id.
+// Indexed by map order (0 = first map, 1 = second map, …).
+// team1/team2 order matches match2opponents order from the API.
+const MOCK_MATCH_STATS = {
+  "Ffcq6omMBC_R01-M003": {
+    veto: [
+      { type: "ban",     team: "2",  map: "Ancient" },
+      { type: "ban",     team: "1",  map: "Anubis" },
+      { type: "pick",    team: "2",  map: "Dust2" },
+      { type: "pick",    team: "1",  map: "Nuke" },
+      { type: "ban",     team: "1",  map: "Overpass" },
+      { type: "ban",     team: "2",  map: "Mirage" },
+      { type: "decider", team: null, map: "Inferno" },
+    ],
+    games: [
+    {
+      // Map 0 — Dust II (MOUZ 13 – 11 Aurora, 24 rounds)
+      playerStats: {
+        team1: [
+          { name: "xertioN", kills: 23, deaths: 15, assists: 7,  kd: 1.53, kast: 83.3, adr: 109.6, rating: 1.82, hs: 39.1 },
+          { name: "Spinx",   kills: 17, deaths: 13, assists: 6,  kd: 1.31, kast: 75.0, adr:  77.8, rating: 1.32, hs: 47.1 },
+          { name: "jL",      kills: 13, deaths: 15, assists: 12, kd: 0.87, kast: 87.5, adr:  62.8, rating: 0.97, hs: 53.8 },
+          { name: "torzsi",  kills: 10, deaths: 11, assists: 5,  kd: 0.91, kast: 70.8, adr:  44.4, rating: 0.85, hs: 40.0 },
+          { name: "xelex",   kills: 12, deaths: 15, assists: 4,  kd: 0.80, kast: 79.2, adr:  46.0, rating: 0.72, hs: 50.0 },
+        ],
+        team2: [
+          { name: "Wicadia",  kills: 22, deaths: 17, assists: 2, kd: 1.29, kast: 66.7, adr:  98.8, rating: 1.36, hs: 72.7 },
+          { name: "soulfly",  kills: 17, deaths: 18, assists: 4, kd: 0.94, kast: 75.0, adr:  73.7, rating: 1.33, hs: 70.6 },
+          { name: "woxic",    kills: 15, deaths: 14, assists: 3, kd: 1.07, kast: 70.8, adr:  72.6, rating: 0.90, hs: 40.0 },
+          { name: "MAJ3R",    kills:  6, deaths: 13, assists: 8, kd: 0.46, kast: 75.0, adr:  33.7, rating: 0.65, hs: 50.0 },
+          { name: "XANTARES", kills:  8, deaths: 14, assists: 6, kd: 0.57, kast: 66.7, adr:  54.1, rating: 0.54, hs: 50.0 },
+        ],
+      },
+    },
+    {
+      // Map 1 — Nuke (MOUZ 16 – 5 Aurora, 21 rounds)
+      playerStats: {
+        team1: [
+          { name: "xertioN", kills: 21, deaths: 13, assists: 3, kd: 1.62, kast: 95.2, adr: 107.0, rating: 1.74, hs: 71.4 },
+          { name: "xelex",   kills: 16, deaths: 11, assists: 4, kd: 1.45, kast: 76.2, adr:  65.8, rating: 1.40, hs: 62.5 },
+          { name: "jL",      kills: 17, deaths: 16, assists: 4, kd: 1.06, kast: 66.7, adr:  87.1, rating: 1.22, hs: 58.8 },
+          { name: "Spinx",   kills: 12, deaths: 13, assists: 3, kd: 0.92, kast: 66.7, adr:  57.7, rating: 0.91, hs: 66.7 },
+          { name: "torzsi",  kills: 10, deaths: 13, assists: 4, kd: 0.77, kast: 81.0, adr:  56.0, rating: 0.87, hs: 20.0 },
+        ],
+        team2: [
+          { name: "woxic",    kills: 19, deaths: 14, assists: 2, kd: 1.36, kast: 66.7, adr:  81.7, rating: 1.15, hs: 31.6 },
+          { name: "MAJ3R",    kills: 16, deaths: 17, assists: 4, kd: 0.94, kast: 76.2, adr:  73.1, rating: 1.08, hs: 37.5 },
+          { name: "Wicadia",  kills: 16, deaths: 16, assists: 5, kd: 1.00, kast: 47.6, adr:  82.2, rating: 1.00, hs: 75.0 },
+          { name: "XANTARES", kills: 12, deaths: 14, assists: 6, kd: 0.86, kast: 81.0, adr:  75.8, rating: 0.78, hs: 66.7 },
+          { name: "soulfly",  kills:  2, deaths: 15, assists: 4, kd: 0.13, kast: 66.7, adr:  29.3, rating: 0.48, hs: 100.0 },
+        ],
+      },
+    },
+    ],
+  },
+};
+
+export function getMockMatchStats(matchId) {
+  return MOCK_MATCH_STATS[matchId] || null;
+}
 export function getInterviews(wiki = "valorant") {
   return INTERVIEWS.filter(i => i.wiki === wiki);
 }

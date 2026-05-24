@@ -167,14 +167,48 @@ function mapMatch(m) {
       iconurl: '',
       match2players: o.match2players || [],
     })),
-    match2games: (m.match2games || []).map(g => ({
-      map: g.map || '',
-      scores: [g.score1 ?? g.scores?.[0] ?? 0, g.score2 ?? g.scores?.[1] ?? 0],
-      winner: String(g.winner ?? ''),
-      date: g.date || '',
-      length: g.length || '',
-      vod: g.vod || null,
-    })),
+    match2games: (m.match2games || []).map(g => {
+      let playerStats = null
+      const rawParticipants = g.participants || null
+      if (rawParticipants && Object.keys(rawParticipants).length) {
+        const team1 = [], team2 = []
+        const KEY_RE = /^(\d+)_(\d+)$/
+        const cleanName = raw => (raw || '').replace(/_\([^)]+\)$/, '').replace(/_/g, ' ').trim()
+        for (const [key, p] of Object.entries(rawParticipants)) {
+          const match = KEY_RE.exec(key)
+          if (!match) continue
+          const teamIdx = parseInt(match[1], 10)
+          const name = cleanName(p.player || p.displayname || p.id || '')
+          if (!name) continue
+          const kills  = Number(p.kills  ?? 0)
+          const deaths = Number(p.deaths ?? 0)
+          const entry = {
+            name,
+            kills,
+            deaths,
+            assists: Number(p.assists ?? 0),
+            kd:      deaths > 0 ? kills / deaths : kills,
+            adr:     Number(p.adr ?? 0),
+            rating:  Number(p.rating ?? 0),
+            kast:    Number(p.kast   ?? 0),
+            hs:      Number(p.hs ?? p.headshots ?? 0),
+          }
+          if (teamIdx === 1) team1.push(entry)
+          else team2.push(entry)
+        }
+        if (team1.length || team2.length) playerStats = { team1, team2 }
+      }
+      return {
+        map: g.map || '',
+        scores: [g.score1 ?? g.scores?.[0] ?? 0, g.score2 ?? g.scores?.[1] ?? 0],
+        winner: String(g.winner ?? ''),
+        date: g.date || '',
+        length: g.length || '',
+        vod: g.vod || null,
+        playerStats,
+        extradata: g.extradata || null,
+      }
+    }),
     wiki: 'counterstrike',
   }
 }
@@ -2319,4 +2353,69 @@ export async function getLoLPlayerRecord(pagename) {
       earnings:    Number(r.earnings || 0),
     }
   } catch { return null }
+}
+
+
+// Fetches last N head-to-head finished matches between two teams.
+export async function getCS2H2HMatches(team1, team2, limit = 5) {
+  if (!team1 || !team2) return []
+  const data = await lqFetch('match', {
+    wiki:       'counterstrike',
+    conditions: `[[opponent::${team1}]] AND [[opponent::${team2}]] AND [[finished::1]]`,
+    limit:      String(limit + 3),
+    order:      'date desc',
+  })
+  return (data.result || []).map(mapMatch).slice(0, limit)
+}
+
+
+// Fetches tournament banner image via Liquipedia MediaWiki parse API. 24h cache.
+export async function getCS2TournamentImage(pagename) {
+  if (!pagename) return ''
+  const LS_KEY = `lq_tournimg_${pagename}`
+  const TTL    = 24 * 60 * 60 * 1000
+  try {
+    const raw = localStorage.getItem(LS_KEY)
+    if (raw) {
+      const { url, ts } = JSON.parse(raw)
+      if (Date.now() - ts < TTL) return url
+    }
+  } catch {}
+  try {
+    const r = await fetch(
+      `https://liquipedia.net/counterstrike/api.php?action=parse&page=${encodeURIComponent(pagename)}&prop=properties&format=json&origin=*`,
+      { headers: { 'User-Agent': 'EsporMax/1.0 (espormax-bot)' } }
+    )
+    if (!r.ok) return ''
+    const data  = await r.json()
+    const props = data?.parse?.properties || []
+    const meta  = props.find(p => p.name === 'metaimageurl')
+    const fullUrl = meta?.['*'] || ''
+    if (!fullUrl) return ''
+    const m = fullUrl.match(/\/commons\/images\/([a-f0-9]\/[a-f0-9]{2})\/(.+)$/)
+    const thumbUrl = m
+      ? `https://liquipedia.net/commons/images/thumb/${m[1]}/${m[2]}/600px-${m[2]}`
+      : fullUrl
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ url: thumbUrl, ts: Date.now() })) } catch {}
+    return thumbUrl
+  } catch { return '' }
+}
+
+// Fetches VOD links for a CS2 match from the matchvod table.
+export async function getCS2MatchVods(matchId) {
+  if (!matchId) return []
+  try {
+    const data = await lqFetch('matchvod', {
+      wiki:       'counterstrike',
+      conditions: `[[match::${matchId}]]`,
+      limit:      '10',
+    })
+    return (data.result || [])
+      .filter(v => v.vod || v.link)
+      .map(v => ({
+        language: v.language || 'EN',
+        url:      v.vod || v.link || '',
+        platform: v.platform || 'youtube',
+      }))
+  } catch { return [] }
 }
