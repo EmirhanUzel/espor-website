@@ -84,7 +84,7 @@ function AppInner() {
           <Route path="/player/:id/stats"  element={<PlayerStats />} />
           <Route path="/team/:name"        element={<TeamPage wiki={wiki} />} />
           <Route path="/news"              element={<NewsPage wiki={wiki} />} />
-          <Route path="/transfers"         element={<TransfersPage />} />
+          <Route path="/transfers"         element={<TransfersPage wiki={wiki} />} />
           <Route path="/forum"             element={<ForumPage />} />
           <Route path="/forum/:topicId"    element={<ForumTopicPage />} />
           <Route path="/profile"           element={<UserProfilePage />} />

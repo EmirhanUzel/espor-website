@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getTransfers, formatDate, getFlag } from "../services/api";
-import { getCS2Transfers, getLoLTransfers } from "../services/liquipediaApi";
+import { getTransfers, getTeam, getPlayer, formatDate } from "../services/api";
+import {
+  getCS2Transfers, getLoLTransfers,
+  getCS2PlayerImage, getLoLPlayerImage,
+  getCS2TeamLogos, getLoLTeamLogos,
+} from "../services/liquipediaApi";
 import styles from "./TransfersPage.module.css";
 import { useLanguage } from "../contexts/LanguageContext";
 
@@ -10,232 +14,227 @@ const ROLE_LABEL = {
   sentinel: "Sentinel", igl: "IGL", rifler: "Rifler", awper: "AWPer",
   support: "Support", top: "Top", jungle: "Jungle", mid: "Mid",
   bot: "Bot/ADC", adc: "ADC",
-  "1": "Carry (#1)", "2": "Mid (#2)", "3": "Offlane (#3)",
-  "4": "Support (#4)", "5": "Hard Support (#5)",
+  "1": "Carry", "2": "Mid", "3": "Offlane",
+  "4": "Support", "5": "Hard Support",
 };
 
-const WIKI_LABEL = {
-  valorant: "VALORANT", counterstrike: "CS2",
-  dota2: "Dota 2", leagueoflegends: "LoL",
-};
+const PAGE_SIZE = 15;
 
-function TransferCard({ transfer }) {
-  const { t } = useLanguage();
-  return (
-    <div className={styles.card}>
-      <div className={styles.cardHead}>
-        <div className={styles.playerBlock}>
-          <Link to={`/player/${transfer.player}`} className={styles.playerAvatar} onClick={e => e.stopPropagation()}>{transfer.player[0]}</Link>
-          <div className={styles.playerInfo}>
-            <Link to={`/player/${transfer.player}`} className={styles.playerName} onClick={e => e.stopPropagation()}>{transfer.player}</Link>
-            <span className={styles.playerNat}>{getFlag(transfer.nationality)} {transfer.nationality}</span>
-          </div>
-        </div>
-        <div className={styles.cardMeta}>
-          <span className={styles.wikiBadge}>{WIKI_LABEL[transfer.wiki] || transfer.wiki}</span>
-          <span className={styles.dateLabel}>{formatDate(transfer.date)}</span>
-        </div>
-      </div>
+const STAFF_ROLES = new Set([
+  "coach", "head coach", "assistant coach",
+  "analyst", "performance analyst",
+  "manager", "general manager", "team manager",
+  "ceo", "owner", "staff", "content creator",
+  "observer", "streamer", "director",
+]);
 
-      <div className={styles.transferFlow}>
-        <div className={styles.teamBlock}>
-          <span className={styles.teamLabel}>{t("transfers.previousTeam")}</span>
-          <Link to={`/team/${encodeURIComponent(transfer.fromteam)}`} className={styles.teamName} onClick={e => e.stopPropagation()}>{transfer.fromteam}</Link>
-        </div>
-        <div className={styles.arrowBlock}>
-          <div className={styles.arrowLine} />
-          <span className={styles.arrowIcon}>→</span>
-        </div>
-        <div className={`${styles.teamBlock} ${styles.teamBlockRight}`}>
-          <span className={styles.teamLabel}>{t("transfers.newTeam")}</span>
-          <Link to={`/team/${encodeURIComponent(transfer.toteam)}`} className={`${styles.teamName} ${styles.teamNameNew}`} onClick={e => e.stopPropagation()}>{transfer.toteam}</Link>
-        </div>
-      </div>
-
-      <div className={styles.cardFoot}>
-        <div className={styles.roles}>
-          {transfer.role1 && (
-            <span className={styles.roleBadge}>
-              {ROLE_LABEL[transfer.role1.toLowerCase()] || transfer.role1}
-            </span>
-          )}
-          {transfer.role2 && transfer.role2 !== transfer.role1 && (
-            <span className={styles.roleBadge}>
-              {ROLE_LABEL[transfer.role2.toLowerCase()] || transfer.role2}
-            </span>
-          )}
-        </div>
-        {transfer.reference?.reference1 && (
-          <a href={transfer.reference.reference1} target="_blank" rel="noreferrer" className={styles.refLink}
-            title={transfer.reference.reference1type}>
-            {t("transfers.source")}
-          </a>
-        )}
-      </div>
-    </div>
-  );
+const AVATAR_COLORS = ["#6c5ce7","#0984e3","#00b894","#e17055","#fd79a8","#fdcb6e","#a29bfe","#55efc4"];
+function avatarColor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
-function TransferRow({ transfer }) {
-  return (
-    <div className={styles.tableRow}>
-      <div className={styles.tablePlayer}>
-        <Link to={`/player/${transfer.player}`} className={styles.tableAvatar}>{transfer.player[0]}</Link>
-        <div>
-          <Link to={`/player/${transfer.player}`} className={styles.tablePlayerName}>{transfer.player}</Link>
-          <span className={styles.tableNat}>{getFlag(transfer.nationality)} {transfer.nationality}</span>
-        </div>
-      </div>
-      <div className={styles.tableFrom}>
-        <Link to={`/team/${encodeURIComponent(transfer.fromteam)}`} className={styles.tableTeamFrom}>{transfer.fromteam}</Link>
-      </div>
-      <span className={styles.tableArrow}>→</span>
-      <div className={styles.tableTo}>
-        <Link to={`/team/${encodeURIComponent(transfer.toteam)}`} className={styles.tableTeamTo}>{transfer.toteam}</Link>
-      </div>
-      <div className={styles.tableRole}>
-        {transfer.role1 && (
-          <span className={styles.tableRoleBadge}>
-            {ROLE_LABEL[transfer.role1.toLowerCase()] || transfer.role1}
-          </span>
-        )}
-      </div>
-      <div className={styles.tableWiki}>
-        <span className={styles.tableWikiBadge}>{WIKI_LABEL[transfer.wiki] || transfer.wiki}</span>
-      </div>
-      <span className={styles.tableDate}>{formatDate(transfer.date)}</span>
-      {transfer.reference?.reference1 && (
-        <a href={transfer.reference.reference1} target="_blank" rel="noreferrer" className={styles.tableRef}>↗</a>
-      )}
-    </div>
-  );
-}
-
-export default function TransfersPage() {
-  const { t } = useLanguage();
-  const [apiTransfers, setApiTransfers] = useState([]);
-  const [viewMode, setViewMode] = useState("cards");
-  const [wikiFilter, setWikiFilter] = useState("All");
+function PlayerAvatar({ name, wiki }) {
+  const [src, setSrc] = useState(getPlayer(name)?.imageurl || "");
 
   useEffect(() => {
-    Promise.all([
-      getCS2Transfers(15).catch(() => []),
-      getLoLTransfers(15).catch(() => []),
-    ]).then(([cs2, lol]) => {
-      setApiTransfers([
-        ...cs2.map(tr => ({ ...tr, wiki: 'counterstrike' })),
-        ...lol.map(tr => ({ ...tr, wiki: 'leagueoflegends' })),
-      ]);
-    });
-  }, []);
+    const mock = getPlayer(name)?.imageurl || "";
+    setSrc(mock);
+    if (mock) return;
 
-  const mockTransfers = getTransfers();
-  const mockNonApi = mockTransfers.filter(tr => tr.wiki !== 'counterstrike' && tr.wiki !== 'leagueoflegends');
-  const transfers = [...apiTransfers, ...mockNonApi];
+    let cancelled = false;
+    const fetchImg = wiki === "counterstrike" ? getCS2PlayerImage
+                   : wiki === "leagueoflegends" ? getLoLPlayerImage
+                   : null;
+    if (fetchImg) {
+      fetchImg(name).then(url => { if (!cancelled && url) setSrc(url); }).catch(() => {});
+    }
+    return () => { cancelled = true; };
+  }, [name, wiki]);
 
-  const wikis = ["All", ...new Set(transfers.map(tr => tr.wiki))];
-  const filtered = wikiFilter === "All" ? transfers : transfers.filter(tr => tr.wiki === wikiFilter);
-  const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (!src) {
+    return (
+      <span className={styles.avatarLetter} style={{ background: avatarColor(name) }}>
+        {(name || "?")[0].toUpperCase()}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={name}
+      className={styles.avatar}
+      referrerPolicy="no-referrer"
+      onError={() => setSrc("")}
+    />
+  );
+}
 
-  const stats = {
-    total: transfers.length,
-    valorant: transfers.filter(tr => tr.wiki === "valorant").length,
-    cs2: transfers.filter(tr => tr.wiki === "counterstrike").length,
-    dota2: transfers.filter(tr => tr.wiki === "dota2").length,
-    lol: transfers.filter(tr => tr.wiki === "leagueoflegends").length,
-  };
+function TeamLogo({ name, logoMap }) {
+  const team = getTeam(name);
+  const logo = logoMap?.[name] || team?.textlesslogourl || team?.logourl;
+  const [err, setErr] = useState(false);
+
+  if (!logo || err) {
+    return (
+      <span className={styles.teamLogoFallback}>
+        {(name || "?")[0].toUpperCase()}
+      </span>
+    );
+  }
+  return <img src={logo} alt={name} className={styles.teamLogoImg} referrerPolicy="no-referrer" onError={() => setErr(true)} />;
+}
+
+function TeamBlock({ name, isTo, logoMap }) {
+  const hasTeam = name && name !== "-" && name !== "—";
+  if (!hasTeam) {
+    return isTo
+      ? <span className={styles.freeAgent}>Free Agent</span>
+      : null;
+  }
+  return (
+    <Link to={`/team/${encodeURIComponent(name)}`} className={isTo ? styles.teamTo : styles.teamFrom}>
+      <TeamLogo name={name} logoMap={logoMap} />
+      <span className={isTo ? styles.teamToName : styles.teamFromName}>{name}</span>
+    </Link>
+  );
+}
+
+function TransferRow({ transfer, wiki, logoMap }) {
+  const role = transfer.role1
+    ? (ROLE_LABEL[transfer.role1.toLowerCase()] || transfer.role1)
+    : null;
+
+  return (
+    <div className={styles.row}>
+      <div className={styles.playerCell}>
+        <Link to={`/player/${encodeURIComponent(transfer.player)}`} className={styles.avatarLink} tabIndex={-1}>
+          <PlayerAvatar name={transfer.player} wiki={wiki} />
+        </Link>
+        <div className={styles.playerMeta}>
+          <Link to={`/player/${encodeURIComponent(transfer.player)}`} className={styles.playerName}>
+            {transfer.player}
+          </Link>
+          {role && <span className={styles.roleBadge}>{role}</span>}
+        </div>
+      </div>
+
+      <div className={styles.flowCell}>
+        <TeamBlock name={transfer.fromteam} isTo={false} logoMap={logoMap} />
+        <span className={styles.arrow}>→</span>
+        <TeamBlock name={transfer.toteam} isTo={true} logoMap={logoMap} />
+      </div>
+
+      <span className={styles.date}>{formatDate(transfer.date)}</span>
+    </div>
+  );
+}
+
+export default function TransfersPage({ wiki = "valorant" }) {
+  const { t } = useLanguage();
+  const [apiTransfers, setApiTransfers] = useState([]);
+  const [teamLogos, setTeamLogos] = useState({});
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setVisible(PAGE_SIZE);
+    setLoading(true);
+    setTeamLogos({});
+
+    if (wiki === "counterstrike") {
+      getCS2Transfers(150).catch(() => []).then(cs2 => {
+        const players = cs2.filter(tr => {
+          const r = (tr.role1 || "").toLowerCase();
+          return !STAFF_ROLES.has(r);
+        });
+        setApiTransfers(players.map(tr => ({ ...tr, wiki: "counterstrike" })));
+        setLoading(false);
+      });
+    } else if (wiki === "leagueoflegends") {
+      getLoLTransfers(80).catch(() => []).then(lol => {
+        const players = lol.filter(tr => !STAFF_ROLES.has((tr.role1 || "").toLowerCase()));
+        setApiTransfers(players.map(tr => ({ ...tr, wiki: "leagueoflegends" })));
+        setLoading(false);
+      });
+    } else {
+      setApiTransfers([]);
+      setLoading(false);
+    }
+  }, [wiki]);
+
+  // Fetch team logos in bulk from Liquipedia once transfers are loaded
+  useEffect(() => {
+    const fetchLogos = wiki === "counterstrike" ? getCS2TeamLogos
+                     : wiki === "leagueoflegends" ? getLoLTeamLogos
+                     : null;
+    if (!fetchLogos || !apiTransfers.length) return;
+
+    const names = [...new Set(
+      apiTransfers
+        .flatMap(tr => [tr.fromteam, tr.toteam])
+        .filter(n => n && n !== "-" && n !== "—")
+    )];
+    if (!names.length) return;
+
+    let cancelled = false;
+    fetchLogos(names).then(map => { if (!cancelled) setTeamLogos(prev => ({ ...prev, ...map })); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [apiTransfers, wiki]);
+
+  // Merge API data with mock data (API first; mock fills in when API returns nothing)
+  const mockForWiki = getTransfers().filter(tr => tr.wiki === wiki);
+  const apiKeys = new Set(apiTransfers.map(tr => `${tr.player}|${(tr.date || "").slice(0, 10)}`));
+  const mockFallback = mockForWiki.filter(tr => !apiKeys.has(`${tr.player}|${(tr.date || "").slice(0, 10)}`));
+  const all = [...apiTransfers, ...mockFallback];
+
+  const sorted = [...all].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const shown = sorted.slice(0, visible);
+  const hasMore = visible < sorted.length;
 
   return (
     <main>
-      <div className={styles.pageHero}>
+      <div className={styles.hero}>
         <div className="wrap">
-          <h1 className={styles.pageTitle}>{t("transfers.title")}</h1>
-          <p className={styles.pageSubtitle}>{t("transfers.subtitle")}</p>
-          <div className={styles.heroStats}>
-            {[
-              [t("transfers.total"), stats.total],
-              ["VALORANT", stats.valorant],
-              ["CS2", stats.cs2],
-              ["Dota 2", stats.dota2],
-              ["LoL", stats.lol],
-            ].map(([label, val]) => (
-              <div key={label} className={styles.heroStat}>
-                <span className={styles.heroStatVal}>{val}</span>
-                <span className={styles.heroStatLabel}>{label}</span>
-              </div>
-            ))}
-          </div>
+          <h1 className={styles.title}>{t("transfers.title")}</h1>
+          <p className={styles.subtitle}>
+            {sorted.length} {t("transfers.shown")}
+          </p>
         </div>
       </div>
 
       <div className="wrap">
-        <div className={styles.controls}>
-          <div className={styles.filterBar}>
-            {wikis.map(w => (
-              <button
-                key={w}
-                className={`${styles.filterBtn} ${wikiFilter === w ? styles.filterBtnActive : ""}`}
-                onClick={() => setWikiFilter(w)}
-              >
-                {w === "All" ? t("transfers.total") : (WIKI_LABEL[w] || w)}
-                {w !== "All" && (
-                  <span className={styles.filterCount}>
-                    {transfers.filter(tr => tr.wiki === w).length}
-                  </span>
-                )}
-              </button>
-            ))}
+        <div className={styles.listWrap}>
+          <div className={styles.listHead}>
+            <span>{t("transfers.player")}</span>
+            <span>{t("transfers.from")} → {t("transfers.to")}</span>
+            <span>{t("transfers.date")}</span>
           </div>
 
-          <div className={styles.viewToggle}>
-            <button
-              className={`${styles.viewBtn} ${viewMode === "cards" ? styles.viewBtnActive : ""}`}
-              onClick={() => setViewMode("cards")} title={t("transfers.cardView")}
-            >⊞</button>
-            <button
-              className={`${styles.viewBtn} ${viewMode === "table" ? styles.viewBtnActive : ""}`}
-              onClick={() => setViewMode("table")} title={t("transfers.listView")}
-            >≡</button>
-          </div>
+          {shown.map((tr, i) => (
+            <TransferRow key={`${tr.player}-${tr.date}-${i}`} transfer={tr} wiki={wiki} logoMap={teamLogos} />
+          ))}
+
+          {loading && shown.length === 0 && (
+            <div className={styles.loading}>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className={styles.skeleton} />
+              ))}
+            </div>
+          )}
+
+          {!loading && shown.length === 0 && (
+            <div className={styles.empty}>{t("transfers.empty")}</div>
+          )}
+
+          {!loading && hasMore && (
+            <button className={styles.seeMore} onClick={() => setVisible(v => v + PAGE_SIZE)}>
+              {t("transfers.seeMore") || "See More"}
+              <span className={styles.seeMoreCount}>+{sorted.length - visible}</span>
+            </button>
+          )}
         </div>
-
-        <p className={styles.resultCount}>
-          <strong>{sorted.length}</strong> {t("transfers.shown")}
-        </p>
-
-        {viewMode === "cards" && (
-          <section className={styles.section}>
-            <div className={styles.grid}>
-              {sorted.map((tr, i) => (
-                <TransferCard key={`${tr.player}-${tr.date}-${i}`} transfer={tr} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {viewMode === "table" && (
-          <section className={styles.section}>
-            <div className={styles.table}>
-              <div className={styles.tableHead}>
-                <span>{t("transfers.player")}</span>
-                <span>{t("transfers.from")}</span>
-                <span></span>
-                <span>{t("transfers.to")}</span>
-                <span>{t("transfers.role")}</span>
-                <span>{t("transfers.game")}</span>
-                <span>{t("transfers.date")}</span>
-                <span></span>
-              </div>
-              {sorted.map((tr, i) => (
-                <TransferRow key={`${tr.player}-${tr.date}-${i}`} transfer={tr} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {sorted.length === 0 && (
-          <div className={styles.empty}>{t("transfers.empty")}</div>
-        )}
       </div>
     </main>
   );

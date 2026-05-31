@@ -220,8 +220,9 @@ export const translations = {
     "transfers.role": "Role",
     "transfers.game": "Game",
     "transfers.date": "Date",
-    "transfers.shown": "transfers shown",
-    "transfers.empty": "No transfers found for this filter.",
+    "transfers.shown": "transfers",
+    "transfers.empty": "No transfers found.",
+    "transfers.seeMore": "See More",
     "transfers.cardView": "Card view",
     "transfers.listView": "List view",
     // Stats Page
@@ -557,8 +558,9 @@ export const translations = {
     "transfers.role": "Rol",
     "transfers.game": "Oyun",
     "transfers.date": "Tarih",
-    "transfers.shown": "transfer gösteriliyor",
-    "transfers.empty": "Bu filtreye uygun transfer bulunamadı.",
+    "transfers.shown": "transfer",
+    "transfers.empty": "Transfer bulunamadı.",
+    "transfers.seeMore": "Daha Fazla Göster",
     "transfers.cardView": "Kart görünümü",
     "transfers.listView": "Liste görünümü",
     // Stats Page

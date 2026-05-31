@@ -88,7 +88,17 @@
       "PowerShell(Get-Item \"C:\\\\Users\\\\Bayar\\\\Desktop\\\\espor-website\\\\graphify-out\\\\.graphify_chunk_03.json\" | Select-Object Name, Length; $content = Get-Content \"C:\\\\Users\\\\Bayar\\\\Desktop\\\\espor-website\\\\graphify-out\\\\.graphify_chunk_03.json\" -Raw; $parsed = $content | ConvertFrom-Json; Write-Host \"Nodes: $\\($parsed.nodes.Count\\)\"; Write-Host \"Edges: $\\($parsed.edges.Count\\)\"; Write-Host \"Hyperedges: $\\($parsed.hyperedges.Count\\)\")",
       "Bash(python *)",
       "PowerShell(& \\(Get-Content graphify-out\\\\.graphify_python\\) -m graphify claude install s2)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(npx --yes playwright@latest install chromium --with-deps)",
+      "Bash(npm install *)",
+      "Bash(npx playwright *)",
+      "Bash(Remove-Item *)",
+      "Bash(powershell *)",
+      "PowerShell($j = Get-Content \"C:\\\\Users\\\\Emirhan\\\\Desktop\\\\espormax-app\\\\test_result.json\" -Raw; Write-Output $j.Length; Write-Output $j)",
+      "PowerShell($c = [System.IO.File]::ReadAllText\\(\"C:\\\\Users\\\\Emirhan\\\\Desktop\\\\espormax-app\\\\parse_test.txt\"\\); $c.Substring\\(0, [Math]::Min\\(120, $c.Length\\)\\))",
+      "Bash(grep -oE \"VITE_\\(LIQUIPEDIA|PANDASCORE\\)_API_KEY=.{0,8}\" .env.local)",
+      "Bash(awk -F= '/VITE_LIQUIPEDIA_API_KEY/{print length\\($2\\)}' .env.local)",
+      "Bash(awk *)"
     ]
   }
 }

@@ -596,6 +596,28 @@ export async function getCS2Transfers(limit = 5) {
   return data.result || []
 }
 
+export async function getCS2TopTeamNames(limit = 20) {
+  const today          = new Date().toISOString().slice(0, 10)
+  const sixMonthsAgo   = new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10)
+  const data = await lqFetch('placement', {
+    wiki:       'counterstrike',
+    conditions: '[[liquipediatier::1]] AND [[date::>' + sixMonthsAgo + ']] AND [[date::<' + today + ']] AND [[opponenttype::team]] AND [[opponentname::!TBD]]',
+    limit:      '200',
+    order:      'date desc',
+  })
+  const seen = new Set()
+  const names = []
+  for (const p of (data.result || [])) {
+    const name = p.opponentname
+    if (!name || name === 'TBD' || seen.has(name)) continue
+    seen.add(name)
+    names.push(name)
+    if (names.length >= limit) break
+  }
+  return names
+}
+
+
 // Builds a lookup map: { lowerCaseName: url, template: url }
 // Queries by both name and template to handle case mismatches & obscure teams
 async function fetchTeamIconMap(opponents) {
